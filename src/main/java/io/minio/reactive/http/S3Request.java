@@ -1,0 +1,175 @@
+package io.minio.reactive.http;
+
+import io.minio.reactive.ReactiveMinioClientConfig;
+import io.minio.reactive.util.S3Escaper;
+import java.net.URI;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+
+/**
+ * Internal request model for S3-compatible requests.
+ *
+ * <p>This object is shared by the signer and the HTTP transport so both operate
+ * on the same method, URI, headers, query string, and body.
+ */
+public final class S3Request {
+  private final HttpMethod method;
+  private final String bucket;
+  private final String object;
+  private final String region;
+  private final Map<String, String> headers;
+  private final Map<String, String> queryParameters;
+  private final byte[] body;
+  private final MediaType contentType;
+
+  private S3Request(Builder builder) {
+    this.method = Objects.requireNonNull(builder.method, "method must not be null");
+    this.bucket = builder.bucket;
+    this.object = builder.object;
+    this.region = builder.region;
+    this.headers = Collections.unmodifiableMap(new LinkedHashMap<String, String>(builder.headers));
+    this.queryParameters =
+        Collections.unmodifiableMap(new LinkedHashMap<String, String>(builder.queryParameters));
+    this.body = builder.body;
+    this.contentType =
+        builder.contentType == null ? MediaType.APPLICATION_OCTET_STREAM : builder.contentType;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public HttpMethod method() {
+    return method;
+  }
+
+  public String bucket() {
+    return bucket;
+  }
+
+  public String object() {
+    return object;
+  }
+
+  public String region() {
+    return region;
+  }
+
+  public Map<String, String> headers() {
+    return headers;
+  }
+
+  public Map<String, String> queryParameters() {
+    return queryParameters;
+  }
+
+  public byte[] body() {
+    return body;
+  }
+
+  public boolean hasBody() {
+    return body != null && body.length > 0;
+  }
+
+  public MediaType contentType() {
+    return contentType;
+  }
+
+  public String canonicalUri() {
+    return S3Escaper.canonicalUri(bucket, object);
+  }
+
+  public String canonicalQueryString() {
+    return S3Escaper.canonicalQueryString(queryParameters);
+  }
+
+  public URI toUri(ReactiveMinioClientConfig config) {
+    // The exact URI text used here must match what the signer used.
+    StringBuilder builder = new StringBuilder(config.endpoint());
+    builder.append(canonicalUri());
+    String canonicalQueryString = canonicalQueryString();
+    if (!canonicalQueryString.isEmpty()) {
+      builder.append('?').append(canonicalQueryString);
+    }
+    return URI.create(builder.toString());
+  }
+
+  public Builder toBuilder() {
+    Builder builder = new Builder();
+    builder.method = this.method;
+    builder.bucket = this.bucket;
+    builder.object = this.object;
+    builder.region = this.region;
+    builder.headers.putAll(this.headers);
+    builder.queryParameters.putAll(this.queryParameters);
+    builder.body = this.body;
+    builder.contentType = this.contentType;
+    return builder;
+  }
+
+  public static final class Builder {
+    private HttpMethod method;
+    private String bucket;
+    private String object;
+    private String region;
+    private final Map<String, String> headers = new LinkedHashMap<String, String>();
+    private final Map<String, String> queryParameters = new LinkedHashMap<String, String>();
+    private byte[] body;
+    private MediaType contentType;
+
+    private Builder() {}
+
+    public Builder method(HttpMethod method) {
+      this.method = method;
+      return this;
+    }
+
+    public Builder bucket(String bucket) {
+      this.bucket = bucket;
+      return this;
+    }
+
+    public Builder object(String object) {
+      this.object = object;
+      return this;
+    }
+
+    public Builder region(String region) {
+      this.region = region;
+      return this;
+    }
+
+    public Builder header(String name, String value) {
+      this.headers.put(name, value);
+      return this;
+    }
+
+    public Builder queryParameter(String name, String value) {
+      this.queryParameters.put(name, value);
+      return this;
+    }
+
+    public Builder body(byte[] body) {
+      this.body = body;
+      return this;
+    }
+
+    public Builder contentType(String contentType) {
+      this.contentType = MediaType.parseMediaType(contentType);
+      return this;
+    }
+
+    public Builder contentType(MediaType contentType) {
+      this.contentType = contentType;
+      return this;
+    }
+
+    public S3Request build() {
+      return new S3Request(this);
+    }
+  }
+}
