@@ -19,10 +19,19 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Minimal AWS SigV4 signer for standard S3 requests.
+ * 最小可用的 AWS SigV4 签名器。
  *
- * <p>This covers the core S3 signing flow: canonical request, string to sign,
- * derived signing key, and Authorization header.
+ * <p>当前实现已经覆盖标准 S3 请求所需的核心步骤：
+ *
+ * <ol>
+ *   <li>生成 payload 的 SHA-256 摘要
+ *   <li>构造 canonical request
+ *   <li>构造 string to sign
+ *   <li>推导 signing key
+ *   <li>生成 Authorization 头
+ * </ol>
+ *
+ * <p>这部分是整个 SDK 最协议化的代码，读懂它对理解 MinIO/S3 请求为什么这样发很关键。
  */
 public final class S3RequestSigner {
   private static final DateTimeFormatter AMZ_DATE =
@@ -52,13 +61,15 @@ public final class S3RequestSigner {
     }
 
     if (credentials.isAnonymous()) {
-      // Anonymous access keeps the normalized request headers but skips Authorization.
+      // 匿名访问不生成 Authorization，但仍然保留前面补充的标准头部。
       return builder.build();
     }
 
     S3Request unsignedRequest = builder.build();
     Map<String, String> canonicalHeaders = canonicalHeaders(unsignedRequest.headers());
     String signedHeaders = signedHeaders(canonicalHeaders);
+
+    // canonical request 是服务端验签时会按同样规则重建的文本，因此格式必须严格一致。
     String canonicalRequest =
         unsignedRequest.method().name()
             + "\n"
@@ -113,7 +124,7 @@ public final class S3RequestSigner {
     Map<String, String> canonical = new LinkedHashMap<String, String>();
     for (String name : names) {
       String signedName = name.toLowerCase(Locale.US);
-      // Avoid signing unstable headers that may be rewritten by the HTTP client stack.
+      // 这些头可能被底层 HTTP 客户端改写或补充，不适合作为稳定签名输入。
       if ("authorization".equals(signedName)
           || "user-agent".equals(signedName)
           || "accept-encoding".equals(signedName)) {

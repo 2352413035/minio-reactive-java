@@ -4,10 +4,17 @@ import java.net.URI;
 import java.util.Objects;
 
 /**
- * Minimal client configuration used by the current prototype.
+ * 当前原型项目使用的最小客户端配置。
  *
- * <p>At this stage we only keep the fields needed to talk to a real MinIO server:
- * endpoint, region, and path-style access.
+ * <p>目前只保留已经验证必需的几个字段：
+ *
+ * <ul>
+ *   <li>endpoint：MinIO 服务地址
+ *   <li>region：签名时使用的区域
+ *   <li>pathStyle：当前是否使用路径风格访问
+ * </ul>
+ *
+ * <p>官方 `minio-java` 在这层还会处理更多事情，例如 region 发现、超时、域名风格判断等。
  */
 public final class ReactiveMinioClientConfig {
   private final String endpoint;

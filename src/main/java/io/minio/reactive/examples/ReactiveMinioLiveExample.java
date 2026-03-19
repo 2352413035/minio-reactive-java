@@ -2,23 +2,20 @@ package io.minio.reactive.examples;
 
 import io.minio.reactive.ReactiveMinioClient;
 import io.minio.reactive.errors.ReactiveS3Exception;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import reactor.core.publisher.Mono;
 
 /**
- * Manual smoke example against a real MinIO server.
+ * 连接真实 MinIO 的手工冒烟示例。
  *
- * <p>This example is intentionally linear so it can be used as a runnable walkthrough
- * for the current SDK prototype.
+ * <p>这段代码故意写成线性流程，目的是让你把“一个完整的对象操作闭环”读清楚：
+ * 检查桶、建桶、上传、查元数据、下载、删对象、删桶。
  */
 public final class ReactiveMinioLiveExample {
-  private static final String LOCAL_CONFIG_FILE = "config/minio-local.properties";
+  private static final String LOCAL_CONFIG_FILE = "minio-local.properties";
 
   private ReactiveMinioLiveExample() {}
 
@@ -63,7 +60,7 @@ public final class ReactiveMinioLiveExample {
             .doOnSuccess(ignored -> System.out.println("object uploaded: " + object))
             .then(client.statObject(bucket, object))
             .doOnNext(ReactiveMinioLiveExample::printHeaders)
-            // This call previously exposed a response-body lifecycle bug in WebClient usage.
+            // 这一段曾经暴露过 WebClient 响应体生命周期处理错误，因此保留下来作为验证点。
             .then(client.getObjectAsString(bucket, object))
             .doOnNext(value -> System.out.println("downloaded content: " + value))
             .then(client.removeObject(bucket, object))
@@ -83,10 +80,13 @@ public final class ReactiveMinioLiveExample {
 
   private static Properties loadProperties() {
     Properties properties = new Properties();
-    try (InputStream inputStream = Files.newInputStream(Paths.get(LOCAL_CONFIG_FILE))) {
-      properties.load(inputStream);
-    } catch (IOException ignored) {
-      // Local config is optional. Environment variables still work as fallback.
+    try (InputStream inputStream =
+        ReactiveMinioLiveExample.class.getClassLoader().getResourceAsStream(LOCAL_CONFIG_FILE)) {
+      if (inputStream != null) {
+        properties.load(inputStream);
+      }
+    } catch (Exception ignored) {
+      // 本地配置文件是可选的，没有时仍然允许使用环境变量。
     }
     return properties;
   }
@@ -97,7 +97,7 @@ public final class ReactiveMinioLiveExample {
       throw new IllegalStateException(
           "Missing config value. Please set "
               + propertyKey
-              + " in "
+              + " in classpath resource "
               + LOCAL_CONFIG_FILE
               + " or "
               + envKey);

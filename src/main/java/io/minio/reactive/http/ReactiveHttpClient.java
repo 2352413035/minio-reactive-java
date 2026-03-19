@@ -15,12 +15,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Reactive HTTP sender for S3-compatible requests.
+ * S3 兼容请求的响应式 HTTP 发送层。
  *
- * <p>Important implementation note: response bodies must be consumed inside
- * {@code exchangeToMono}/{@code exchangeToFlux}. An earlier version returned
- * {@code ClientResponse} first and tried to decode the body later, which made successful GET
- * requests look like empty content because the body had already been released.
+ * <p>这里封装的是“怎么发请求”和“怎么读取响应”。
+ * 当前实现中一个非常关键的经验是：响应体必须在
+ * {@code exchangeToMono}/{@code exchangeToFlux} 的回调内部消费，
+ * 不能先把 {@code ClientResponse} 取出来再到外面读 body，
+ * 否则会出现请求成功但响应体为空的情况。
  */
 public final class ReactiveHttpClient {
   private final WebClient webClient;
@@ -98,8 +99,10 @@ public final class ReactiveHttpClient {
             .headers(headers -> apply(headers, request));
 
     if (request.hasBody()) {
-      // PUT bucket and PUT object both depend on explicit body + content type here.
-      return bodySpec.contentType(request.contentType()).body(BodyInserters.fromValue(request.body()));
+      // PUT Bucket 和 PUT Object 都依赖这里把请求体和 Content-Type 正确写出去。
+      return bodySpec
+          .contentType(request.contentType())
+          .body(BodyInserters.fromValue(request.body()));
     }
 
     return bodySpec;

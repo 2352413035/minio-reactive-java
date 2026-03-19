@@ -1,4 +1,4 @@
-﻿# minio-reactive-java
+# minio-reactive-java
 
 这是一个面向学习和实现的响应式 MinIO Java SDK 原型项目。
 
@@ -13,9 +13,9 @@
 
 Windows 下更方便的方式是直接使用项目内配置文件：
 
-- `config/minio-local.properties`
+- `src/main/resources/minio-local.properties`
 
-示例会优先从这个文件读取配置，然后再读取环境变量。
+示例会优先从类路径资源 `minio-local.properties` 读取配置，然后再读取环境变量。
 
 ```properties
 minio.endpoint=http://127.0.0.1:9000
@@ -95,3 +95,4 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/05-implementation-roadmap.md`
 - `docs/06-current-implementation-notes.md`
 - `docs/07-debugging-notes.md`
+- `docs/08-s3-method-protocol.md`

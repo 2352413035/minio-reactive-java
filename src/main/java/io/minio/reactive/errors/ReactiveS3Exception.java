@@ -1,7 +1,16 @@
 package io.minio.reactive.errors;
 
 /**
- * Basic S3 HTTP error wrapper for the reactive client.
+ * 响应式 MinIO 客户端的基础 S3 异常。
+ *
+ * <p>当前版本先保留最核心的两项信息：
+ *
+ * <ul>
+ *   <li>HTTP 状态码
+ *   <li>响应体文本
+ * </ul>
+ *
+ * <p>这样在排查 403、404、XML 错误响应时，调用方至少能直接看到服务端返回了什么。
  */
 public final class ReactiveS3Exception extends RuntimeException {
   private final int statusCode;

@@ -11,10 +11,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
 /**
- * Internal request model for S3-compatible requests.
+ * S3 兼容请求的内部模型。
  *
- * <p>This object is shared by the signer and the HTTP transport so both operate
- * on the same method, URI, headers, query string, and body.
+ * <p>这个对象的意义不只是“装参数”，更重要的是让签名器和 HTTP 发送层
+ * 使用同一份 method、URI、query、headers、body 语义，避免“签名看见的请求”和
+ * “真正发出去的请求”不一致。
  */
 public final class S3Request {
   private final HttpMethod method;
@@ -88,7 +89,7 @@ public final class S3Request {
   }
 
   public URI toUri(ReactiveMinioClientConfig config) {
-    // The exact URI text used here must match what the signer used.
+    // 这里生成的 URI 文本必须与签名阶段使用的 canonical URI/query 保持一致。
     StringBuilder builder = new StringBuilder(config.endpoint());
     builder.append(canonicalUri());
     String canonicalQueryString = canonicalQueryString();

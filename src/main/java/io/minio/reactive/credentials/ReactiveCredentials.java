@@ -1,8 +1,18 @@
 package io.minio.reactive.credentials;
 
 /**
- * 閸濆秴绨插?SDK 娴ｈ法鏁ら惃鍕殶鐠囦焦膩閸ㄥ鈧? *
- * <p>閸忓牅绻氶幐浣虹暆閸楁洩绱濋崣顏冪箽閻ｆ瑩娼ら幀浣稿殶鐠囦礁鎷伴崠鍨倳鐠佸潡妫堕棁鈧憰浣烘畱鐎涙顔岄妴鍌氭倵缂侇厼顩ч弸婊勫复閸?STS閵嗕竸ssumeRole閵嗕箘ebIdentity閿? * 閸愬秷藟閸?expiry 缁涘鐫橀幀褋鈧? */
+ * 响应式 SDK 使用的凭证对象。
+ *
+ * <p>当前只包含三项最基础的数据：
+ *
+ * <ul>
+ *   <li>accessKey
+ *   <li>secretKey
+ *   <li>sessionToken
+ * </ul>
+ *
+ * <p>之所以保留 sessionToken，是为了后续支持临时凭证场景，例如 STS、AssumeRole、WebIdentity。
+ */
 public final class ReactiveCredentials {
   private final String accessKey;
   private final String secretKey;

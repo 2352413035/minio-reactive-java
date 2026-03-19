@@ -17,11 +17,18 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Reactive MinIO client entrypoint.
+ * 响应式 MinIO 客户端入口。
  *
- * <p>This class is intentionally thin. Each public method follows the same flow:
- * build an {@link S3Request}, resolve credentials, sign it with SigV4, then hand it to the
- * HTTP layer.
+ * <p>这个类本身尽量保持轻量。每个公开方法基本都遵循同一条调用链：
+ *
+ * <ol>
+ *   <li>根据业务动作构造 {@link S3Request}
+ *   <li>获取凭证
+ *   <li>使用 SigV4 对请求签名
+ *   <li>把签名后的请求交给 HTTP 层发送
+ * </ol>
+ *
+ * <p>这样拆分后，客户端层只负责“编排”，不会把协议细节、签名逻辑、HTTP 细节混在一起。
  */
 public final class ReactiveMinioClient {
   private final ReactiveMinioClientConfig config;
@@ -45,20 +52,22 @@ public final class ReactiveMinioClient {
   }
 
   public Mono<Boolean> bucketExists(String bucket) {
+    // HEAD Bucket 只关心桶是否存在，不需要响应体。
     S3Request request =
         S3Request.builder().method(HttpMethod.HEAD).bucket(bucket).region(config.region()).build();
 
     return sign(request)
         .flatMap(httpClient::exchangeToStatus)
         .map(status -> status >= 200 && status < 300)
+        // 对 bucketExists 来说，404 是正常业务结果，不应该作为异常继续抛出。
         .onErrorResume(
             ReactiveS3Exception.class,
             ex -> ex.statusCode() == 404 ? Mono.just(false) : Mono.error(ex));
   }
 
   public Mono<Void> makeBucket(String bucket) {
-    // Live MinIO testing showed that sending an empty PUT bucket body can fail while
-    // the server tries to parse LocationConstraint. This prototype always sends the XML.
+    // 真实 MinIO 调试中已经验证：空的 PUT Bucket 请求可能触发服务端解析
+    // LocationConstraint 时出现 EOF，因此这里显式发送 XML。
     String body =
         "<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
             + "<LocationConstraint>"
@@ -87,7 +96,7 @@ public final class ReactiveMinioClient {
   }
 
   public Flux<byte[]> getObject(String bucket, String object) {
-    // Streaming download variant. This is the path to keep extending for large objects.
+    // 这是流式下载接口，后续做大文件下载时会主要扩展这一条路径。
     S3Request request =
         S3Request.builder()
             .method(HttpMethod.GET)
@@ -100,7 +109,7 @@ public final class ReactiveMinioClient {
   }
 
   public Mono<byte[]> getObjectAsBytes(String bucket, String object) {
-    // Convenience download variant. Suitable for examples and small objects.
+    // 这是便捷接口，会把整个对象一次性读入内存，适合示例和小文件。
     S3Request request =
         S3Request.builder()
             .method(HttpMethod.GET)
@@ -152,6 +161,7 @@ public final class ReactiveMinioClient {
   }
 
   public Mono<Map<String, List<String>>> statObject(String bucket, String object) {
+    // HEAD Object 适合取元数据，不下载对象内容。
     S3Request request =
         S3Request.builder()
             .method(HttpMethod.HEAD)
@@ -164,8 +174,7 @@ public final class ReactiveMinioClient {
   }
 
   private Mono<S3Request> sign(S3Request request) {
-    // The provider stays reactive so future temporary-credential refresh can be added
-    // without changing the external API shape.
+    // 凭证提供者保持响应式接口，这样后续对接临时凭证刷新时不需要推翻现有 API。
     return credentialsProvider
         .getCredentials()
         .defaultIfEmpty(ReactiveCredentials.anonymous())

@@ -3,8 +3,12 @@ package io.minio.reactive.credentials;
 import reactor.core.publisher.Mono;
 
 /**
- * 鍝嶅簲寮忓嚟璇佹彁渚涜€呫€? *
- * <p>鍜?minio-java 涓悓姝ョ殑 Provider.fetch() 涓嶅悓锛岃繖閲岀洿鎺ユ妸寮傛鑳藉姏鏀捐繘鎶借薄鏈韩锛屾柟渚垮悗缁鎺ュ閮? * 鍑瘉鏈嶅姟銆? */
+ * 响应式凭证提供者接口。
+ *
+ * <p>和传统同步 SDK 中“直接返回凭证”的接口不同，这里返回 {@link Mono}，
+ * 目的是把“拿凭证”这件事本身也纳入响应式链路。
+ * 这样后续接入远程凭证服务、刷新临时凭证时，不需要再引入阻塞调用。
+ */
 @FunctionalInterface
 public interface ReactiveCredentialsProvider {
   Mono<ReactiveCredentials> getCredentials();

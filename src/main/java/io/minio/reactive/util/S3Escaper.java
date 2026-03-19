@@ -8,10 +8,14 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 /**
- * Minimal percent-encoding helpers for S3 canonical requests.
+ * S3 canonical request 所需的最小编码工具。
+ *
+ * <p>SigV4 并不是对“原始字符串”直接签名，而是对规范化后的 URI 和 query 进行签名。
+ * 因此这里的编码规则必须和签名器、实际请求 URI 保持一致。
  */
 public final class S3Escaper {
-  private static final String UNRESERVED = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
+  private static final String UNRESERVED =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
 
   private S3Escaper() {}
 
