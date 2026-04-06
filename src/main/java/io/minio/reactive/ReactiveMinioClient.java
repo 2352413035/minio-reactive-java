@@ -7,14 +7,15 @@ import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.http.ReactiveHttpClient;
 import io.minio.reactive.http.S3Request;
 import io.minio.reactive.signer.S3RequestSigner;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 响应式 MinIO 客户端入口。
@@ -51,6 +52,13 @@ public final class ReactiveMinioClient {
     return new Builder();
   }
 
+ public Mono<String> getBucketLocation(String bucket){
+     S3Request request = S3Request.builder().method(HttpMethod.GET).bucket(bucket).queryParameter("location",null).build();
+     return sign(request)
+             .flatMap(httpClient::exchangeToByteArray).map(bytes -> new String(bytes, StandardCharsets.UTF_8));
+ }
+
+
   public Mono<Boolean> bucketExists(String bucket) {
     // HEAD Bucket 只关心桶是否存在，不需要响应体。
     S3Request request =
@@ -71,7 +79,7 @@ public final class ReactiveMinioClient {
     String body =
         "<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
             + "<LocationConstraint>"
-            + config.region()
+            + "xiaxieregion"
             + "</LocationConstraint>"
             + "</CreateBucketConfiguration>";
     byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
