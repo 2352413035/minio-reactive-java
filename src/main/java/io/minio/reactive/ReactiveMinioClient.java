@@ -79,7 +79,7 @@ public final class ReactiveMinioClient {
     String body =
         "<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
             + "<LocationConstraint>"
-            + "xiaxieregion"
+            + config.region()
             + "</LocationConstraint>"
             + "</CreateBucketConfiguration>";
     byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
