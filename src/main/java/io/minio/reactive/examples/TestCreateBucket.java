@@ -7,7 +7,7 @@ public class TestCreateBucket {
     public static void main(String[] args) {
         ReactiveMinioClient client =
                 ReactiveMinioClient.builder()
-                        .region("niuniuniujia")
+//                        .region("niuniuniujia")
                         .endpoint("http://127.0.0.1:9000")
                         .credentials("nFpKQzMpRQlBn05PrjzT", "Sac0vCSvF3gEuDHUqulAXfLltuaXu1OGl09ILdJO")
                         .build();

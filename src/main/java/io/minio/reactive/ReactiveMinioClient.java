@@ -52,11 +52,21 @@ public final class ReactiveMinioClient {
     return new Builder();
   }
 
- public Mono<String> getBucketLocation(String bucket){
-     S3Request request = S3Request.builder().method(HttpMethod.GET).bucket(bucket).queryParameter("location",null).build();
-     return sign(request)
-             .flatMap(httpClient::exchangeToByteArray).map(bytes -> new String(bytes, StandardCharsets.UTF_8));
- }
+  public Mono<String> getBucketLocation(String bucket) {
+    // GetBucketLocation 是 bucket 级查询。当前 MinIO 环境中，这个结果更接近
+    // “服务端当前对外暴露的 region”，而不是 AWS S3 语义下一个强独立的 bucket 属性。
+    S3Request request =
+        S3Request.builder()
+            .method(HttpMethod.GET)
+            .bucket(bucket)
+            .region(config.region())
+            .queryParameter("location", null)
+            .build();
+
+    return sign(request)
+        .flatMap(httpClient::exchangeToByteArray)
+        .map(bytes -> new String(bytes, StandardCharsets.UTF_8));
+  }
 
 
   public Mono<Boolean> bucketExists(String bucket) {
@@ -79,7 +89,7 @@ public final class ReactiveMinioClient {
     String body =
         "<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
             + "<LocationConstraint>"
-            + "xiaxieregion"
+            + config.region()
             + "</LocationConstraint>"
             + "</CreateBucketConfiguration>";
     byte[] bytes = body.getBytes(StandardCharsets.UTF_8);

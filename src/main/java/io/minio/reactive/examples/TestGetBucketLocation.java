@@ -3,10 +3,6 @@ package io.minio.reactive.examples;
 import io.minio.reactive.ReactiveMinioClient;
 import reactor.core.publisher.Mono;
 
-import java.io.InputStream;
-import java.util.Properties;
-import java.util.UUID;
-
 public class TestGetBucketLocation {
     public static void main(String[] args) {
 

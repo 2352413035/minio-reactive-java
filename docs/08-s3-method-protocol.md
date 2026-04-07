@@ -128,6 +128,33 @@ http://my-bucket.127.0.0.1:9000/hello.txt
 
 空 body 的标准 SHA-256 是固定值，对理解 `HEAD/GET/DELETE` 请求很重要。
 
+## 3.4 当前项目里对 MinIO region 的认知
+
+这是当前阶段非常重要的认知点。
+
+在你现在的 MinIO 环境里，`GetBucketLocation` 表现出来的行为更接近：
+
+1. 反映 MinIO 服务端当前的全局 region 配置
+2. 而不是 AWS S3 语义下“每个 bucket 都有一个强独立、稳定的 region 属性”
+
+你当前的实测现象是：
+
+1. MinIO 没有设置 region 时，`GetBucketLocation` 返回空值
+2. 修改 MinIO 服务端 region 后，`GetBucketLocation` 返回你设置的 region
+
+这说明在当前环境中：
+
+- bucket location 更像是服务端全局 region 的协议映射
+- 因此客户端签名 region、`makeBucket` 的 `LocationConstraint`、MinIO 服务端配置的 region，必须保持一致
+
+所以当前原型里，region 至少会出现在三个地方：
+
+1. 客户端配置 `ReactiveMinioClient.builder().region(...)`
+2. `makeBucket()` XML 里的 `LocationConstraint`
+3. SigV4 的 scope 中，例如 `20260407/ap-southeast-1/s3/aws4_request`
+
+这三者只要有一个不一致，就很容易出现“查到是这个 region，但用这个 region 仍然报错”的情况。
+
 ## 4. 方法级协议说明
 
 下面以当前已经实现的方法为准。
@@ -208,7 +235,7 @@ HEAD /demo-bucket
 
 ```xml
 <CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-  <LocationConstraint>us-east-1</LocationConstraint>
+  <LocationConstraint>your-region</LocationConstraint>
 </CreateBucketConfiguration>
 ```
 
@@ -227,6 +254,17 @@ HEAD /demo-bucket
 
 真实调试里，空的 `PUT Bucket` 请求曾触发 MinIO 服务端在解析 `LocationConstraint` 时出现 EOF。
 这说明服务端并不是只看“你用了 PUT”，还会去解析请求体结构。
+
+### 当前项目里 region 的额外要求
+
+这里不能把 `LocationConstraint` 写死成某个值。
+必须和：
+
+1. 客户端配置 region
+2. SigV4 签名使用的 region
+3. MinIO 服务端当前配置的 region
+
+保持一致。
 
 ### 成功响应
 
@@ -514,6 +552,7 @@ hello from reactive minio sdk
 8. 哪些头需要参与签名
 9. 成功时应该读响应头、响应体，还是都不读
 10. 服务端失败时，错误体通常是什么格式
+11. region 在客户端配置、请求体、签名 scope 三个位置是否一致
 
 ## 7. 当前文档的边界
 
