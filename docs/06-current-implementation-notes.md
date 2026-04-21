@@ -107,20 +107,17 @@
 
 ## 4. 当前项目还没有实现什么
 
-现在不要误以为项目已经接近完成。
-它只是完成了一个“真实可验证的最小版本”。
+当前已经从最小闭环推进到“核心 S3 SDK 能力”阶段，新增了 list、copy、delete-many、tagging、presign、multipart、XML 解析和结构化错误。
 
-当前还没做的重点包括：
+仍然需要继续扩展或单独规划的重点包括：
 
-1. `listObjects`
-2. XML 响应解析
-3. XML 错误解析
-4. presigned URL
-5. multipart upload
-6. region 自动发现
-7. 更完整的 credentials provider
-8. 更完整的异常模型
-9. 大文件真正的端到端流式上传/下载
+1. 更完整的 typed bucket config 模型（当前提供 XML/JSON 子资源入口）
+2. object retention / legal hold / ACL / select object content 的强类型封装
+3. listen notification 的长连接/流式事件模型
+4. MinIO admin API（用户、策略、服务、heal、KMS、批处理等）应拆到独立 `ReactiveMinioAdminClient`
+5. region 自动发现与多 region 缓存策略
+6. 更完整的动态 credentials provider / STS provider
+7. 真正不落内存的未知长度 SigV4 streaming upload
 
 ## 5. 为什么先做到这里是合理的
 
