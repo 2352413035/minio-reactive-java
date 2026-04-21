@@ -79,4 +79,19 @@ class S3RequestSignerTest {
                     ReactiveCredentials.of("minioadmin", "minioadmin"),
                     Duration.ofDays(8)));
   }
+  @Test
+  void shouldUseRequestServiceNameInCredentialScope() {
+    S3Request request =
+        S3Request.builder().method(HttpMethod.POST).path("/").serviceName("sts").body(new byte[0]).build();
+
+    S3Request signed =
+        new S3RequestSigner()
+            .sign(
+                request,
+                ReactiveMinioClientConfig.of("http://localhost:9000", "us-east-1"),
+                ReactiveCredentials.of("minioadmin", "minioadmin"));
+
+    Assertions.assertTrue(signed.headers().get("Authorization").contains("/sts/aws4_request"));
+  }
+
 }

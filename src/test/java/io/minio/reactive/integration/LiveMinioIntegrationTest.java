@@ -1,6 +1,7 @@
 package io.minio.reactive.integration;
 
 import io.minio.reactive.ReactiveMinioClient;
+import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
@@ -76,6 +77,20 @@ class LiveMinioIntegrationTest {
 
     List<BucketInfo> buckets = client.listBuckets().block();
     Assertions.assertTrue(containsBucket(buckets, bucket));
+    Assertions.assertEquals(
+        Integer.valueOf(200), client.rawClient().executeToStatus(MinioApiCatalog.byName("HEALTH_LIVE_GET")).block());
+    Assertions.assertTrue(
+        client
+            .rawClient()
+            .executeToString(
+                MinioApiCatalog.byName("S3_LIST_BUCKETS"),
+                emptyMap(),
+                emptyMap(),
+                emptyMap(),
+                null,
+                null)
+            .block()
+            .contains(bucket));
 
     client.putObject(bucket, "folder/a.txt", "alpha", "text/plain").block();
     client.putObject(bucket, "folder/b.txt", "bravo", "text/plain").block();
@@ -129,6 +144,10 @@ class LiveMinioIntegrationTest {
                 "multipart.bin"))
         .block();
     Assertions.assertTrue(client.listObjects(bucket).collectList().block().isEmpty());
+  }
+
+  private static Map<String, String> emptyMap() {
+    return java.util.Collections.<String, String>emptyMap();
   }
 
   private static boolean containsBucket(List<BucketInfo> buckets, String bucket) {

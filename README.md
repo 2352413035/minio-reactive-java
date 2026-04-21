@@ -95,6 +95,15 @@ $env:MINIO_REGION='us-east-1'
 mvn -Dtest=LiveMinioIntegrationTest test
 ```
 
+## 完整 MinIO 接口覆盖
+
+除常用 S3 对象存储方法外，项目还提供：
+
+- `MinioApiCatalog`：覆盖本地 `minio` 路由文件中的 S3/Admin/KMS/STS/Health/Metrics 233 个 HTTP 接口。
+- `ReactiveMinioRawClient`：对 catalog 中任意接口执行响应式签名请求，适合 admin/KMS/STS 等暂未强类型建模的接口。
+
+详见 `docs/09-minio-api-catalog.md`。
+
 ## 文档目录
 
 - `docs/01-minio-s3-basics.md`
@@ -105,3 +114,6 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/06-current-implementation-notes.md`
 - `docs/07-debugging-notes.md`
 - `docs/08-s3-method-protocol.md`
+
+- `docs/09-minio-api-catalog.md`
+- `docs/10-version-management.md`
