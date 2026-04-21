@@ -73,7 +73,7 @@ public final class S3Request {
   }
 
   public boolean hasBody() {
-    return body != null && body.length > 0;
+    return body != null;
   }
 
   public MediaType contentType() {

@@ -3,9 +3,11 @@ package io.minio.reactive.signer;
 import io.minio.reactive.ReactiveMinioClientConfig;
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.http.S3Request;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -46,7 +48,7 @@ public final class S3RequestSigner {
     String payloadHash = sha256Hex(request.hasBody() ? request.body() : new byte[0]);
 
     S3Request.Builder builder = request.toBuilder();
-    builder.header("Host", config.endpointUri().getHost() + portSuffix(config));
+    builder.header("Host", hostHeader(config));
     builder.header("User-Agent", "minio-reactive-java/0.1.0-SNAPSHOT");
     builder.header("X-Amz-Date", amzDate);
     builder.header("X-Amz-Content-Sha256", payloadHash);
@@ -105,6 +107,74 @@ public final class S3RequestSigner {
             + signature;
 
     return unsignedRequest.toBuilder().header("Authorization", authorization).build();
+  }
+
+
+  public URI presign(
+      S3Request request,
+      ReactiveMinioClientConfig config,
+      ReactiveCredentials credentials,
+      Duration expires) {
+    if (credentials.isAnonymous()) {
+      return request.toUri(config);
+    }
+    long expiresSeconds = expires == null ? 900L : expires.getSeconds();
+    if (expiresSeconds < 1L || expiresSeconds > 604800L) {
+      throw new IllegalArgumentException(
+          "presigned URL expiry must be between 1 and 604800 seconds");
+    }
+
+    ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+    String amzDate = now.format(AMZ_DATE);
+    String shortDate = now.format(SHORT_DATE);
+    String scope = shortDate + "/" + config.region() + "/s3/aws4_request";
+    String signedHeaders = "host";
+
+    S3Request.Builder builder = request.toBuilder();
+    builder.header("Host", hostHeader(config));
+    builder.queryParameter("X-Amz-Algorithm", "AWS4-HMAC-SHA256");
+    builder.queryParameter("X-Amz-Credential", credentials.accessKey() + "/" + scope);
+    builder.queryParameter("X-Amz-Date", amzDate);
+    builder.queryParameter("X-Amz-Expires", Long.toString(expiresSeconds));
+    builder.queryParameter("X-Amz-SignedHeaders", signedHeaders);
+    if (credentials.sessionToken() != null && !credentials.sessionToken().trim().isEmpty()) {
+      builder.queryParameter("X-Amz-Security-Token", credentials.sessionToken());
+    }
+
+    S3Request unsignedRequest = builder.build();
+    Map<String, String> canonicalHeaders = new LinkedHashMap<String, String>();
+    canonicalHeaders.put("host", hostHeader(config));
+
+    String canonicalRequest =
+        unsignedRequest.method().name()
+            + "\n"
+            + unsignedRequest.canonicalUri()
+            + "\n"
+            + unsignedRequest.canonicalQueryString()
+            + "\n"
+            + canonicalHeadersString(canonicalHeaders)
+            + "\n"
+            + signedHeaders
+            + "\n"
+            + "UNSIGNED-PAYLOAD";
+
+    String stringToSign =
+        "AWS4-HMAC-SHA256\n"
+            + amzDate
+            + "\n"
+            + scope
+            + "\n"
+            + sha256Hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
+
+    byte[] signingKey = signingKey(credentials.secretKey(), shortDate, config.region(), "s3");
+    String signature = hex(hmac(signingKey, stringToSign));
+    S3Request presigned =
+        unsignedRequest.toBuilder().queryParameter("X-Amz-Signature", signature).build();
+    return presigned.toUri(config);
+  }
+
+  private static String hostHeader(ReactiveMinioClientConfig config) {
+    return config.endpointUri().getHost() + portSuffix(config);
   }
 
   private static String portSuffix(ReactiveMinioClientConfig config) {

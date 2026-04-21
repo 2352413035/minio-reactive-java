@@ -2,6 +2,7 @@ package io.minio.reactive.http;
 
 import io.minio.reactive.ReactiveMinioClientConfig;
 import io.minio.reactive.errors.ReactiveS3Exception;
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -80,6 +81,11 @@ public final class ReactiveHttpClient {
             });
   }
 
+  public Mono<String> exchangeToString(S3Request request) {
+    return exchangeToByteArray(request)
+        .map(bytes -> new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+  }
+
   public Mono<byte[]> exchangeToByteArray(S3Request request) {
     return requestSpec(request)
         .exchangeToMono(
@@ -87,7 +93,11 @@ public final class ReactiveHttpClient {
               if (!response.statusCode().is2xxSuccessful()) {
                 return readError(response).flatMap(Mono::error);
               }
-              return response.bodyToMono(byte[].class).defaultIfEmpty(new byte[0]);
+              return response
+                  .bodyToFlux(DataBuffer.class)
+                  .reduce(new ByteArrayOutputStream(), ReactiveHttpClient::append)
+                  .map(ByteArrayOutputStream::toByteArray)
+                  .defaultIfEmpty(new byte[0]);
             });
   }
 
@@ -117,6 +127,17 @@ public final class ReactiveHttpClient {
 
   private static void apply(HttpHeaders headers, S3Request request) {
     request.headers().forEach(headers::add);
+  }
+
+  private static ByteArrayOutputStream append(ByteArrayOutputStream output, DataBuffer dataBuffer) {
+    try {
+      byte[] bytes = new byte[dataBuffer.readableByteCount()];
+      dataBuffer.read(bytes);
+      output.write(bytes, 0, bytes.length);
+      return output;
+    } finally {
+      DataBufferUtils.release(dataBuffer);
+    }
   }
 
   private static byte[] toBytes(DataBuffer dataBuffer) {

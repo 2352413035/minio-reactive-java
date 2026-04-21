@@ -13,10 +13,15 @@ public final class StaticCredentialsProvider implements ReactiveCredentialsProvi
   private final ReactiveCredentials credentials;
 
   public StaticCredentialsProvider(String accessKey, String secretKey) {
+    this(accessKey, secretKey, null);
+  }
+
+  public StaticCredentialsProvider(String accessKey, String secretKey, String sessionToken) {
     this.credentials =
         ReactiveCredentials.of(
             Objects.requireNonNull(accessKey, "accessKey must not be null"),
-            Objects.requireNonNull(secretKey, "secretKey must not be null"));
+            Objects.requireNonNull(secretKey, "secretKey must not be null"),
+            sessionToken);
   }
 
   @Override

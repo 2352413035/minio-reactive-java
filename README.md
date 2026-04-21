@@ -45,18 +45,27 @@ minio.content=hello from reactive minio sdk
 
 ## 当前原型已实现的能力
 
-- SigV4 最小可用签名
+- SigV4 普通请求签名与 presigned URL 签名
+- `listBuckets`
 - `bucketExists`
 - `makeBucket`
 - `removeBucket`
-- `putObject`
+- `getBucketLocation`
+- `listObjects` / `listObjectsPage`
+- `putObject`（byte[]、String、Publisher<byte[]> 便捷入口）
 - `getObject`
+- `getObjectRange`
 - `getObjectAsBytes`
 - `getObjectAsString`
 - `statObject`
+- `copyObject`
 - `removeObject`
+- `removeObjects`
+- object/bucket tagging
+- bucket policy/lifecycle/versioning/notification/encryption/object-lock/replication XML/JSON 子资源入口
+- multipart upload 基础流程：create/uploadPart/listParts/complete/abort
 
-这些能力已经通过真实 MinIO 进行了最小闭环验证。
+这些能力已经通过 JDK8 单元测试以及真实 MinIO 集成测试进行了验证。
 
 ## 运行真实 MinIO 示例
 
