@@ -64,6 +64,10 @@ public final class ReactiveMinioClient {
     return new Builder();
   }
 
+  public ReactiveMinioRawClient rawClient() {
+    return new ReactiveMinioRawClient(config, credentialsProvider, httpClient, signer);
+  }
+
   public Mono<List<BucketInfo>> listBuckets() {
     S3Request request = request(HttpMethod.GET, null, null).build();
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseBuckets);

@@ -47,6 +47,25 @@ public final class S3Escaper {
     return joiner.toString();
   }
 
+  public static String canonicalPath(String path) {
+    if (path == null || path.trim().isEmpty() || "/".equals(path.trim())) {
+      return "/";
+    }
+    String value = path.trim();
+    if (!value.startsWith("/")) {
+      value = "/" + value;
+    }
+    String[] tokens = value.substring(1).split("/", -1);
+    StringBuilder builder = new StringBuilder("/");
+    for (int i = 0; i < tokens.length; i++) {
+      if (i > 0) {
+        builder.append('/');
+      }
+      builder.append(encodePathSegment(tokens[i]));
+    }
+    return builder.toString();
+  }
+
   public static String canonicalUri(String bucket, String object) {
     StringBuilder builder = new StringBuilder("/");
     if (bucket != null && !bucket.trim().isEmpty()) {

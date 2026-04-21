@@ -21,7 +21,9 @@ public final class S3Request {
   private final HttpMethod method;
   private final String bucket;
   private final String object;
+  private final String path;
   private final String region;
+  private final String serviceName;
   private final Map<String, String> headers;
   private final Map<String, String> queryParameters;
   private final byte[] body;
@@ -31,7 +33,9 @@ public final class S3Request {
     this.method = Objects.requireNonNull(builder.method, "method must not be null");
     this.bucket = builder.bucket;
     this.object = builder.object;
+    this.path = builder.path;
     this.region = builder.region;
+    this.serviceName = builder.serviceName == null ? "s3" : builder.serviceName;
     this.headers = Collections.unmodifiableMap(new LinkedHashMap<String, String>(builder.headers));
     this.queryParameters =
         Collections.unmodifiableMap(new LinkedHashMap<String, String>(builder.queryParameters));
@@ -56,8 +60,16 @@ public final class S3Request {
     return object;
   }
 
+  public String path() {
+    return path;
+  }
+
   public String region() {
     return region;
+  }
+
+  public String serviceName() {
+    return serviceName;
   }
 
   public Map<String, String> headers() {
@@ -81,6 +93,9 @@ public final class S3Request {
   }
 
   public String canonicalUri() {
+    if (path != null && !path.trim().isEmpty()) {
+      return S3Escaper.canonicalPath(path);
+    }
     return S3Escaper.canonicalUri(bucket, object);
   }
 
@@ -104,7 +119,9 @@ public final class S3Request {
     builder.method = this.method;
     builder.bucket = this.bucket;
     builder.object = this.object;
+    builder.path = this.path;
     builder.region = this.region;
+    builder.serviceName = this.serviceName;
     builder.headers.putAll(this.headers);
     builder.queryParameters.putAll(this.queryParameters);
     builder.body = this.body;
@@ -116,7 +133,9 @@ public final class S3Request {
     private HttpMethod method;
     private String bucket;
     private String object;
+    private String path;
     private String region;
+    private String serviceName;
     private final Map<String, String> headers = new LinkedHashMap<String, String>();
     private final Map<String, String> queryParameters = new LinkedHashMap<String, String>();
     private byte[] body;
@@ -139,8 +158,18 @@ public final class S3Request {
       return this;
     }
 
+    public Builder path(String path) {
+      this.path = path;
+      return this;
+    }
+
     public Builder region(String region) {
       this.region = region;
+      return this;
+    }
+
+    public Builder serviceName(String serviceName) {
+      this.serviceName = serviceName;
       return this;
     }
 

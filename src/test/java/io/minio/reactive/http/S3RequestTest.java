@@ -44,4 +44,18 @@ class S3RequestTest {
 
     Assertions.assertTrue(request.hasBody());
   }
+  @Test
+  void shouldUseRawPathWhenProvided() {
+    S3Request request =
+        S3Request.builder()
+            .method(HttpMethod.GET)
+            .path("/minio/admin/v3/idp-config/openid/my provider")
+            .queryParameter("x", "a b")
+            .build();
+
+    Assertions.assertEquals(
+        "http://localhost:9000/minio/admin/v3/idp-config/openid/my%20provider?x=a%20b",
+        request.toUri(ReactiveMinioClientConfig.of("http://localhost:9000", "us-east-1")).toString());
+  }
+
 }

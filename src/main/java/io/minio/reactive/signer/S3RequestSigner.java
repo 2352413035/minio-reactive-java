@@ -85,7 +85,8 @@ public final class S3RequestSigner {
             + "\n"
             + payloadHash;
 
-    String scope = shortDate + "/" + config.region() + "/s3/aws4_request";
+    String serviceName = serviceName(request);
+    String scope = shortDate + "/" + config.region() + "/" + serviceName + "/aws4_request";
     String stringToSign =
         "AWS4-HMAC-SHA256\n"
             + amzDate
@@ -94,7 +95,8 @@ public final class S3RequestSigner {
             + "\n"
             + sha256Hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
 
-    byte[] signingKey = signingKey(credentials.secretKey(), shortDate, config.region(), "s3");
+    byte[] signingKey =
+        signingKey(credentials.secretKey(), shortDate, config.region(), serviceName);
     String signature = hex(hmac(signingKey, stringToSign));
     String authorization =
         "AWS4-HMAC-SHA256 Credential="
@@ -108,7 +110,6 @@ public final class S3RequestSigner {
 
     return unsignedRequest.toBuilder().header("Authorization", authorization).build();
   }
-
 
   public URI presign(
       S3Request request,
@@ -127,7 +128,8 @@ public final class S3RequestSigner {
     ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
     String amzDate = now.format(AMZ_DATE);
     String shortDate = now.format(SHORT_DATE);
-    String scope = shortDate + "/" + config.region() + "/s3/aws4_request";
+    String serviceName = serviceName(request);
+    String scope = shortDate + "/" + config.region() + "/" + serviceName + "/aws4_request";
     String signedHeaders = "host";
 
     S3Request.Builder builder = request.toBuilder();
@@ -166,11 +168,17 @@ public final class S3RequestSigner {
             + "\n"
             + sha256Hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
 
-    byte[] signingKey = signingKey(credentials.secretKey(), shortDate, config.region(), "s3");
+    byte[] signingKey =
+        signingKey(credentials.secretKey(), shortDate, config.region(), serviceName);
     String signature = hex(hmac(signingKey, stringToSign));
     S3Request presigned =
         unsignedRequest.toBuilder().queryParameter("X-Amz-Signature", signature).build();
     return presigned.toUri(config);
+  }
+
+  private static String serviceName(S3Request request) {
+    String value = request.serviceName();
+    return value == null || value.trim().isEmpty() ? "s3" : value.trim();
   }
 
   private static String hostHeader(ReactiveMinioClientConfig config) {
