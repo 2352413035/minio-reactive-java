@@ -1,13 +1,15 @@
-# 09 MinIO API Catalog Coverage
+# 09 MinIO API 目录覆盖说明
 
-This project now has two API layers:
+当前项目提供两层 API：
 
-1. `ReactiveMinioClient` — typed, Reactor-friendly helpers for the common S3 object-storage SDK surface.
-2. `ReactiveMinioRawClient` + `MinioApiCatalog` — a route-complete, protocol-level executor for every MinIO server HTTP interface discovered in the local `minio` router files.
+1. `ReactiveMinioClient`：面向常用 S3 对象存储场景的强类型、Reactor 风格便捷客户端。
+2. `ReactiveMinioRawClient` + `MinioApiCatalog`：面向 MinIO 服务端公开 HTTP 路由的完整目录和原始响应式执行器。
 
-## Covered router sources
+这两层的关系是：常用对象存储操作优先使用强类型客户端；管理端、KMS、STS、监控、健康检查等接口，在没有进一步强类型建模前，先通过原始执行器完整暴露。
 
-The catalog mirrors these local MinIO files:
+## 已覆盖的路由来源
+
+接口目录对照本地 `minio` 项目中的下列公开路由文件整理：
 
 - `minio/cmd/api-router.go`
 - `minio/cmd/admin-router.go`
@@ -16,20 +18,20 @@ The catalog mirrors these local MinIO files:
 - `minio/cmd/healthcheck-router.go`
 - `minio/cmd/metrics-router.go`
 
-## Catalog families
+## 接口分组
 
-Current catalog size: 233 endpoints.
+当前目录共覆盖 233 个公开 HTTP 接口。
 
-| Family | Count | Source |
+| 分组 | 数量 | 来源说明 |
 | --- | ---: | --- |
-| `s3` | 77 | S3 object, bucket, root routes |
-| `admin` | 128 | MinIO admin `/minio/admin/v3` routes |
-| `kms` | 7 | MinIO KMS `/minio/kms/v1` routes |
-| `health` | 8 | `/minio/health/*` readiness/liveness routes |
-| `metrics` | 6 | Prometheus and metrics v2/v3 routes |
-| `sts` | 7 | AWS STS-compatible routes |
+| `s3` | 77 | S3 对象、桶、根路径相关接口 |
+| `admin` | 128 | MinIO 管理端 `/minio/admin/v3` 接口 |
+| `kms` | 7 | MinIO KMS `/minio/kms/v1` 接口 |
+| `health` | 8 | `/minio/health/*` 存活和就绪检查接口 |
+| `metrics` | 6 | Prometheus 以及 metrics v2/v3 监控接口 |
+| `sts` | 7 | AWS STS 兼容接口 |
 
-## Usage
+## 使用示例
 
 ```java
 ReactiveMinioClient client =
@@ -50,17 +52,48 @@ String xml = raw.executeToString(
     null).block();
 ```
 
-Use the typed client for stable object-storage flows. Use the raw client for admin, KMS, STS, metrics, health, or newly-added MinIO routes before a typed model exists.
+建议使用方式：
 
-## Design notes
+- 普通对象存储流程优先使用 `ReactiveMinioClient`。
+- 管理端、KMS、STS、监控、健康检查，或 MinIO 新增但尚未强类型封装的接口，使用 `ReactiveMinioRawClient`。
+- 后续如果为某类接口补充强类型模型，不应删除 `MinioApiCatalog` 中已有的原始接口覆盖。
 
-- Catalog endpoints include method, path template, auth requirement, fixed query parameters, and required dynamic query parameters.
-- `ReactiveMinioRawClient` expands path variables, merges fixed and dynamic query values, signs auth-required calls with the same SigV4 signer, and delegates to the shared WebFlux HTTP layer.
-- Health endpoints are marked with `authScheme=none`.
-- Metrics endpoints use `authScheme=bearer` because default MinIO metrics auth expects a bearer/JWT token unless `MINIO_PROMETHEUS_AUTH_TYPE=public` is configured. The raw client therefore permits caller-supplied `Authorization: Bearer ...` only for bearer endpoints and does not SigV4-sign them.
-- S3/Admin/KMS and signed STS endpoints use `authScheme=sigv4`; STS signed form requests use SigV4 service scope `sts`, while S3/Admin/KMS use `s3`.
-- Admin/KMS/STS typed request/response classes are intentionally deferred; their wire models are broad and version-sensitive. The route-complete raw layer prevents missing public interfaces while typed models can be added incrementally.
+## 认证语义
 
-## Scope boundary
+目录中的每个接口都记录认证语义：
 
-`MinioApiCatalog` covers public/client-facing HTTP interfaces registered by the MinIO server router. Distributed erasure internals registered from `routers.go` (`storage`, `peer`, `bootstrap`, namespace lock, and grid routes) are private node-to-node protocols, not stable public SDK APIs. They are intentionally excluded from this Java SDK surface unless a future task explicitly targets MinIO internal cluster protocol clients.
+- `sigv4`：使用 AWS Signature V4 签名。
+- `bearer`：使用调用方提供的 `Authorization: Bearer ...`，当前用于 metrics 相关接口。
+- `none`：不需要 SDK 自动签名，当前用于健康检查等接口。
+
+具体约定：
+
+- S3、Admin、KMS 以及需要签名的 STS 接口使用 SigV4。
+- STS 的签名表单接口使用 `sts` service scope；S3、Admin、KMS 使用 `s3` service scope。
+- Metrics 默认按 MinIO 的 JWT/Bearer 认证方式建模；如果服务端配置为公开 metrics，调用时可以不传 `Authorization`。
+- 原始客户端会拒绝调用方为 SigV4 接口手动传入 `Host`、`Authorization`、`X-Amz-Date`、`X-Amz-Content-Sha256`、`X-Amz-Security-Token` 等由签名器管理的头。
+
+## 设计边界
+
+`MinioApiCatalog` 覆盖的是 MinIO 服务端公开、面向客户端或管理端调用的 HTTP 接口。
+
+`minio/cmd/routers.go` 中还会在分布式 erasure 场景注册一些内部协议路由，例如：
+
+- storage REST
+- peer REST
+- bootstrap REST
+- namespace lock REST
+- grid route
+
+这些属于 MinIO 节点之间的内部通信协议，不是稳定的公开 SDK 接口。本项目当前不把它们纳入 Java SDK 的公开 API 面。如果未来确实要调研这些内部协议，应单独设计内部协议客户端，而不是混入普通 MinIO SDK。
+
+## 后续强类型化方向
+
+当前目录保证“不漏公开路由入口”。后续可以在此基础上逐步补强类型客户端：
+
+1. `ReactiveMinioAdminClient`：用户、组、策略、服务状态、heal、配置、批处理等管理端接口。
+2. `ReactiveMinioKmsClient`：KMS 状态、key 创建、key 列表、key 状态等接口。
+3. `ReactiveMinioStsClient`：AssumeRole、WebIdentity、LDAP、ClientGrants 等临时凭证接口。
+4. `ReactiveMinioMetricsClient`：Prometheus 和 metrics v2/v3 结果读取。
+
+强类型客户端应复用 `MinioApiCatalog` 和 `ReactiveMinioRawClient`，避免重复维护路径、query、认证方式和签名逻辑。
