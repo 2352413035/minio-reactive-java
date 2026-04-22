@@ -73,3 +73,16 @@
 3. 单元测试覆盖推荐业务方法。
 4. raw 兜底路径仍可调用同一接口。
 5. JDK8 和 JDK17+ 两条分支均完成迁移和验证。
+
+
+## madmin 加密兼容边界
+
+MinIO 管理端的一些写接口并不是普通 JSON body。服务端会调用 `madmin.DecryptData` 解密请求体，例如新增用户、更新服务账号、设置配置等接口。`madmin-go` 的 `EncryptData` 格式由 32 字节 salt、1 字节算法 ID、8 字节 nonce 和 secure-io DARE 加密流组成，密钥派生涉及 Argon2id 或 PBKDF2，AEAD 可能是 AES-GCM 或 ChaCha20-Poly1305。
+
+当前 Java SDK 只提供 `MadminEncryptionSupport.isEncrypted(...)` 用于识别这类载荷，不提供加密/解密实现。原因是如果没有完整复刻 secure-io DARE 流格式并完成互操作测试，草率生成密文会让管理端写接口表现为“看似支持、实际不可用”。
+
+因此，在 madmin 加密兼容层完成之前：
+
+- 新增用户、设置完整配置、服务账号创建/更新等依赖加密载荷的接口，不会伪装成完整强业务方法。
+- 这类接口继续保留高级兼容入口或 raw 兜底入口，由调用方传入已经符合 MinIO madmin 格式的载荷。
+- 后续如果实现加密兼容层，必须先做与 madmin-go 的加密/解密互操作测试。
