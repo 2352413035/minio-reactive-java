@@ -147,6 +147,23 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         null);
   }
 
+
+  /**
+   * 创建服务账号，返回服务端加密响应载荷。
+   *
+   * <p>MinIO 服务端会用 madmin 默认加密算法返回服务账号凭证。当前 Java 端尚不能解密默认
+   * Argon2id 响应，因此这里返回 `EncryptedAdminResponse`，不伪装成已解析凭证。
+   */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> addServiceAccount(
+      io.minio.reactive.messages.admin.AddServiceAccountRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return executeEncryptedJsonToBytes(
+            "ADMIN_ADD_SERVICE_ACCOUNT", emptyMap(), emptyMap(), request.toPayload())
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
   /** 调用 `ADMIN_SERVICE_V2`。 */
   public Mono<String> serviceV2(String action, byte[] body, String contentType) {
     return executeToString("ADMIN_SERVICE_V2", emptyMap(), map("action", action), emptyMap(), body, contentType);

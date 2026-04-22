@@ -1,6 +1,8 @@
 package io.minio.reactive;
 
 import io.minio.reactive.catalog.MinioApiCatalog;
+import io.minio.reactive.messages.admin.AddServiceAccountRequest;
+import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.AddUserRequest;
 import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
@@ -179,6 +181,36 @@ class ReactiveMinioSpecializedClientsTest {
                 MadminEncryptionSupport.decryptData("admin-secret", encrypted),
                 java.nio.charset.StandardCharsets.UTF_8)
             .contains("user-secret"));
+  }
+
+
+  @Test
+  void shouldBuildEncryptedServiceAccountRequestPayload() {
+    AddServiceAccountRequest request =
+        AddServiceAccountRequest.builder()
+            .name("svc1")
+            .description("demo service account")
+            .policyJson("{\"Version\":\"2012-10-17\"}")
+            .build();
+    byte[] encrypted =
+        MadminEncryptionSupport.encryptData(
+            "admin-secret", io.minio.reactive.util.JsonSupport.toJsonBytes(request.toPayload()));
+    String decrypted =
+        new String(
+            MadminEncryptionSupport.decryptData("admin-secret", encrypted),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+    Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(encrypted));
+    Assertions.assertTrue(decrypted.contains("svc1"));
+    Assertions.assertTrue(decrypted.contains("demo service account"));
+  }
+
+
+  @Test
+  void shouldExposeServiceAccountBusinessMethod() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "addServiceAccount");
+    EncryptedAdminResponse response = new EncryptedAdminResponse(new byte[41]);
+    Assertions.assertTrue(response.isEncrypted());
   }
 
   private static void assertDeprecatedMethodExists(Class<?> type, String name) {
