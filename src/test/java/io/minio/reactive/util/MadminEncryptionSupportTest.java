@@ -29,9 +29,26 @@ class MadminEncryptionSupportTest {
   }
 
   @Test
-  void shouldFailFastForUnsupportedEncryption() {
-    Assertions.assertThrows(
-        UnsupportedOperationException.class,
-        () -> MadminEncryptionSupport.encryptData("secret", "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+  void shouldRoundTripPbkdf2AesGcmPayload() {
+    byte[] plain = "{\"Version\":\"2012-10-17\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    byte[] encrypted = MadminEncryptionSupport.encryptData("secret", plain);
+    byte[] decrypted = MadminEncryptionSupport.decryptData("secret", encrypted);
+
+    Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(encrypted));
+    Assertions.assertArrayEquals(plain, decrypted);
+  }
+
+  @Test
+  void shouldRoundTripLargePayloadAcrossFragments() {
+    byte[] plain = new byte[(1 << 14) + 37];
+    for (int i = 0; i < plain.length; i++) {
+      plain[i] = (byte) (i % 251);
+    }
+
+    byte[] encrypted = MadminEncryptionSupport.encryptData("secret", plain);
+    byte[] decrypted = MadminEncryptionSupport.decryptData("secret", encrypted);
+
+    Assertions.assertArrayEquals(plain, decrypted);
   }
 }
