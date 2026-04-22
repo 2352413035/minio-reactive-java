@@ -51,16 +51,16 @@ public final class ReactiveMinioKmsClient extends ReactiveMinioCatalogClientSupp
   }
 
   /** 获取 KMS key 状态，并保留原始 JSON 字段。 */
-  public Mono<io.minio.reactive.messages.kms.KmsJsonResult> getKeyStatus() {
-    return keyStatus().map(io.minio.reactive.messages.kms.KmsJsonResult::parse);
+  public Mono<io.minio.reactive.messages.kms.KmsKeyStatus> getKeyStatus() {
+    return keyStatus().map(io.minio.reactive.messages.kms.KmsKeyStatus::parse);
   }
 
 
   /** 获取指定 KMS key 状态，并保留原始 JSON 字段。 */
-  public Mono<io.minio.reactive.messages.kms.KmsJsonResult> getKeyStatus(String keyId) {
+  public Mono<io.minio.reactive.messages.kms.KmsKeyStatus> getKeyStatus(String keyId) {
     requireText("keyId", keyId);
     return executeToString("KMS_KEY_STATUS", emptyMap(), map("key-id", keyId), emptyMap(), null, null)
-        .map(io.minio.reactive.messages.kms.KmsJsonResult::parse);
+        .map(io.minio.reactive.messages.kms.KmsKeyStatus::parse);
   }
 
   /** 调用 `KMS_STATUS`。 */

@@ -4,10 +4,14 @@ import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.messages.admin.AdminJsonResult;
 import io.minio.reactive.messages.admin.AdminServerInfo;
 import io.minio.reactive.messages.kms.KmsJsonResult;
+import io.minio.reactive.messages.kms.KmsKeyStatus;
 import io.minio.reactive.messages.kms.KmsKeyList;
 import io.minio.reactive.messages.metrics.PrometheusMetrics;
 import io.minio.reactive.messages.sts.AssumeRoleResult;
+import io.minio.reactive.messages.sts.AssumeRoleWithWebIdentityRequest;
 import io.minio.reactive.util.S3Xml;
+import io.minio.reactive.credentials.StsCredentialsProvider;
+import reactor.core.publisher.Mono;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -46,6 +50,15 @@ class StrongBusinessModelsTest {
   }
 
   @Test
+  void shouldParseKmsKeyStatus() {
+    KmsKeyStatus status =
+        KmsKeyStatus.parse("{\"key-id\":\"key1\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}");
+
+    Assertions.assertEquals("key1", status.keyId());
+    Assertions.assertTrue(status.isOk());
+  }
+
+  @Test
   void shouldWrapKmsJson() {
     KmsJsonResult result = KmsJsonResult.parse("{\"status\":\"ok\"}");
 
@@ -66,6 +79,17 @@ class StrongBusinessModelsTest {
     Assertions.assertEquals("sk", credentials.secretKey());
     Assertions.assertEquals("token", credentials.sessionToken());
     Assertions.assertEquals("tomorrow", result.expiration());
+  }
+
+  @Test
+  void shouldCreateStsRequestAndProvider() {
+    AssumeRoleWithWebIdentityRequest request = AssumeRoleWithWebIdentityRequest.of("token");
+    AssumeRoleResult result =
+        new AssumeRoleResult(ReactiveCredentials.of("ak", "sk", "session"), "later", "<xml/>");
+    StsCredentialsProvider provider = StsCredentialsProvider.from(Mono.just(result));
+
+    Assertions.assertEquals("token", request.webIdentityToken());
+    Assertions.assertEquals("session", provider.getCredentials().block().sessionToken());
   }
 
   @Test
