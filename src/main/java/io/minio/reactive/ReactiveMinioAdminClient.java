@@ -22,6 +22,51 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return new Builder();
   }
 
+
+  /** 获取服务端信息摘要，返回强类型稳定字段并保留原始 JSON。 */
+  public Mono<io.minio.reactive.messages.admin.AdminServerInfo> getServerInfo() {
+    return serverInfo().map(io.minio.reactive.messages.admin.AdminServerInfo::parse);
+  }
+
+  /** 获取存储信息，当前以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getStorageInfo() {
+    return storageInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取数据使用量信息，当前以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getDataUsageInfo() {
+    return dataUsageInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取当前账号信息，当前以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getAccountInfo() {
+    return accountInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取单个用户信息，当前以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getUserInfo(String accessKey) {
+    requireText("accessKey", accessKey);
+    return userInfo(accessKey).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 删除内部用户。 */
+  public Mono<Void> deleteUser(String accessKey) {
+    requireText("accessKey", accessKey);
+    return executeToVoid("ADMIN_REMOVE_USER", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null);
+  }
+
+  /** 设置用户启用或禁用状态。 */
+  public Mono<Void> setUserEnabled(String accessKey, boolean enabled) {
+    requireText("accessKey", accessKey);
+    return executeToVoid(
+        "ADMIN_SET_USER_STATUS",
+        emptyMap(),
+        map("accessKey", accessKey, "status", enabled ? "enabled" : "disabled"),
+        emptyMap(),
+        null,
+        null);
+  }
+
   /** 调用 `ADMIN_SERVICE_V2`。 */
   public Mono<String> serviceV2(String action, byte[] body, String contentType) {
     return executeToString("ADMIN_SERVICE_V2", emptyMap(), map("action", action), emptyMap(), body, contentType);

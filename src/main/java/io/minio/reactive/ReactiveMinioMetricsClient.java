@@ -22,6 +22,42 @@ public final class ReactiveMinioMetricsClient extends ReactiveMinioCatalogClient
     return new Builder();
   }
 
+
+  /** 拉取集群 Prometheus 指标文本。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeClusterMetrics(
+      String bearerToken) {
+    return v2Cluster(bearerToken)
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("cluster", text));
+  }
+
+  /** 拉取节点 Prometheus 指标文本。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeNodeMetrics(
+      String bearerToken) {
+    return v2Node(bearerToken)
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("node", text));
+  }
+
+  /** 拉取桶维度 Prometheus 指标文本。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeBucketMetrics(
+      String bearerToken) {
+    return v2Bucket(bearerToken)
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("bucket", text));
+  }
+
+  /** 拉取资源维度 Prometheus 指标文本。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeResourceMetrics(
+      String bearerToken) {
+    return v2Resource(bearerToken)
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("resource", text));
+  }
+
+  /** 拉取 metrics v3 指定路径的指标文本。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeV3(
+      String pathComps, String bearerToken) {
+    return v3(pathComps, bearerToken)
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("v3" + pathComps, text));
+  }
+
   /** 调用 `METRICS_PROMETHEUS_LEGACY`。 */
   public Mono<String> prometheusLegacy(String bearerToken) {
     return executeToString("METRICS_PROMETHEUS_LEGACY", emptyMap(), emptyMap(), bearerHeaders(bearerToken), null, null);

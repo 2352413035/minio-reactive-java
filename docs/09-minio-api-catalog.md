@@ -108,6 +108,6 @@ String xml = raw.executeToString(
 5. `ReactiveMinioMetricsClient`：监控指标接口。
 6. `ReactiveMinioHealthClient`：健康检查接口。
 
-这些专用客户端的方法名来自 `MinioApiCatalog` 中的接口名。当前多数非对象存储接口先返回原始文本响应；后续可以在这些方法之上继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
+这些专用客户端的方法名来自 `MinioApiCatalog` 中的接口名。当前已经为 Health、Metrics、STS、KMS、Admin 增加了第一批强业务入口，例如健康检查布尔结果、Prometheus 文本包装、STS 临时凭证解析、KMS/Admin JSON 包装。其它非对象存储接口仍可能先返回原始文本响应；后续会继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
 
 强类型客户端应复用 `MinioApiCatalog` 和 `ReactiveMinioRawClient`，避免重复维护路径、query、认证方式和签名逻辑。

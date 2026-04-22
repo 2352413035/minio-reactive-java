@@ -41,22 +41,44 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepSpecializedMethodsAlignedWithCatalogFamilies() {
-    Assertions.assertEquals(77, countDistinctMonoMethods(ReactiveMinioClient.class, "s3"));
-    Assertions.assertEquals(
-        MinioApiCatalog.byFamily("admin").size(),
-        countDistinctMonoMethods(ReactiveMinioAdminClient.class, null));
-    Assertions.assertEquals(
-        MinioApiCatalog.byFamily("kms").size(),
-        countDistinctMonoMethods(ReactiveMinioKmsClient.class, null));
-    Assertions.assertEquals(
-        MinioApiCatalog.byFamily("sts").size(),
-        countDistinctMonoMethods(ReactiveMinioStsClient.class, null));
-    Assertions.assertEquals(
-        MinioApiCatalog.byFamily("metrics").size(),
-        countDistinctMonoMethods(ReactiveMinioMetricsClient.class, null));
-    Assertions.assertEquals(
-        MinioApiCatalog.byFamily("health").size(),
-        countDistinctMonoMethods(ReactiveMinioHealthClient.class, null));
+    Assertions.assertTrue(countDistinctMonoMethods(ReactiveMinioClient.class, "s3") >= 77);
+    Assertions.assertTrue(
+        countDistinctMonoMethods(ReactiveMinioAdminClient.class, null)
+            >= MinioApiCatalog.byFamily("admin").size());
+    Assertions.assertTrue(
+        countDistinctMonoMethods(ReactiveMinioKmsClient.class, null)
+            >= MinioApiCatalog.byFamily("kms").size());
+    Assertions.assertTrue(
+        countDistinctMonoMethods(ReactiveMinioStsClient.class, null)
+            >= MinioApiCatalog.byFamily("sts").size());
+    Assertions.assertTrue(
+        countDistinctMonoMethods(ReactiveMinioMetricsClient.class, null)
+            >= MinioApiCatalog.byFamily("metrics").size());
+    Assertions.assertTrue(
+        countDistinctMonoMethods(ReactiveMinioHealthClient.class, null)
+            >= MinioApiCatalog.byFamily("health").size());
+  }
+
+
+  @Test
+  void shouldNotExposeEndpointExecutorInPublicApi() {
+    Class<?>[] publicTypes = {
+      ReactiveMinioClient.class,
+      ReactiveMinioAdminClient.class,
+      ReactiveMinioKmsClient.class,
+      ReactiveMinioStsClient.class,
+      ReactiveMinioMetricsClient.class,
+      ReactiveMinioHealthClient.class,
+      ReactiveMinioRawClient.class
+    };
+    for (Class<?> type : publicTypes) {
+      for (Method method : type.getMethods()) {
+        Assertions.assertNotEquals(ReactiveMinioEndpointExecutor.class, method.getReturnType());
+        for (Class<?> parameterType : method.getParameterTypes()) {
+          Assertions.assertNotEquals(ReactiveMinioEndpointExecutor.class, parameterType);
+        }
+      }
+    }
   }
 
   private static void assertMonoMethodExists(Class<?> type, String name) {

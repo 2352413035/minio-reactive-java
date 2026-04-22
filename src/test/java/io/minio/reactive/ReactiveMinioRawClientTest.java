@@ -2,6 +2,7 @@ package io.minio.reactive;
 
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.catalog.MinioApiEndpoint;
+import io.minio.reactive.errors.ReactiveMinioProtocolException;
 import io.minio.reactive.http.S3Request;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -9,6 +10,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 class ReactiveMinioRawClientTest {
   @Test
@@ -163,6 +168,38 @@ class ReactiveMinioRawClientTest {
             null);
 
     Assertions.assertEquals("Bearer token", request.headers().get("Authorization"));
+  }
+
+  @Test
+  void shouldMapAdminJsonErrorsToProtocolException() {
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request ->
+                    Mono.just(
+                        ClientResponse.create(HttpStatus.BAD_REQUEST)
+                            .header("x-amz-request-id", "req-1")
+                            .body("{\"code\":\"BadRequest\",\"message\":\"bad admin request\",\"requestId\":\"req-1\"}")
+                            .build()))
+            .build();
+    ReactiveMinioRawClient client =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    ReactiveMinioProtocolException error =
+        Assertions.assertThrows(
+            ReactiveMinioProtocolException.class,
+            () -> client.executeToString(MinioApiCatalog.byName("ADMIN_SERVER_INFO")).block());
+
+    Assertions.assertEquals("admin", error.protocol());
+    Assertions.assertEquals(400, error.statusCode());
+    Assertions.assertEquals("BadRequest", error.code());
+    Assertions.assertEquals("bad admin request", error.errorMessage());
+    Assertions.assertEquals("req-1", error.requestId());
   }
 
 }

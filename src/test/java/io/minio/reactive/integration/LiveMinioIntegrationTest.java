@@ -6,6 +6,7 @@ import io.minio.reactive.ReactiveMinioHealthClient;
 import io.minio.reactive.ReactiveMinioRawClient;
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.BucketInfo;
+import io.minio.reactive.messages.admin.AdminServerInfo;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.MultipartUpload;
@@ -101,6 +102,7 @@ class LiveMinioIntegrationTest {
 
     List<BucketInfo> buckets = client.listBuckets().block();
     Assertions.assertTrue(containsBucket(buckets, bucket));
+    Assertions.assertEquals(Boolean.TRUE, healthClient.isLive().block());
     Assertions.assertEquals(Integer.valueOf(200), healthClient.liveGet().block());
     Assertions.assertEquals(
         Integer.valueOf(200), rawClient.executeToStatus(MinioApiCatalog.byName("HEALTH_LIVE_GET")).block());
@@ -115,6 +117,7 @@ class LiveMinioIntegrationTest {
                 null)
             .block()
             .contains(bucket));
+    AdminServerInfo typedAdminInfo = adminClient.getServerInfo().block();
     String adminInfo = adminClient.serverInfo().block();
     String rawAdminInfo =
         rawClient
@@ -126,6 +129,7 @@ class LiveMinioIntegrationTest {
                 null,
                 null)
             .block();
+    Assertions.assertFalse(typedAdminInfo.deploymentId().isEmpty());
     Assertions.assertTrue(adminInfo.contains("deploymentID"));
     Assertions.assertTrue(rawAdminInfo.contains("deploymentID"));
     Assertions.assertTrue(adminInfo.contains("servers"));

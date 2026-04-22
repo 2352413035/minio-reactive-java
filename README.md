@@ -110,6 +110,8 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 一般业务项目优先直接创建并使用 `ReactiveMinioClient`。只有需要管理端、KMS、STS、监控、健康检查等能力时，才直接创建对应专用客户端。所有客户端都是平级入口；`ReactiveMinioRawClient` 是最后的兜底层，用于尚未封装成专用方法的新接口或特殊接口。
 
+当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics 提供 Prometheus 文本包装；STS 提供临时凭证解析入口；KMS 和 Admin 提供第一批 JSON 响应包装。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
+
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
 ## 文档目录

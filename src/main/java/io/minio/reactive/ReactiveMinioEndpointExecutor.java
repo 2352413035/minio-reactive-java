@@ -3,9 +3,12 @@ package io.minio.reactive;
 import io.minio.reactive.catalog.MinioApiEndpoint;
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.credentials.ReactiveCredentialsProvider;
+import io.minio.reactive.errors.ReactiveMinioProtocolException;
+import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.http.ReactiveHttpClient;
 import io.minio.reactive.http.S3Request;
 import io.minio.reactive.signer.S3RequestSigner;
+import io.minio.reactive.util.JsonSupport;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,8 +52,10 @@ final class ReactiveMinioEndpointExecutor {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
-        .flatMap(httpClient::exchangeToStatus);
+    return withProtocolErrors(
+        endpoint,
+        prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
+            .flatMap(httpClient::exchangeToStatus));
   }
 
   Mono<String> executeToString(
@@ -60,8 +65,10 @@ final class ReactiveMinioEndpointExecutor {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
-        .flatMap(httpClient::exchangeToString);
+    return withProtocolErrors(
+        endpoint,
+        prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
+            .flatMap(httpClient::exchangeToString));
   }
 
   Mono<byte[]> executeToBytes(
@@ -71,8 +78,10 @@ final class ReactiveMinioEndpointExecutor {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
-        .flatMap(httpClient::exchangeToByteArray);
+    return withProtocolErrors(
+        endpoint,
+        prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
+            .flatMap(httpClient::exchangeToByteArray));
   }
 
   Flux<byte[]> executeToBody(
@@ -82,8 +91,10 @@ final class ReactiveMinioEndpointExecutor {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
-        .flatMapMany(httpClient::exchangeToBody);
+    return withProtocolErrors(
+        endpoint,
+        prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
+            .flatMapMany(httpClient::exchangeToBody));
   }
 
   Mono<Map<String, List<String>>> executeToHeaders(
@@ -93,8 +104,10 @@ final class ReactiveMinioEndpointExecutor {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
-        .flatMap(httpClient::exchangeToHeaders);
+    return withProtocolErrors(
+        endpoint,
+        prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
+            .flatMap(httpClient::exchangeToHeaders));
   }
 
   Mono<Void> executeToVoid(
@@ -104,8 +117,10 @@ final class ReactiveMinioEndpointExecutor {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
-        .flatMap(httpClient::exchangeToVoid);
+    return withProtocolErrors(
+        endpoint,
+        prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
+            .flatMap(httpClient::exchangeToVoid));
   }
 
   S3Request requestFor(
@@ -147,6 +162,60 @@ final class ReactiveMinioEndpointExecutor {
       }
     }
     return builder.build();
+  }
+
+
+  /** 非 S3 协议族使用更贴近领域的异常，避免把 Admin/KMS/STS 错误都表现成 S3 XML 错误。 */
+  private static <T> Mono<T> withProtocolErrors(MinioApiEndpoint endpoint, Mono<T> source) {
+    return source.onErrorMap(ReactiveS3Exception.class, ex -> mapProtocolError(endpoint, ex));
+  }
+
+  /** 非 S3 协议族使用更贴近领域的异常，避免把 Admin/KMS/STS 错误都表现成 S3 XML 错误。 */
+  private static <T> Flux<T> withProtocolErrors(MinioApiEndpoint endpoint, Flux<T> source) {
+    return source.onErrorMap(ReactiveS3Exception.class, ex -> mapProtocolError(endpoint, ex));
+  }
+
+  private static RuntimeException mapProtocolError(MinioApiEndpoint endpoint, ReactiveS3Exception ex) {
+    if ("s3".equals(endpoint.family())) {
+      return ex;
+    }
+    String code = ex.errorCode();
+    String message = ex.errorMessage();
+    String requestId = ex.requestId();
+    if ((requestId == null || requestId.isEmpty()) && ex.s3Error() != null) {
+      requestId = ex.s3Error().requestId();
+    }
+    if ((code == null || code.isEmpty())
+        && ex.responseBody() != null
+        && !ex.responseBody().trim().isEmpty()) {
+      Map<String, Object> values = safeJson(ex.responseBody());
+      code = firstText(values, "code", "Code", "error", "Error");
+      message = firstText(values, "message", "Message", "errorMessage", "ErrorMessage");
+      requestId = firstText(values, "requestId", "requestID", "RequestId", "RequestID");
+    }
+    return new ReactiveMinioProtocolException(
+        endpoint.family(), ex.statusCode(), code, message, requestId, ex.responseBody());
+  }
+
+  private static Map<String, Object> safeJson(String body) {
+    try {
+      return JsonSupport.parseMap(body);
+    } catch (RuntimeException ignored) {
+      return Collections.emptyMap();
+    }
+  }
+
+  private static String firstText(Map<String, Object> values, String... names) {
+    for (String name : names) {
+      Object value = values.get(name);
+      if (value != null) {
+        String text = String.valueOf(value);
+        if (!text.trim().isEmpty()) {
+          return text;
+        }
+      }
+    }
+    return "";
   }
 
   /** 按认证方案决定是否签名，避免把 bearer 或无认证接口错误地做 SigV4 签名。 */
