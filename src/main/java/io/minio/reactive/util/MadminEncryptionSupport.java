@@ -15,7 +15,7 @@ import javax.crypto.spec.SecretKeySpec;
  *
  * <p>madmin-go 的加密数据格式为：32 字节 salt、1 字节算法 ID、8 字节 nonce、后续 DARE
  * 加密流。当前 Java 实现选择服务端已支持的 PBKDF2 + AES-GCM 算法 ID，避免引入 Argon2 或
- * ChaCha20 依赖，目标是对齐 `madmin.DecryptData` 支持的 PBKDF2 AES-GCM 流式分片格式；在接入管理端写接口前仍需补充 madmin-go 互操作测试。
+ * ChaCha20 依赖，该实现已对齐 `madmin.DecryptData` 支持的 PBKDF2 AES-GCM 流式分片格式。它适合生成发往 MinIO 管理端写接口的加密载荷；但当前仍不能解密 madmin-go 默认生成的 Argon2id 载荷。
  */
 public final class MadminEncryptionSupport {
   private static final int SALT_LENGTH = 32;
@@ -47,7 +47,7 @@ public final class MadminEncryptionSupport {
   /**
    * 使用 madmin-go 兼容的 PBKDF2 + AES-GCM 格式加密数据。
    *
-   * <p>返回格式为 `salt | 算法 ID | nonce | DARE 密文分片`。服务端 `madmin.DecryptData` 会根据算法 ID 选择 PBKDF2 AES-GCM 路径。当前实现已有 Java 端 round-trip 测试；接入管理端写接口前还需要使用 madmin-go 做互操作测试。
+   * <p>返回格式为 `salt | 算法 ID | nonce | DARE 密文分片`。服务端 `madmin.DecryptData` 会根据算法 ID 选择 PBKDF2 AES-GCM 路径。当前实现已有 Java 端 round-trip，并已通过 madmin-go v3.0.109 解密 Java 载荷的临时互操作验证。
    */
   public static byte[] encryptData(String secretKey, byte[] plainData) {
     requireSecret(secretKey);
@@ -68,7 +68,7 @@ public final class MadminEncryptionSupport {
     }
   }
 
-  /** 解密 PBKDF2 + AES-GCM madmin 加密载荷，主要用于互操作和单元测试。 */
+  /** 解密 PBKDF2 + AES-GCM madmin 加密载荷；暂不支持 madmin-go 默认 Argon2id 载荷。 */
   public static byte[] decryptData(String secretKey, byte[] encryptedData) {
     requireSecret(secretKey);
     if (encryptedData == null || encryptedData.length < SALT_LENGTH + 1 + STORED_NONCE_LENGTH + GCM_TAG_BYTES) {

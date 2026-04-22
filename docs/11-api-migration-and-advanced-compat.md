@@ -79,10 +79,10 @@
 
 MinIO 管理端的一些写接口并不是普通 JSON body。服务端会调用 `madmin.DecryptData` 解密请求体，例如新增用户、更新服务账号、设置配置等接口。`madmin-go` 的 `EncryptData` 格式由 32 字节 salt、1 字节算法 ID、8 字节 nonce 和 secure-io DARE 加密流组成，密钥派生涉及 Argon2id 或 PBKDF2，AEAD 可能是 AES-GCM 或 ChaCha20-Poly1305。
 
-当前 Java SDK 已提供 `MadminEncryptionSupport.isEncrypted(...)`，并实现了 PBKDF2 + AES-GCM 路径的 Java 端加密/解密 round-trip。由于当前环境缺少 Go 工具链，尚未完成与 `madmin-go` 的互操作测试，因此还不能把依赖加密载荷的管理端写接口标记为完整强类型能力。
+当前 Java SDK 已提供 `MadminEncryptionSupport.isEncrypted(...)`，并实现了 PBKDF2 + AES-GCM 路径的 Java 端加密/解密 round-trip。已用临时 Go 工具链验证：Java 生成的 PBKDF2/AES-GCM 载荷可以被 `madmin-go v3.0.109` 的 `DecryptData` 解密。反向方向仍有限制：`madmin-go` 默认可能生成 Argon2id/AES-GCM 或 Argon2id/ChaCha20-Poly1305 载荷，当前 Java 端尚不能解密这些默认响应载荷。
 
 因此，在 madmin 加密兼容层完成之前：
 
-- 新增用户、设置完整配置、服务账号创建/更新等依赖加密载荷的接口，在 madmin-go 互操作测试完成前，不会伪装成完整强业务方法。
+- 新增用户、设置完整配置、服务账号创建/更新等依赖“请求加密载荷”的接口，后续可以基于 PBKDF2/AES-GCM 写入方向继续 typed 化；但涉及“读取服务端加密响应”的接口，仍需先补 Argon2id/ChaCha20 或其它兼容解密能力。
 - 这类接口继续保留高级兼容入口或 raw 兜底入口，由调用方传入已经符合 MinIO madmin 格式的载荷。
-- 后续把加密载荷接入 Admin 写接口前，必须先做与 madmin-go 的加密/解密互操作测试。
+- 后续把加密载荷接入 Admin 写接口前，必须保留 madmin-go 互操作测试；如果接口需要读取服务端加密响应，必须先补齐 Argon2id 相关解密能力或引入经批准依赖。
