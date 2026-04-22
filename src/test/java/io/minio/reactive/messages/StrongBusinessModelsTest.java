@@ -2,6 +2,9 @@ package io.minio.reactive.messages;
 
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.messages.admin.AdminJsonResult;
+import io.minio.reactive.messages.admin.AdminPolicyInfo;
+import io.minio.reactive.messages.admin.AdminPolicyList;
+import io.minio.reactive.messages.admin.AdminUserInfo;
 import io.minio.reactive.messages.admin.AdminServerInfo;
 import io.minio.reactive.messages.kms.KmsJsonResult;
 import io.minio.reactive.messages.kms.KmsKeyStatus;
@@ -40,6 +43,22 @@ class StrongBusinessModelsTest {
 
     Assertions.assertEquals(1, result.values().get("a"));
     Assertions.assertEquals("x", result.values().get("b"));
+  }
+
+  @Test
+  void shouldParseAdminUserAndPolicyModels() {
+    AdminUserInfo user =
+        AdminUserInfo.parse("{\"policyName\":\"readonly\",\"status\":\"enabled\",\"memberOf\":[\"dev\"],\"updatedAt\":\"now\"}");
+    AdminPolicyInfo policy =
+        AdminPolicyInfo.parse("{\"PolicyName\":\"readonly\",\"Policy\":{\"Version\":\"2012-10-17\"},\"CreateDate\":\"c\",\"UpdateDate\":\"u\"}");
+    AdminPolicyList list = AdminPolicyList.parse("{\"readonly\":{\"Version\":\"2012-10-17\"}}");
+
+    Assertions.assertEquals("readonly", user.policyName());
+    Assertions.assertEquals("enabled", user.status());
+    Assertions.assertEquals("dev", user.memberOf().get(0));
+    Assertions.assertEquals("readonly", policy.policyName());
+    Assertions.assertTrue(policy.policyJson().contains("2012-10-17"));
+    Assertions.assertTrue(list.policies().containsKey("readonly"));
   }
 
   @Test
