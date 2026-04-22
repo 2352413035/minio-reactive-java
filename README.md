@@ -108,7 +108,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `ReactiveMinioMetricsClient`：监控指标专用客户端。
 - `ReactiveMinioHealthClient`：健康检查专用客户端。
 
-一般业务项目优先使用 `ReactiveMinioClient`。只有需要管理端、KMS、STS、监控、健康检查等能力时，才使用对应专用客户端。`ReactiveMinioRawClient` 是最后的兜底层，用于尚未封装成专用方法的新接口或特殊接口。
+一般业务项目优先直接创建并使用 `ReactiveMinioClient`。只有需要管理端、KMS、STS、监控、健康检查等能力时，才直接创建对应专用客户端。所有客户端都是平级入口；`ReactiveMinioRawClient` 是最后的兜底层，用于尚未封装成专用方法的新接口或特殊接口。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 

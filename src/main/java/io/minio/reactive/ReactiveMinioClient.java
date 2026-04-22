@@ -67,32 +67,8 @@ public final class ReactiveMinioClient {
     return new Builder();
   }
 
-  public ReactiveMinioRawClient rawClient() {
-    return new ReactiveMinioRawClient(config, credentialsProvider, httpClient, signer);
-  }
-
   private ReactiveMinioEndpointExecutor endpointExecutor() {
     return new ReactiveMinioEndpointExecutor(config, credentialsProvider, httpClient, signer);
-  }
-
-  public ReactiveMinioAdminClient adminClient() {
-    return new ReactiveMinioAdminClient(endpointExecutor());
-  }
-
-  public ReactiveMinioKmsClient kmsClient() {
-    return new ReactiveMinioKmsClient(endpointExecutor());
-  }
-
-  public ReactiveMinioStsClient stsClient() {
-    return new ReactiveMinioStsClient(endpointExecutor());
-  }
-
-  public ReactiveMinioMetricsClient metricsClient() {
-    return new ReactiveMinioMetricsClient(endpointExecutor());
-  }
-
-  public ReactiveMinioHealthClient healthClient() {
-    return new ReactiveMinioHealthClient(endpointExecutor());
   }
 
   public Mono<List<BucketInfo>> listBuckets() {

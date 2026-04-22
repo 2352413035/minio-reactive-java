@@ -101,16 +101,13 @@ io.minio.reactive
 
 ## 4.7 当前 SDK 分层理念
 
-当前 SDK 不再把所有能力都塞进一个大客户端，而是分成“目录、兜底调用器、专用客户端”三层。
+当前 SDK 不再把所有能力都塞进一个大客户端，也不把其它客户端挂在 `ReactiveMinioClient` 底下，而是分成“目录、共享执行器、平级专用客户端、兜底调用器”几层。
 
 第一层是 `MinioApiCatalog`。它是 MinIO 公开接口目录，集中记录接口名、分组、HTTP 方法、路径模板、query 要求和认证方式。这样做的目的，是先保证本地 MinIO 公开路由在 SDK 中有统一登记，不会因为强类型模型还没写完就完全无法调用。
 
-第二层是 `ReactiveMinioRawClient`。它是兜底原始调用器，按照目录条目构造请求并发送。它适合两类场景：
+第二层是内部共享执行器 `ReactiveMinioEndpointExecutor`。它不直接暴露给业务用户，只负责路径展开、query 合并、认证分派、签名和 HTTP 调用。专用客户端和 raw client 都复用它，所以它们是平级关系，不存在“专用客户端包 raw client 一层”的问题。
 
-1. SDK 暂时还没有封装某个 MinIO 新接口时，用户可以先通过 raw client 调用。
-2. 某些管理端或监控接口返回结构还没有强类型模型时，可以先拿原始 XML、JSON、文本或字节结果。
-
-第三层是专用客户端：
+第三层是平级专用客户端：
 
 - `ReactiveMinioClient`：对象存储专用客户端，面向上传、下载、列对象、对象标签、预签名、分片上传等常用 S3/MinIO 操作。
 - `ReactiveMinioAdminClient`：管理端专用客户端。
@@ -119,7 +116,12 @@ io.minio.reactive
 - `ReactiveMinioMetricsClient`：监控指标专用客户端。
 - `ReactiveMinioHealthClient`：健康检查专用客户端。
 
-这种拆分的原则是：业务常用能力做成更好用的专用客户端；所有公开接口都保留 raw 兜底入口；后续新增强类型方法时，复用目录和 raw client，不重复维护路径、query 和认证逻辑。
+第四层是 `ReactiveMinioRawClient`。它是兜底原始调用器，保留 Map 形式的灵活入参，适合两类场景：
+
+1. SDK 暂时还没有封装某个 MinIO 新接口时，用户可以先通过 raw client 调用。
+2. 某些接口需要特殊 header、特殊 query、原始 XML/JSON/字节响应时，可以先用 raw client 排障或临时接入。
+
+这种拆分的原则是：业务常用能力做成更好用的专用客户端；所有专用客户端和 `ReactiveMinioClient` 平级；所有公开接口都保留 raw 兜底入口；后续新增强类型方法时，复用目录和共享执行器，不重复维护路径、query 和认证逻辑。
 
 ## 5. 为什么不直接把所有逻辑塞进 WebClient 调用链里
 
