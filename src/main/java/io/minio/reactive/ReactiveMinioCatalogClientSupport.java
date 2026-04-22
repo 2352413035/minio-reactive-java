@@ -3,6 +3,7 @@ package io.minio.reactive;
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.catalog.MinioApiEndpoint;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import reactor.core.publisher.Flux;
@@ -11,22 +12,17 @@ import reactor.core.publisher.Mono;
 /**
  * 专用客户端共享的目录执行辅助基类。
  *
- * <p>Admin、KMS、STS、Metrics 等客户端都只是围绕某一类目录接口提供更容易发现的方法名，
- * 真正的路径展开、query 合并、认证分派和 HTTP 发送仍统一委托给 `ReactiveMinioRawClient`。
+ * <p>它直接依赖底层执行器，不依赖 `ReactiveMinioRawClient`。这样 Admin、KMS、STS、Metrics、
+ * Health 等专用客户端与 raw client 是并列关系，而不是“用 raw 再包一层”。
  */
 abstract class ReactiveMinioCatalogClientSupport {
-  protected final ReactiveMinioRawClient rawClient;
+  private final ReactiveMinioEndpointExecutor executor;
 
-  ReactiveMinioCatalogClientSupport(ReactiveMinioRawClient rawClient) {
-    if (rawClient == null) {
-      throw new IllegalArgumentException("rawClient must not be null");
+  ReactiveMinioCatalogClientSupport(ReactiveMinioEndpointExecutor executor) {
+    if (executor == null) {
+      throw new IllegalArgumentException("executor must not be null");
     }
-    this.rawClient = rawClient;
-  }
-
-  /** 返回底层兜底调用器，方便遇到尚未封装的返回形式时直接使用。 */
-  public ReactiveMinioRawClient rawClient() {
-    return rawClient;
+    this.executor = executor;
   }
 
   /** 按目录名称执行接口并返回文本响应。 */
@@ -37,7 +33,7 @@ abstract class ReactiveMinioCatalogClientSupport {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return rawClient.executeToString(
+    return executor.executeToString(
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
@@ -49,7 +45,7 @@ abstract class ReactiveMinioCatalogClientSupport {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return rawClient.executeToBytes(
+    return executor.executeToBytes(
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
@@ -61,7 +57,7 @@ abstract class ReactiveMinioCatalogClientSupport {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return rawClient.executeToBody(
+    return executor.executeToBody(
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
@@ -73,7 +69,7 @@ abstract class ReactiveMinioCatalogClientSupport {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return rawClient.executeToHeaders(
+    return executor.executeToHeaders(
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
@@ -85,7 +81,7 @@ abstract class ReactiveMinioCatalogClientSupport {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return rawClient.executeToStatus(
+    return executor.executeToStatus(
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
@@ -97,7 +93,7 @@ abstract class ReactiveMinioCatalogClientSupport {
       Map<String, String> headers,
       byte[] body,
       String contentType) {
-    return rawClient.executeToVoid(
+    return executor.executeToVoid(
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
@@ -106,8 +102,32 @@ abstract class ReactiveMinioCatalogClientSupport {
     return MinioApiCatalog.byName(endpointName);
   }
 
-  /** 供便捷重载复用的空 Map。 */
+  /** 供便捷方法复用的空 Map。 */
   protected static Map<String, String> emptyMap() {
     return Collections.<String, String>emptyMap();
+  }
+
+  /** 生成只有一个键值对的 Map，用于强类型方法内部组装路径变量或 query。 */
+  protected static Map<String, String> map(String key, String value) {
+    Map<String, String> result = new LinkedHashMap<String, String>();
+    result.put(key, value);
+    return result;
+  }
+
+  /** 根据可变键值对生成 Map，调用方必须成对传入 key 和 value。 */
+  protected static Map<String, String> map(String... keyValues) {
+    Map<String, String> result = new LinkedHashMap<String, String>();
+    for (int i = 0; i < keyValues.length; i += 2) {
+      result.put(keyValues[i], keyValues[i + 1]);
+    }
+    return result;
+  }
+
+  /** 为 bearer 认证接口组装 Authorization 头；token 为空时返回空头，兼容公开 metrics 配置。 */
+  protected static Map<String, String> bearerHeaders(String bearerToken) {
+    if (bearerToken == null || bearerToken.trim().isEmpty()) {
+      return emptyMap();
+    }
+    return map("Authorization", bearerToken.startsWith("Bearer ") ? bearerToken : "Bearer " + bearerToken);
   }
 }

@@ -91,6 +91,22 @@ class LiveMinioIntegrationTest {
                 null)
             .block()
             .contains(bucket));
+    String adminInfo = client.adminClient().serverInfo().block();
+    String rawAdminInfo =
+        client
+            .rawClient()
+            .executeToString(
+                MinioApiCatalog.byName("ADMIN_SERVER_INFO"),
+                emptyMap(),
+                emptyMap(),
+                emptyMap(),
+                null,
+                null)
+            .block();
+    Assertions.assertTrue(adminInfo.contains("deploymentID"));
+    Assertions.assertTrue(rawAdminInfo.contains("deploymentID"));
+    Assertions.assertTrue(adminInfo.contains("servers"));
+    Assertions.assertTrue(rawAdminInfo.contains("servers"));
 
     client.putObject(bucket, "folder/a.txt", "alpha", "text/plain").block();
     client.putObject(bucket, "folder/b.txt", "bravo", "text/plain").block();

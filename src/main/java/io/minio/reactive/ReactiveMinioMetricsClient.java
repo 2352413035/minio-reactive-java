@@ -1,77 +1,46 @@
 package io.minio.reactive;
 
-import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
  * 监控指标专用客户端。
  *
- * <p>这个客户端只提供监控指标相关目录接口的命名入口；响应体先以原始文本返回。
- * 如果某个接口需要二进制、流式或只读响应头，可以通过 `rawClient()` 使用底层兜底调用器。
+ * <p>这个客户端按监控指标接口的业务名称提供方法，调用者不需要直接查目录或拼 Map。
+ * 如果遇到尚未补充业务模型的特殊场景，可以回退使用 `ReactiveMinioRawClient`。
  */
 public final class ReactiveMinioMetricsClient extends ReactiveMinioCatalogClientSupport {
-  ReactiveMinioMetricsClient(ReactiveMinioRawClient rawClient) {
-    super(rawClient);
+  ReactiveMinioMetricsClient(ReactiveMinioEndpointExecutor executor) {
+    super(executor);
   }
 
-  /** 调用目录接口 `METRICS_PROMETHEUS_LEGACY`，返回原始文本响应。 */
-  public Mono<String> prometheusLegacy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("METRICS_PROMETHEUS_LEGACY", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `METRICS_PROMETHEUS_LEGACY`。 */
+  public Mono<String> prometheusLegacy(String bearerToken) {
+    return executeToString("METRICS_PROMETHEUS_LEGACY", emptyMap(), emptyMap(), bearerHeaders(bearerToken), null, null);
   }
 
-  /** 调用目录接口 `METRICS_V2_CLUSTER`，返回原始文本响应。 */
-  public Mono<String> v2Cluster(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("METRICS_V2_CLUSTER", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `METRICS_V2_CLUSTER`。 */
+  public Mono<String> v2Cluster(String bearerToken) {
+    return executeToString("METRICS_V2_CLUSTER", emptyMap(), emptyMap(), bearerHeaders(bearerToken), null, null);
   }
 
-  /** 调用目录接口 `METRICS_V2_BUCKET`，返回原始文本响应。 */
-  public Mono<String> v2Bucket(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("METRICS_V2_BUCKET", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `METRICS_V2_BUCKET`。 */
+  public Mono<String> v2Bucket(String bearerToken) {
+    return executeToString("METRICS_V2_BUCKET", emptyMap(), emptyMap(), bearerHeaders(bearerToken), null, null);
   }
 
-  /** 调用目录接口 `METRICS_V2_NODE`，返回原始文本响应。 */
-  public Mono<String> v2Node(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("METRICS_V2_NODE", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `METRICS_V2_NODE`。 */
+  public Mono<String> v2Node(String bearerToken) {
+    return executeToString("METRICS_V2_NODE", emptyMap(), emptyMap(), bearerHeaders(bearerToken), null, null);
   }
 
-  /** 调用目录接口 `METRICS_V2_RESOURCE`，返回原始文本响应。 */
-  public Mono<String> v2Resource(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("METRICS_V2_RESOURCE", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `METRICS_V2_RESOURCE`。 */
+  public Mono<String> v2Resource(String bearerToken) {
+    return executeToString("METRICS_V2_RESOURCE", emptyMap(), emptyMap(), bearerHeaders(bearerToken), null, null);
   }
 
-  /** 调用目录接口 `METRICS_V3`，返回原始文本响应。 */
-  public Mono<String> v3(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("METRICS_V3", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `METRICS_V3`。 */
+  public Mono<String> v3(String pathComps, String bearerToken) {
+    return executeToString("METRICS_V3", map("pathComps", pathComps), emptyMap(), bearerHeaders(bearerToken), null, null);
   }
 
 }

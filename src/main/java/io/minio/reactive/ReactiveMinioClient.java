@@ -1,5 +1,7 @@
 package io.minio.reactive;
 
+import io.minio.reactive.catalog.MinioApiCatalog;
+import io.minio.reactive.catalog.MinioApiEndpoint;
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.credentials.ReactiveCredentialsProvider;
 import io.minio.reactive.credentials.StaticCredentialsProvider;
@@ -27,6 +29,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.reactivestreams.Publisher;
@@ -68,24 +71,28 @@ public final class ReactiveMinioClient {
     return new ReactiveMinioRawClient(config, credentialsProvider, httpClient, signer);
   }
 
+  private ReactiveMinioEndpointExecutor endpointExecutor() {
+    return new ReactiveMinioEndpointExecutor(config, credentialsProvider, httpClient, signer);
+  }
+
   public ReactiveMinioAdminClient adminClient() {
-    return new ReactiveMinioAdminClient(rawClient());
+    return new ReactiveMinioAdminClient(endpointExecutor());
   }
 
   public ReactiveMinioKmsClient kmsClient() {
-    return new ReactiveMinioKmsClient(rawClient());
+    return new ReactiveMinioKmsClient(endpointExecutor());
   }
 
   public ReactiveMinioStsClient stsClient() {
-    return new ReactiveMinioStsClient(rawClient());
+    return new ReactiveMinioStsClient(endpointExecutor());
   }
 
   public ReactiveMinioMetricsClient metricsClient() {
-    return new ReactiveMinioMetricsClient(rawClient());
+    return new ReactiveMinioMetricsClient(endpointExecutor());
   }
 
   public ReactiveMinioHealthClient healthClient() {
-    return new ReactiveMinioHealthClient(rawClient());
+    return new ReactiveMinioHealthClient(endpointExecutor());
   }
 
   public Mono<List<BucketInfo>> listBuckets() {
@@ -495,6 +502,24 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToVoid);
   }
 
+  /** 目录型方法内部复用的空 Map。 */
+  private static Map<String, String> emptyMap() {
+    return Collections.<String, String>emptyMap();
+  }
+
+  /** 根据可变键值对生成 Map，调用方必须成对传入 key 和 value。 */
+  private static Map<String, String> map(String... keyValues) {
+    Map<String, String> result = new LinkedHashMap<String, String>();
+    for (int i = 0; i < keyValues.length; i += 2) {
+      result.put(keyValues[i], keyValues[i + 1]);
+    }
+    return result;
+  }
+
+  private MinioApiEndpoint endpoint(String endpointName) {
+    return MinioApiCatalog.byName(endpointName);
+  }
+
   private S3Request.Builder request(HttpMethod method, String bucket, String object) {
     return S3Request.builder().method(method).bucket(bucket).object(object).region(config.region());
   }
@@ -537,1389 +562,656 @@ public final class ReactiveMinioClient {
 
   // 目录型 S3 原始接口入口开始
 
-  /** 调用目录接口 `S3_HEAD_OBJECT`，返回原始文本响应。 */
-  public Mono<String> s3HeadObject(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_HEAD_OBJECT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_OBJECT_ATTRIBUTES`，返回原始文本响应。 */
-  public Mono<String> s3GetObjectAttributes(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_OBJECT_ATTRIBUTES"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_COPY_OBJECT_PART`，返回原始文本响应。 */
-  public Mono<String> s3CopyObjectPart(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_COPY_OBJECT_PART"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_OBJECT_PART`，返回原始文本响应。 */
-  public Mono<String> s3PutObjectPart(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_OBJECT_PART"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_OBJECT_PARTS`，返回原始文本响应。 */
-  public Mono<String> s3ListObjectParts(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_OBJECT_PARTS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_COMPLETE_MULTIPART_UPLOAD`，返回原始文本响应。 */
-  public Mono<String> s3CompleteMultipartUpload(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_COMPLETE_MULTIPART_UPLOAD"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_CREATE_MULTIPART_UPLOAD`，返回原始文本响应。 */
-  public Mono<String> s3CreateMultipartUpload(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_CREATE_MULTIPART_UPLOAD"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_ABORT_MULTIPART_UPLOAD`，返回原始文本响应。 */
-  public Mono<String> s3AbortMultipartUpload(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_ABORT_MULTIPART_UPLOAD"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_OBJECT_ACL`，返回原始文本响应。 */
-  public Mono<String> s3GetObjectAcl(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_OBJECT_ACL"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_OBJECT_ACL`，返回原始文本响应。 */
-  public Mono<String> s3PutObjectAcl(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_OBJECT_ACL"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_OBJECT_TAGGING`，返回原始文本响应。 */
-  public Mono<String> s3GetObjectTagging(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_OBJECT_TAGGING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_OBJECT_TAGGING`，返回原始文本响应。 */
-  public Mono<String> s3PutObjectTagging(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_OBJECT_TAGGING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_OBJECT_TAGGING`，返回原始文本响应。 */
-  public Mono<String> s3DeleteObjectTagging(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_OBJECT_TAGGING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_SELECT_OBJECT_CONTENT`，返回原始文本响应。 */
-  public Mono<String> s3SelectObjectContent(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_SELECT_OBJECT_CONTENT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_OBJECT_RETENTION`，返回原始文本响应。 */
-  public Mono<String> s3GetObjectRetention(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_OBJECT_RETENTION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_OBJECT_LEGAL_HOLD`，返回原始文本响应。 */
-  public Mono<String> s3GetObjectLegalHold(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_OBJECT_LEGAL_HOLD"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_OBJECT_LAMBDA`，返回原始文本响应。 */
-  public Mono<String> s3GetObjectLambda(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_OBJECT_LAMBDA"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_OBJECT`，返回原始文本响应。 */
-  public Mono<String> s3GetObject(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_OBJECT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_COPY_OBJECT`，返回原始文本响应。 */
-  public Mono<String> s3CopyObject(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_COPY_OBJECT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_OBJECT_RETENTION`，返回原始文本响应。 */
-  public Mono<String> s3PutObjectRetention(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_OBJECT_RETENTION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_OBJECT_LEGAL_HOLD`，返回原始文本响应。 */
-  public Mono<String> s3PutObjectLegalHold(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_OBJECT_LEGAL_HOLD"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_OBJECT_EXTRACT`，返回原始文本响应。 */
-  public Mono<String> s3PutObjectExtract(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_OBJECT_EXTRACT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_OBJECT`，返回原始文本响应。 */
-  public Mono<String> s3PutObject(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_OBJECT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_OBJECT`，返回原始文本响应。 */
-  public Mono<String> s3DeleteObject(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_OBJECT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_POST_RESTORE_OBJECT`，返回原始文本响应。 */
-  public Mono<String> s3PostRestoreObject(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_POST_RESTORE_OBJECT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_LOCATION`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketLocation(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_LOCATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_POLICY`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_POLICY"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_LIFECYCLE`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketLifecycle(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_LIFECYCLE"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_ENCRYPTION`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketEncryption(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_ENCRYPTION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_OBJECT_LOCK`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketObjectLock(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_OBJECT_LOCK"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_REPLICATION`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketReplication(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_REPLICATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_VERSIONING`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketVersioning(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_VERSIONING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_NOTIFICATION`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketNotification(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_NOTIFICATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LISTEN_BUCKET_NOTIFICATION`，返回原始文本响应。 */
-  public Mono<String> s3ListenBucketNotification(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LISTEN_BUCKET_NOTIFICATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_RESET_BUCKET_REPLICATION_STATUS`，返回原始文本响应。 */
-  public Mono<String> s3ResetBucketReplicationStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_RESET_BUCKET_REPLICATION_STATUS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_ACL`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketAcl(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_ACL"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_ACL`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketAcl(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_ACL"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_CORS`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketCors(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_CORS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_CORS`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketCors(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_CORS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET_CORS`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucketCors(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET_CORS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_WEBSITE`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketWebsite(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_WEBSITE"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_ACCELERATE`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketAccelerate(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_ACCELERATE"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_REQUEST_PAYMENT`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketRequestPayment(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_REQUEST_PAYMENT"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_LOGGING`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketLogging(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_LOGGING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_TAGGING`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketTagging(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_TAGGING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET_WEBSITE`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucketWebsite(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET_WEBSITE"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET_TAGGING`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucketTagging(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET_TAGGING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_MULTIPART_UPLOADS`，返回原始文本响应。 */
-  public Mono<String> s3ListMultipartUploads(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_MULTIPART_UPLOADS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_OBJECTS_V2_WITH_METADATA`，返回原始文本响应。 */
-  public Mono<String> s3ListObjectsV2WithMetadata(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_OBJECTS_V2_WITH_METADATA"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_OBJECTS_V2`，返回原始文本响应。 */
-  public Mono<String> s3ListObjectsV2(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_OBJECTS_V2"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_OBJECT_VERSIONS_WITH_METADATA`，返回原始文本响应。 */
-  public Mono<String> s3ListObjectVersionsWithMetadata(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_OBJECT_VERSIONS_WITH_METADATA"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_OBJECT_VERSIONS`，返回原始文本响应。 */
-  public Mono<String> s3ListObjectVersions(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_OBJECT_VERSIONS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_POLICY_STATUS`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketPolicyStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_POLICY_STATUS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_LIFECYCLE`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketLifecycle(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_LIFECYCLE"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_REPLICATION`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketReplication(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_REPLICATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_ENCRYPTION`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketEncryption(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_ENCRYPTION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_POLICY`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_POLICY"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_OBJECT_LOCK`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketObjectLock(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_OBJECT_LOCK"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_TAGGING`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketTagging(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_TAGGING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_VERSIONING`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketVersioning(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_VERSIONING"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET_NOTIFICATION`，返回原始文本响应。 */
-  public Mono<String> s3PutBucketNotification(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET_NOTIFICATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_RESET_BUCKET_REPLICATION_START`，返回原始文本响应。 */
-  public Mono<String> s3ResetBucketReplicationStart(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_RESET_BUCKET_REPLICATION_START"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_PUT_BUCKET`，返回原始文本响应。 */
-  public Mono<String> s3PutBucket(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_PUT_BUCKET"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_HEAD_BUCKET`，返回原始文本响应。 */
-  public Mono<String> s3HeadBucket(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_HEAD_BUCKET"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_POST_POLICY_BUCKET`，返回原始文本响应。 */
-  public Mono<String> s3PostPolicyBucket(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_POST_POLICY_BUCKET"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_MULTIPLE_OBJECTS`，返回原始文本响应。 */
-  public Mono<String> s3DeleteMultipleObjects(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_MULTIPLE_OBJECTS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET_POLICY`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucketPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET_POLICY"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET_REPLICATION`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucketReplication(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET_REPLICATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET_LIFECYCLE`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucketLifecycle(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET_LIFECYCLE"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET_ENCRYPTION`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucketEncryption(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET_ENCRYPTION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_DELETE_BUCKET`，返回原始文本响应。 */
-  public Mono<String> s3DeleteBucket(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_DELETE_BUCKET"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_REPLICATION_METRICS_V2`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketReplicationMetricsV2(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_REPLICATION_METRICS_V2"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_GET_BUCKET_REPLICATION_METRICS`，返回原始文本响应。 */
-  public Mono<String> s3GetBucketReplicationMetrics(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_GET_BUCKET_REPLICATION_METRICS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_VALIDATE_BUCKET_REPLICATION_CREDS`，返回原始文本响应。 */
-  public Mono<String> s3ValidateBucketReplicationCreds(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_VALIDATE_BUCKET_REPLICATION_CREDS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_OBJECTS_V1`，返回原始文本响应。 */
-  public Mono<String> s3ListObjectsV1(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_OBJECTS_V1"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LISTEN_ROOT_NOTIFICATION`，返回原始文本响应。 */
-  public Mono<String> s3ListenRootNotification(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LISTEN_ROOT_NOTIFICATION"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
-  }
-
-
-  /** 调用目录接口 `S3_LIST_BUCKETS`，返回原始文本响应。 */
-  public Mono<String> s3ListBuckets(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return rawClient()
-        .executeToString(
-            io.minio.reactive.catalog.MinioApiCatalog.byName("S3_LIST_BUCKETS"),
-            pathVariables,
-            queryParameters,
-            headers,
-            body,
-            contentType);
+  /** 调用 `S3_HEAD_OBJECT`。 */
+  public Mono<Integer> s3HeadObject(String bucket, String object) {
+    return endpointExecutor()
+        .executeToStatus(endpoint("S3_HEAD_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_OBJECT_ATTRIBUTES`。 */
+  public Mono<String> s3GetObjectAttributes(String bucket, String object) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_OBJECT_ATTRIBUTES"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_COPY_OBJECT_PART`。 */
+  public Mono<String> s3CopyObjectPart(String bucket, String object, String partNumber, String uploadId, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_COPY_OBJECT_PART"), map("bucket", bucket, "object", object), map("partNumber", partNumber, "uploadId", uploadId), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_COPY_OBJECT_PART`，不携带请求体。 */
+  public Mono<String> s3CopyObjectPart(String bucket, String object, String partNumber, String uploadId) {
+    return s3CopyObjectPart(bucket, object, partNumber, uploadId, null, null);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_PART`。 */
+  public Mono<String> s3PutObjectPart(String bucket, String object, String partNumber, String uploadId, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_OBJECT_PART"), map("bucket", bucket, "object", object), map("partNumber", partNumber, "uploadId", uploadId), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_PART`，不携带请求体。 */
+  public Mono<String> s3PutObjectPart(String bucket, String object, String partNumber, String uploadId) {
+    return s3PutObjectPart(bucket, object, partNumber, uploadId, null, null);
+  }
+
+  /** 调用 `S3_LIST_OBJECT_PARTS`。 */
+  public Mono<String> s3ListObjectParts(String bucket, String object, String uploadId) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_OBJECT_PARTS"), map("bucket", bucket, "object", object), map("uploadId", uploadId), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_COMPLETE_MULTIPART_UPLOAD`。 */
+  public Mono<String> s3CompleteMultipartUpload(String bucket, String object, String uploadId, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_COMPLETE_MULTIPART_UPLOAD"), map("bucket", bucket, "object", object), map("uploadId", uploadId), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_COMPLETE_MULTIPART_UPLOAD`，不携带请求体。 */
+  public Mono<String> s3CompleteMultipartUpload(String bucket, String object, String uploadId) {
+    return s3CompleteMultipartUpload(bucket, object, uploadId, null, null);
+  }
+
+  /** 调用 `S3_CREATE_MULTIPART_UPLOAD`。 */
+  public Mono<String> s3CreateMultipartUpload(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_CREATE_MULTIPART_UPLOAD"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_CREATE_MULTIPART_UPLOAD`，不携带请求体。 */
+  public Mono<String> s3CreateMultipartUpload(String bucket, String object) {
+    return s3CreateMultipartUpload(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_ABORT_MULTIPART_UPLOAD`。 */
+  public Mono<String> s3AbortMultipartUpload(String bucket, String object, String uploadId, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_ABORT_MULTIPART_UPLOAD"), map("bucket", bucket, "object", object), map("uploadId", uploadId), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_ABORT_MULTIPART_UPLOAD`，不携带请求体。 */
+  public Mono<String> s3AbortMultipartUpload(String bucket, String object, String uploadId) {
+    return s3AbortMultipartUpload(bucket, object, uploadId, null, null);
+  }
+
+  /** 调用 `S3_GET_OBJECT_ACL`。 */
+  public Mono<String> s3GetObjectAcl(String bucket, String object) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_OBJECT_ACL"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_ACL`。 */
+  public Mono<String> s3PutObjectAcl(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_OBJECT_ACL"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_ACL`，不携带请求体。 */
+  public Mono<String> s3PutObjectAcl(String bucket, String object) {
+    return s3PutObjectAcl(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_GET_OBJECT_TAGGING`。 */
+  public Mono<String> s3GetObjectTagging(String bucket, String object) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_OBJECT_TAGGING"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_TAGGING`。 */
+  public Mono<String> s3PutObjectTagging(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_OBJECT_TAGGING"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_TAGGING`，不携带请求体。 */
+  public Mono<String> s3PutObjectTagging(String bucket, String object) {
+    return s3PutObjectTagging(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_DELETE_OBJECT_TAGGING`。 */
+  public Mono<String> s3DeleteObjectTagging(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_OBJECT_TAGGING"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_OBJECT_TAGGING`，不携带请求体。 */
+  public Mono<String> s3DeleteObjectTagging(String bucket, String object) {
+    return s3DeleteObjectTagging(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_SELECT_OBJECT_CONTENT`。 */
+  public Mono<String> s3SelectObjectContent(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_SELECT_OBJECT_CONTENT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_SELECT_OBJECT_CONTENT`，不携带请求体。 */
+  public Mono<String> s3SelectObjectContent(String bucket, String object) {
+    return s3SelectObjectContent(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_GET_OBJECT_RETENTION`。 */
+  public Mono<String> s3GetObjectRetention(String bucket, String object) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_OBJECT_RETENTION"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_OBJECT_LEGAL_HOLD`。 */
+  public Mono<String> s3GetObjectLegalHold(String bucket, String object) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_OBJECT_LEGAL_HOLD"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_OBJECT_LAMBDA`。 */
+  public Mono<String> s3GetObjectLambda(String bucket, String object, String lambdaArn) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_OBJECT_LAMBDA"), map("bucket", bucket, "object", object), map("lambdaArn", lambdaArn), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_OBJECT`。 */
+  public Mono<String> s3GetObject(String bucket, String object) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_COPY_OBJECT`。 */
+  public Mono<String> s3CopyObject(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_COPY_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_COPY_OBJECT`，不携带请求体。 */
+  public Mono<String> s3CopyObject(String bucket, String object) {
+    return s3CopyObject(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_RETENTION`。 */
+  public Mono<String> s3PutObjectRetention(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_OBJECT_RETENTION"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_RETENTION`，不携带请求体。 */
+  public Mono<String> s3PutObjectRetention(String bucket, String object) {
+    return s3PutObjectRetention(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_LEGAL_HOLD`。 */
+  public Mono<String> s3PutObjectLegalHold(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_OBJECT_LEGAL_HOLD"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_LEGAL_HOLD`，不携带请求体。 */
+  public Mono<String> s3PutObjectLegalHold(String bucket, String object) {
+    return s3PutObjectLegalHold(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_EXTRACT`。 */
+  public Mono<String> s3PutObjectExtract(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_OBJECT_EXTRACT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_OBJECT_EXTRACT`，不携带请求体。 */
+  public Mono<String> s3PutObjectExtract(String bucket, String object) {
+    return s3PutObjectExtract(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_PUT_OBJECT`。 */
+  public Mono<String> s3PutObject(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_OBJECT`，不携带请求体。 */
+  public Mono<String> s3PutObject(String bucket, String object) {
+    return s3PutObject(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_DELETE_OBJECT`。 */
+  public Mono<String> s3DeleteObject(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_OBJECT`，不携带请求体。 */
+  public Mono<String> s3DeleteObject(String bucket, String object) {
+    return s3DeleteObject(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_POST_RESTORE_OBJECT`。 */
+  public Mono<String> s3PostRestoreObject(String bucket, String object, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_POST_RESTORE_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_POST_RESTORE_OBJECT`，不携带请求体。 */
+  public Mono<String> s3PostRestoreObject(String bucket, String object) {
+    return s3PostRestoreObject(bucket, object, null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_LOCATION`。 */
+  public Mono<String> s3GetBucketLocation(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_LOCATION"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_POLICY`。 */
+  public Mono<String> s3GetBucketPolicy(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_POLICY"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_LIFECYCLE`。 */
+  public Mono<String> s3GetBucketLifecycle(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_LIFECYCLE"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_ENCRYPTION`。 */
+  public Mono<String> s3GetBucketEncryption(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_ENCRYPTION"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_OBJECT_LOCK`。 */
+  public Mono<String> s3GetBucketObjectLock(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_OBJECT_LOCK"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_REPLICATION`。 */
+  public Mono<String> s3GetBucketReplication(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_REPLICATION"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_VERSIONING`。 */
+  public Mono<String> s3GetBucketVersioning(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_VERSIONING"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_NOTIFICATION`。 */
+  public Mono<String> s3GetBucketNotification(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_NOTIFICATION"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LISTEN_BUCKET_NOTIFICATION`。 */
+  public Mono<String> s3ListenBucketNotification(String bucket, String events) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LISTEN_BUCKET_NOTIFICATION"), map("bucket", bucket), map("events", events), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_RESET_BUCKET_REPLICATION_STATUS`。 */
+  public Mono<String> s3ResetBucketReplicationStatus(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_RESET_BUCKET_REPLICATION_STATUS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_ACL`。 */
+  public Mono<String> s3GetBucketAcl(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_ACL"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_ACL`。 */
+  public Mono<String> s3PutBucketAcl(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_ACL"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_ACL`，不携带请求体。 */
+  public Mono<String> s3PutBucketAcl(String bucket) {
+    return s3PutBucketAcl(bucket, null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_CORS`。 */
+  public Mono<String> s3GetBucketCors(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_CORS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_CORS`。 */
+  public Mono<String> s3PutBucketCors(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_CORS"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_CORS`，不携带请求体。 */
+  public Mono<String> s3PutBucketCors(String bucket) {
+    return s3PutBucketCors(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_CORS`。 */
+  public Mono<String> s3DeleteBucketCors(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET_CORS"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_CORS`，不携带请求体。 */
+  public Mono<String> s3DeleteBucketCors(String bucket) {
+    return s3DeleteBucketCors(bucket, null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_WEBSITE`。 */
+  public Mono<String> s3GetBucketWebsite(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_WEBSITE"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_ACCELERATE`。 */
+  public Mono<String> s3GetBucketAccelerate(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_ACCELERATE"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_REQUEST_PAYMENT`。 */
+  public Mono<String> s3GetBucketRequestPayment(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_REQUEST_PAYMENT"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_LOGGING`。 */
+  public Mono<String> s3GetBucketLogging(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_LOGGING"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_TAGGING`。 */
+  public Mono<String> s3GetBucketTagging(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_TAGGING"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_WEBSITE`。 */
+  public Mono<String> s3DeleteBucketWebsite(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET_WEBSITE"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_WEBSITE`，不携带请求体。 */
+  public Mono<String> s3DeleteBucketWebsite(String bucket) {
+    return s3DeleteBucketWebsite(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_TAGGING`。 */
+  public Mono<String> s3DeleteBucketTagging(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET_TAGGING"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_TAGGING`，不携带请求体。 */
+  public Mono<String> s3DeleteBucketTagging(String bucket) {
+    return s3DeleteBucketTagging(bucket, null, null);
+  }
+
+  /** 调用 `S3_LIST_MULTIPART_UPLOADS`。 */
+  public Mono<String> s3ListMultipartUploads(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_MULTIPART_UPLOADS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LIST_OBJECTS_V2_WITH_METADATA`。 */
+  public Mono<String> s3ListObjectsV2WithMetadata(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_OBJECTS_V2_WITH_METADATA"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LIST_OBJECTS_V2`。 */
+  public Mono<String> s3ListObjectsV2(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_OBJECTS_V2"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LIST_OBJECT_VERSIONS_WITH_METADATA`。 */
+  public Mono<String> s3ListObjectVersionsWithMetadata(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_OBJECT_VERSIONS_WITH_METADATA"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LIST_OBJECT_VERSIONS`。 */
+  public Mono<String> s3ListObjectVersions(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_OBJECT_VERSIONS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_POLICY_STATUS`。 */
+  public Mono<String> s3GetBucketPolicyStatus(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_POLICY_STATUS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_LIFECYCLE`。 */
+  public Mono<String> s3PutBucketLifecycle(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_LIFECYCLE"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_LIFECYCLE`，不携带请求体。 */
+  public Mono<String> s3PutBucketLifecycle(String bucket) {
+    return s3PutBucketLifecycle(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_REPLICATION`。 */
+  public Mono<String> s3PutBucketReplication(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_REPLICATION"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_REPLICATION`，不携带请求体。 */
+  public Mono<String> s3PutBucketReplication(String bucket) {
+    return s3PutBucketReplication(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_ENCRYPTION`。 */
+  public Mono<String> s3PutBucketEncryption(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_ENCRYPTION"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_ENCRYPTION`，不携带请求体。 */
+  public Mono<String> s3PutBucketEncryption(String bucket) {
+    return s3PutBucketEncryption(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_POLICY`。 */
+  public Mono<String> s3PutBucketPolicy(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_POLICY"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_POLICY`，不携带请求体。 */
+  public Mono<String> s3PutBucketPolicy(String bucket) {
+    return s3PutBucketPolicy(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_OBJECT_LOCK`。 */
+  public Mono<String> s3PutBucketObjectLock(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_OBJECT_LOCK"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_OBJECT_LOCK`，不携带请求体。 */
+  public Mono<String> s3PutBucketObjectLock(String bucket) {
+    return s3PutBucketObjectLock(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_TAGGING`。 */
+  public Mono<String> s3PutBucketTagging(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_TAGGING"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_TAGGING`，不携带请求体。 */
+  public Mono<String> s3PutBucketTagging(String bucket) {
+    return s3PutBucketTagging(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_VERSIONING`。 */
+  public Mono<String> s3PutBucketVersioning(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_VERSIONING"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_VERSIONING`，不携带请求体。 */
+  public Mono<String> s3PutBucketVersioning(String bucket) {
+    return s3PutBucketVersioning(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_NOTIFICATION`。 */
+  public Mono<String> s3PutBucketNotification(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET_NOTIFICATION"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET_NOTIFICATION`，不携带请求体。 */
+  public Mono<String> s3PutBucketNotification(String bucket) {
+    return s3PutBucketNotification(bucket, null, null);
+  }
+
+  /** 调用 `S3_RESET_BUCKET_REPLICATION_START`。 */
+  public Mono<String> s3ResetBucketReplicationStart(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_RESET_BUCKET_REPLICATION_START"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_RESET_BUCKET_REPLICATION_START`，不携带请求体。 */
+  public Mono<String> s3ResetBucketReplicationStart(String bucket) {
+    return s3ResetBucketReplicationStart(bucket, null, null);
+  }
+
+  /** 调用 `S3_PUT_BUCKET`。 */
+  public Mono<String> s3PutBucket(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_PUT_BUCKET"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_PUT_BUCKET`，不携带请求体。 */
+  public Mono<String> s3PutBucket(String bucket) {
+    return s3PutBucket(bucket, null, null);
+  }
+
+  /** 调用 `S3_HEAD_BUCKET`。 */
+  public Mono<Integer> s3HeadBucket(String bucket) {
+    return endpointExecutor()
+        .executeToStatus(endpoint("S3_HEAD_BUCKET"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_POST_POLICY_BUCKET`。 */
+  public Mono<String> s3PostPolicyBucket(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_POST_POLICY_BUCKET"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_POST_POLICY_BUCKET`，不携带请求体。 */
+  public Mono<String> s3PostPolicyBucket(String bucket) {
+    return s3PostPolicyBucket(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_MULTIPLE_OBJECTS`。 */
+  public Mono<String> s3DeleteMultipleObjects(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_MULTIPLE_OBJECTS"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_MULTIPLE_OBJECTS`，不携带请求体。 */
+  public Mono<String> s3DeleteMultipleObjects(String bucket) {
+    return s3DeleteMultipleObjects(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_POLICY`。 */
+  public Mono<String> s3DeleteBucketPolicy(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET_POLICY"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_POLICY`，不携带请求体。 */
+  public Mono<String> s3DeleteBucketPolicy(String bucket) {
+    return s3DeleteBucketPolicy(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_REPLICATION`。 */
+  public Mono<String> s3DeleteBucketReplication(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET_REPLICATION"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_REPLICATION`，不携带请求体。 */
+  public Mono<String> s3DeleteBucketReplication(String bucket) {
+    return s3DeleteBucketReplication(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_LIFECYCLE`。 */
+  public Mono<String> s3DeleteBucketLifecycle(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET_LIFECYCLE"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_LIFECYCLE`，不携带请求体。 */
+  public Mono<String> s3DeleteBucketLifecycle(String bucket) {
+    return s3DeleteBucketLifecycle(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_ENCRYPTION`。 */
+  public Mono<String> s3DeleteBucketEncryption(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET_ENCRYPTION"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET_ENCRYPTION`，不携带请求体。 */
+  public Mono<String> s3DeleteBucketEncryption(String bucket) {
+    return s3DeleteBucketEncryption(bucket, null, null);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET`。 */
+  public Mono<String> s3DeleteBucket(String bucket, byte[] body, String contentType) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_DELETE_BUCKET"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `S3_DELETE_BUCKET`，不携带请求体。 */
+  public Mono<String> s3DeleteBucket(String bucket) {
+    return s3DeleteBucket(bucket, null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_REPLICATION_METRICS_V2`。 */
+  public Mono<String> s3GetBucketReplicationMetricsV2(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_REPLICATION_METRICS_V2"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_GET_BUCKET_REPLICATION_METRICS`。 */
+  public Mono<String> s3GetBucketReplicationMetrics(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_GET_BUCKET_REPLICATION_METRICS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_VALIDATE_BUCKET_REPLICATION_CREDS`。 */
+  public Mono<String> s3ValidateBucketReplicationCreds(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_VALIDATE_BUCKET_REPLICATION_CREDS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LIST_OBJECTS_V1`。 */
+  public Mono<String> s3ListObjectsV1(String bucket) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_OBJECTS_V1"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LISTEN_ROOT_NOTIFICATION`。 */
+  public Mono<String> s3ListenRootNotification(String events) {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LISTEN_ROOT_NOTIFICATION"), emptyMap(), map("events", events), emptyMap(), null, null);
+  }
+
+  /** 调用 `S3_LIST_BUCKETS`。 */
+  public Mono<String> s3ListBuckets() {
+    return endpointExecutor()
+        .executeToString(endpoint("S3_LIST_BUCKETS"), emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
   // 目录型 S3 原始接口入口结束

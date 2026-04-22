@@ -1,97 +1,56 @@
 package io.minio.reactive;
 
-import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
  * 健康检查专用客户端。
  *
- * <p>这个客户端只提供健康检查相关目录接口的命名入口；响应体先以原始文本返回。
- * 如果某个接口需要二进制、流式或只读响应头，可以通过 `rawClient()` 使用底层兜底调用器。
+ * <p>这个客户端按健康检查接口的业务名称提供方法，调用者不需要直接查目录或拼 Map。
+ * 如果遇到尚未补充业务模型的特殊场景，可以回退使用 `ReactiveMinioRawClient`。
  */
 public final class ReactiveMinioHealthClient extends ReactiveMinioCatalogClientSupport {
-  ReactiveMinioHealthClient(ReactiveMinioRawClient rawClient) {
-    super(rawClient);
+  ReactiveMinioHealthClient(ReactiveMinioEndpointExecutor executor) {
+    super(executor);
   }
 
-  /** 调用目录接口 `HEALTH_CLUSTER_GET`，返回原始文本响应。 */
-  public Mono<String> clusterGet(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_CLUSTER_GET", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_CLUSTER_GET`。 */
+  public Mono<Integer> clusterGet() {
+    return executeToStatus("HEALTH_CLUSTER_GET", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `HEALTH_CLUSTER_HEAD`，返回原始文本响应。 */
-  public Mono<String> clusterHead(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_CLUSTER_HEAD", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_CLUSTER_HEAD`。 */
+  public Mono<Integer> clusterHead() {
+    return executeToStatus("HEALTH_CLUSTER_HEAD", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `HEALTH_CLUSTER_READ_GET`，返回原始文本响应。 */
-  public Mono<String> clusterReadGet(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_CLUSTER_READ_GET", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_CLUSTER_READ_GET`。 */
+  public Mono<Integer> clusterReadGet() {
+    return executeToStatus("HEALTH_CLUSTER_READ_GET", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `HEALTH_CLUSTER_READ_HEAD`，返回原始文本响应。 */
-  public Mono<String> clusterReadHead(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_CLUSTER_READ_HEAD", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_CLUSTER_READ_HEAD`。 */
+  public Mono<Integer> clusterReadHead() {
+    return executeToStatus("HEALTH_CLUSTER_READ_HEAD", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `HEALTH_LIVE_GET`，返回原始文本响应。 */
-  public Mono<String> liveGet(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_LIVE_GET", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_LIVE_GET`。 */
+  public Mono<Integer> liveGet() {
+    return executeToStatus("HEALTH_LIVE_GET", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `HEALTH_LIVE_HEAD`，返回原始文本响应。 */
-  public Mono<String> liveHead(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_LIVE_HEAD", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_LIVE_HEAD`。 */
+  public Mono<Integer> liveHead() {
+    return executeToStatus("HEALTH_LIVE_HEAD", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `HEALTH_READY_GET`，返回原始文本响应。 */
-  public Mono<String> readyGet(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_READY_GET", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_READY_GET`。 */
+  public Mono<Integer> readyGet() {
+    return executeToStatus("HEALTH_READY_GET", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `HEALTH_READY_HEAD`，返回原始文本响应。 */
-  public Mono<String> readyHead(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("HEALTH_READY_HEAD", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `HEALTH_READY_HEAD`。 */
+  public Mono<Integer> readyHead() {
+    return executeToStatus("HEALTH_READY_HEAD", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
 }

@@ -1,87 +1,56 @@
 package io.minio.reactive;
 
-import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
  * KMS 专用客户端。
  *
- * <p>这个客户端只提供KMS相关目录接口的命名入口；响应体先以原始文本返回。
- * 如果某个接口需要二进制、流式或只读响应头，可以通过 `rawClient()` 使用底层兜底调用器。
+ * <p>这个客户端按KMS接口的业务名称提供方法，调用者不需要直接查目录或拼 Map。
+ * 如果遇到尚未补充业务模型的特殊场景，可以回退使用 `ReactiveMinioRawClient`。
  */
 public final class ReactiveMinioKmsClient extends ReactiveMinioCatalogClientSupport {
-  ReactiveMinioKmsClient(ReactiveMinioRawClient rawClient) {
-    super(rawClient);
+  ReactiveMinioKmsClient(ReactiveMinioEndpointExecutor executor) {
+    super(executor);
   }
 
-  /** 调用目录接口 `KMS_STATUS`，返回原始文本响应。 */
-  public Mono<String> status(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("KMS_STATUS", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `KMS_STATUS`。 */
+  public Mono<String> status() {
+    return executeToString("KMS_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `KMS_METRICS`，返回原始文本响应。 */
-  public Mono<String> metrics(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("KMS_METRICS", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `KMS_METRICS`。 */
+  public Mono<String> metrics() {
+    return executeToString("KMS_METRICS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `KMS_APIS`，返回原始文本响应。 */
-  public Mono<String> apis(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("KMS_APIS", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `KMS_APIS`。 */
+  public Mono<String> apis() {
+    return executeToString("KMS_APIS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `KMS_VERSION`，返回原始文本响应。 */
-  public Mono<String> version(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("KMS_VERSION", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `KMS_VERSION`。 */
+  public Mono<String> version() {
+    return executeToString("KMS_VERSION", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用目录接口 `KMS_KEY_CREATE`，返回原始文本响应。 */
-  public Mono<String> keyCreate(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("KMS_KEY_CREATE", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `KMS_KEY_CREATE`。 */
+  public Mono<String> keyCreate(String keyId, byte[] body, String contentType) {
+    return executeToString("KMS_KEY_CREATE", emptyMap(), map("key-id", keyId), emptyMap(), body, contentType);
   }
 
-  /** 调用目录接口 `KMS_KEY_LIST`，返回原始文本响应。 */
-  public Mono<String> keyList(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("KMS_KEY_LIST", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `KMS_KEY_CREATE`，不携带请求体。 */
+  public Mono<String> keyCreate(String keyId) {
+    return keyCreate(keyId, null, null);
   }
 
-  /** 调用目录接口 `KMS_KEY_STATUS`，返回原始文本响应。 */
-  public Mono<String> keyStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("KMS_KEY_STATUS", pathVariables, queryParameters, headers, body, contentType);
+  /** 调用 `KMS_KEY_LIST`。 */
+  public Mono<String> keyList(String pattern) {
+    return executeToString("KMS_KEY_LIST", emptyMap(), map("pattern", pattern), emptyMap(), null, null);
+  }
+
+  /** 调用 `KMS_KEY_STATUS`。 */
+  public Mono<String> keyStatus() {
+    return executeToString("KMS_KEY_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
 }

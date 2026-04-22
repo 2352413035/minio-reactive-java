@@ -1,1297 +1,1021 @@
 package io.minio.reactive;
 
-import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
  * 管理端专用客户端。
  *
- * <p>这个客户端只提供管理端相关目录接口的命名入口；响应体先以原始文本返回。
- * 如果某个接口需要二进制、流式或只读响应头，可以通过 `rawClient()` 使用底层兜底调用器。
+ * <p>这个客户端按管理端接口的业务名称提供方法，调用者不需要直接查目录或拼 Map。
+ * 如果遇到尚未补充业务模型的特殊场景，可以回退使用 `ReactiveMinioRawClient`。
  */
 public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSupport {
-  ReactiveMinioAdminClient(ReactiveMinioRawClient rawClient) {
-    super(rawClient);
-  }
-
-  /** 调用目录接口 `ADMIN_SERVICE_V2`，返回原始文本响应。 */
-  public Mono<String> serviceV2(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SERVICE_V2", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SERVICE`，返回原始文本响应。 */
-  public Mono<String> service(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SERVICE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SERVER_UPDATE_V2`，返回原始文本响应。 */
-  public Mono<String> serverUpdateV2(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SERVER_UPDATE_V2", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SERVER_UPDATE`，返回原始文本响应。 */
-  public Mono<String> serverUpdate(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SERVER_UPDATE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SERVER_INFO`，返回原始文本响应。 */
-  public Mono<String> serverInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SERVER_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_INSPECT_DATA_GET`，返回原始文本响应。 */
-  public Mono<String> inspectDataGet(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_INSPECT_DATA_GET", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_INSPECT_DATA_POST`，返回原始文本响应。 */
-  public Mono<String> inspectDataPost(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_INSPECT_DATA_POST", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_STORAGE_INFO`，返回原始文本响应。 */
-  public Mono<String> storageInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_STORAGE_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_DATA_USAGE_INFO`，返回原始文本响应。 */
-  public Mono<String> dataUsageInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_DATA_USAGE_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_METRICS`，返回原始文本响应。 */
-  public Mono<String> metrics(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_METRICS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_HEAL_ROOT`，返回原始文本响应。 */
-  public Mono<String> healRoot(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_HEAL_ROOT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_HEAL_BUCKET`，返回原始文本响应。 */
-  public Mono<String> healBucket(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_HEAL_BUCKET", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_HEAL_PREFIX`，返回原始文本响应。 */
-  public Mono<String> healPrefix(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_HEAL_PREFIX", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_BACKGROUND_HEAL_STATUS`，返回原始文本响应。 */
-  public Mono<String> backgroundHealStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_BACKGROUND_HEAL_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_POOLS`，返回原始文本响应。 */
-  public Mono<String> listPools(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_POOLS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_POOL_STATUS`，返回原始文本响应。 */
-  public Mono<String> poolStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_POOL_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_START_DECOMMISSION`，返回原始文本响应。 */
-  public Mono<String> startDecommission(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_START_DECOMMISSION", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_CANCEL_DECOMMISSION`，返回原始文本响应。 */
-  public Mono<String> cancelDecommission(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_CANCEL_DECOMMISSION", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REBALANCE_START`，返回原始文本响应。 */
-  public Mono<String> rebalanceStart(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REBALANCE_START", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REBALANCE_STATUS`，返回原始文本响应。 */
-  public Mono<String> rebalanceStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REBALANCE_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REBALANCE_STOP`，返回原始文本响应。 */
-  public Mono<String> rebalanceStop(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REBALANCE_STOP", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_PROFILING_START`，返回原始文本响应。 */
-  public Mono<String> profilingStart(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_PROFILING_START", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_PROFILING_DOWNLOAD`，返回原始文本响应。 */
-  public Mono<String> profilingDownload(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_PROFILING_DOWNLOAD", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_PROFILE`，返回原始文本响应。 */
-  public Mono<String> profile(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_PROFILE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_GET_CONFIG_KV`，返回原始文本响应。 */
-  public Mono<String> getConfigKv(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_GET_CONFIG_KV", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SET_CONFIG_KV`，返回原始文本响应。 */
-  public Mono<String> setConfigKv(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SET_CONFIG_KV", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_DELETE_CONFIG_KV`，返回原始文本响应。 */
-  public Mono<String> deleteConfigKv(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_DELETE_CONFIG_KV", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_HELP_CONFIG_KV`，返回原始文本响应。 */
-  public Mono<String> helpConfigKv(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_HELP_CONFIG_KV", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_CONFIG_HISTORY_KV`，返回原始文本响应。 */
-  public Mono<String> listConfigHistoryKv(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_CONFIG_HISTORY_KV", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_CLEAR_CONFIG_HISTORY_KV`，返回原始文本响应。 */
-  public Mono<String> clearConfigHistoryKv(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_CLEAR_CONFIG_HISTORY_KV", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_RESTORE_CONFIG_HISTORY_KV`，返回原始文本响应。 */
-  public Mono<String> restoreConfigHistoryKv(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_RESTORE_CONFIG_HISTORY_KV", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_GET_CONFIG`，返回原始文本响应。 */
-  public Mono<String> getConfig(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_GET_CONFIG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SET_CONFIG`，返回原始文本响应。 */
-  public Mono<String> setConfig(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SET_CONFIG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_ADD_CANNED_POLICY`，返回原始文本响应。 */
-  public Mono<String> addCannedPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_ADD_CANNED_POLICY", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_ACCOUNT_INFO`，返回原始文本响应。 */
-  public Mono<String> accountInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_ACCOUNT_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_ADD_USER`，返回原始文本响应。 */
-  public Mono<String> addUser(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_ADD_USER", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SET_USER_STATUS`，返回原始文本响应。 */
-  public Mono<String> setUserStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SET_USER_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_ADD_SERVICE_ACCOUNT`，返回原始文本响应。 */
-  public Mono<String> addServiceAccount(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_ADD_SERVICE_ACCOUNT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_UPDATE_SERVICE_ACCOUNT`，返回原始文本响应。 */
-  public Mono<String> updateServiceAccount(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_UPDATE_SERVICE_ACCOUNT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_INFO_SERVICE_ACCOUNT`，返回原始文本响应。 */
-  public Mono<String> infoServiceAccount(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_INFO_SERVICE_ACCOUNT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_SERVICE_ACCOUNTS`，返回原始文本响应。 */
-  public Mono<String> listServiceAccounts(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_SERVICE_ACCOUNTS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_DELETE_SERVICE_ACCOUNT`，返回原始文本响应。 */
-  public Mono<String> deleteServiceAccount(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_DELETE_SERVICE_ACCOUNT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_TEMPORARY_ACCOUNT_INFO`，返回原始文本响应。 */
-  public Mono<String> temporaryAccountInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_TEMPORARY_ACCOUNT_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_ACCESS_KEYS_BULK`，返回原始文本响应。 */
-  public Mono<String> listAccessKeysBulk(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_ACCESS_KEYS_BULK", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_INFO_ACCESS_KEY`，返回原始文本响应。 */
-  public Mono<String> infoAccessKey(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_INFO_ACCESS_KEY", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_INFO_CANNED_POLICY`，返回原始文本响应。 */
-  public Mono<String> infoCannedPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_INFO_CANNED_POLICY", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_BUCKET_POLICIES`，返回原始文本响应。 */
-  public Mono<String> listBucketPolicies(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_BUCKET_POLICIES", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_CANNED_POLICIES`，返回原始文本响应。 */
-  public Mono<String> listCannedPolicies(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_CANNED_POLICIES", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_BUILTIN_POLICY_ENTITIES`，返回原始文本响应。 */
-  public Mono<String> listBuiltinPolicyEntities(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_BUILTIN_POLICY_ENTITIES", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REMOVE_CANNED_POLICY`，返回原始文本响应。 */
-  public Mono<String> removeCannedPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REMOVE_CANNED_POLICY", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SET_USER_OR_GROUP_POLICY`，返回原始文本响应。 */
-  public Mono<String> setUserOrGroupPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SET_USER_OR_GROUP_POLICY", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_ATTACH_DETACH_BUILTIN_POLICY`，返回原始文本响应。 */
-  public Mono<String> attachDetachBuiltinPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_ATTACH_DETACH_BUILTIN_POLICY", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REMOVE_USER`，返回原始文本响应。 */
-  public Mono<String> removeUser(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REMOVE_USER", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_BUCKET_USERS`，返回原始文本响应。 */
-  public Mono<String> listBucketUsers(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_BUCKET_USERS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_USERS`，返回原始文本响应。 */
-  public Mono<String> listUsers(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_USERS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_USER_INFO`，返回原始文本响应。 */
-  public Mono<String> userInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_USER_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_UPDATE_GROUP_MEMBERS`，返回原始文本响应。 */
-  public Mono<String> updateGroupMembers(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_UPDATE_GROUP_MEMBERS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_GET_GROUP`，返回原始文本响应。 */
-  public Mono<String> getGroup(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_GET_GROUP", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_GROUPS`，返回原始文本响应。 */
-  public Mono<String> listGroups(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_GROUPS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SET_GROUP_STATUS`，返回原始文本响应。 */
-  public Mono<String> setGroupStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SET_GROUP_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_EXPORT_IAM`，返回原始文本响应。 */
-  public Mono<String> exportIam(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_EXPORT_IAM", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_IMPORT_IAM`，返回原始文本响应。 */
-  public Mono<String> importIam(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_IMPORT_IAM", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_IMPORT_IAM_V2`，返回原始文本响应。 */
-  public Mono<String> importIamV2(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_IMPORT_IAM_V2", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_ADD_IDP_CONFIG`，返回原始文本响应。 */
-  public Mono<String> addIdpConfig(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_ADD_IDP_CONFIG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_UPDATE_IDP_CONFIG`，返回原始文本响应。 */
-  public Mono<String> updateIdpConfig(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_UPDATE_IDP_CONFIG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_IDP_CONFIG`，返回原始文本响应。 */
-  public Mono<String> listIdpConfig(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_IDP_CONFIG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_GET_IDP_CONFIG`，返回原始文本响应。 */
-  public Mono<String> getIdpConfig(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_GET_IDP_CONFIG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_DELETE_IDP_CONFIG`，返回原始文本响应。 */
-  public Mono<String> deleteIdpConfig(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_DELETE_IDP_CONFIG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LDAP_ADD_SERVICE_ACCOUNT`，返回原始文本响应。 */
-  public Mono<String> ldapAddServiceAccount(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LDAP_ADD_SERVICE_ACCOUNT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LDAP_LIST_ACCESS_KEYS`，返回原始文本响应。 */
-  public Mono<String> ldapListAccessKeys(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LDAP_LIST_ACCESS_KEYS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LDAP_LIST_ACCESS_KEYS_BULK`，返回原始文本响应。 */
-  public Mono<String> ldapListAccessKeysBulk(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LDAP_LIST_ACCESS_KEYS_BULK", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LDAP_POLICY_ENTITIES`，返回原始文本响应。 */
-  public Mono<String> ldapPolicyEntities(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LDAP_POLICY_ENTITIES", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LDAP_ATTACH_DETACH_POLICY`，返回原始文本响应。 */
-  public Mono<String> ldapAttachDetachPolicy(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LDAP_ATTACH_DETACH_POLICY", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_OPENID_LIST_ACCESS_KEYS_BULK`，返回原始文本响应。 */
-  public Mono<String> openidListAccessKeysBulk(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_OPENID_LIST_ACCESS_KEYS_BULK", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_GET_BUCKET_QUOTA`，返回原始文本响应。 */
-  public Mono<String> getBucketQuota(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_GET_BUCKET_QUOTA", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SET_BUCKET_QUOTA`，返回原始文本响应。 */
-  public Mono<String> setBucketQuota(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SET_BUCKET_QUOTA", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_REMOTE_TARGETS`，返回原始文本响应。 */
-  public Mono<String> listRemoteTargets(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_REMOTE_TARGETS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SET_REMOTE_TARGET`，返回原始文本响应。 */
-  public Mono<String> setRemoteTarget(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SET_REMOTE_TARGET", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REMOVE_REMOTE_TARGET`，返回原始文本响应。 */
-  public Mono<String> removeRemoteTarget(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REMOVE_REMOTE_TARGET", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REPLICATION_DIFF`，返回原始文本响应。 */
-  public Mono<String> replicationDiff(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REPLICATION_DIFF", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REPLICATION_MRF`，返回原始文本响应。 */
-  public Mono<String> replicationMrf(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REPLICATION_MRF", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_START_BATCH_JOB`，返回原始文本响应。 */
-  public Mono<String> startBatchJob(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_START_BATCH_JOB", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_BATCH_JOBS`，返回原始文本响应。 */
-  public Mono<String> listBatchJobs(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_BATCH_JOBS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_BATCH_JOB_STATUS`，返回原始文本响应。 */
-  public Mono<String> batchJobStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_BATCH_JOB_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_DESCRIBE_BATCH_JOB`，返回原始文本响应。 */
-  public Mono<String> describeBatchJob(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_DESCRIBE_BATCH_JOB", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_CANCEL_BATCH_JOB`，返回原始文本响应。 */
-  public Mono<String> cancelBatchJob(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_CANCEL_BATCH_JOB", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_EXPORT_BUCKET_METADATA`，返回原始文本响应。 */
-  public Mono<String> exportBucketMetadata(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_EXPORT_BUCKET_METADATA", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_IMPORT_BUCKET_METADATA`，返回原始文本响应。 */
-  public Mono<String> importBucketMetadata(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_IMPORT_BUCKET_METADATA", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_ADD_TIER`，返回原始文本响应。 */
-  public Mono<String> addTier(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_ADD_TIER", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_EDIT_TIER`，返回原始文本响应。 */
-  public Mono<String> editTier(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_EDIT_TIER", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LIST_TIER`，返回原始文本响应。 */
-  public Mono<String> listTier(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LIST_TIER", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REMOVE_TIER`，返回原始文本响应。 */
-  public Mono<String> removeTier(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REMOVE_TIER", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_VERIFY_TIER`，返回原始文本响应。 */
-  public Mono<String> verifyTier(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_VERIFY_TIER", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_TIER_STATS`，返回原始文本响应。 */
-  public Mono<String> tierStats(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_TIER_STATS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_ADD`，返回原始文本响应。 */
-  public Mono<String> siteReplicationAdd(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_ADD", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_REMOVE`，返回原始文本响应。 */
-  public Mono<String> siteReplicationRemove(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_REMOVE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_INFO`，返回原始文本响应。 */
-  public Mono<String> siteReplicationInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_METAINFO`，返回原始文本响应。 */
-  public Mono<String> siteReplicationMetainfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_METAINFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_STATUS`，返回原始文本响应。 */
-  public Mono<String> siteReplicationStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_DEVNULL`，返回原始文本响应。 */
-  public Mono<String> siteReplicationDevnull(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_DEVNULL", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_NETPERF`，返回原始文本响应。 */
-  public Mono<String> siteReplicationNetperf(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_NETPERF", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_PEER_JOIN`，返回原始文本响应。 */
-  public Mono<String> srPeerJoin(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_PEER_JOIN", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_PEER_BUCKET_OPS`，返回原始文本响应。 */
-  public Mono<String> srPeerBucketOps(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_PEER_BUCKET_OPS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_PEER_IAM_ITEM`，返回原始文本响应。 */
-  public Mono<String> srPeerIamItem(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_PEER_IAM_ITEM", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_PEER_BUCKET_META`，返回原始文本响应。 */
-  public Mono<String> srPeerBucketMeta(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_PEER_BUCKET_META", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_PEER_IDP_SETTINGS`，返回原始文本响应。 */
-  public Mono<String> srPeerIdpSettings(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_PEER_IDP_SETTINGS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_EDIT`，返回原始文本响应。 */
-  public Mono<String> siteReplicationEdit(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_EDIT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_PEER_EDIT`，返回原始文本响应。 */
-  public Mono<String> srPeerEdit(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_PEER_EDIT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_PEER_REMOVE`，返回原始文本响应。 */
-  public Mono<String> srPeerRemove(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_PEER_REMOVE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SITE_REPLICATION_RESYNC_OP`，返回原始文本响应。 */
-  public Mono<String> siteReplicationResyncOp(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_RESYNC_OP", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SR_STATE_EDIT`，返回原始文本响应。 */
-  public Mono<String> srStateEdit(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SR_STATE_EDIT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_TOP_LOCKS`，返回原始文本响应。 */
-  public Mono<String> topLocks(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_TOP_LOCKS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_FORCE_UNLOCK`，返回原始文本响应。 */
-  public Mono<String> forceUnlock(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_FORCE_UNLOCK", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SPEEDTEST`，返回原始文本响应。 */
-  public Mono<String> speedtest(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SPEEDTEST", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SPEEDTEST_OBJECT`，返回原始文本响应。 */
-  public Mono<String> speedtestObject(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_OBJECT", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SPEEDTEST_DRIVE`，返回原始文本响应。 */
-  public Mono<String> speedtestDrive(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_DRIVE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SPEEDTEST_NET`，返回原始文本响应。 */
-  public Mono<String> speedtestNet(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_NET", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_SPEEDTEST_SITE`，返回原始文本响应。 */
-  public Mono<String> speedtestSite(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_SITE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_CLIENT_DEVNULL`，返回原始文本响应。 */
-  public Mono<String> clientDevnull(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_CLIENT_DEVNULL", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_CLIENT_DEVNULL_EXTRA_TIME`，返回原始文本响应。 */
-  public Mono<String> clientDevnullExtraTime(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_CLIENT_DEVNULL_EXTRA_TIME", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_TRACE`，返回原始文本响应。 */
-  public Mono<String> trace(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_TRACE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_LOG`，返回原始文本响应。 */
-  public Mono<String> log(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_LOG", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_KMS_STATUS`，返回原始文本响应。 */
-  public Mono<String> kmsStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_KMS_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_KMS_KEY_CREATE`，返回原始文本响应。 */
-  public Mono<String> kmsKeyCreate(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_KMS_KEY_CREATE", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_KMS_KEY_STATUS`，返回原始文本响应。 */
-  public Mono<String> kmsKeyStatus(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_KMS_KEY_STATUS", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_OBD_INFO`，返回原始文本响应。 */
-  public Mono<String> obdInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_OBD_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_HEALTH_INFO`，返回原始文本响应。 */
-  public Mono<String> healthInfo(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_HEALTH_INFO", pathVariables, queryParameters, headers, body, contentType);
-  }
-
-  /** 调用目录接口 `ADMIN_REVOKE_TOKENS`，返回原始文本响应。 */
-  public Mono<String> revokeTokens(
-      Map<String, String> pathVariables,
-      Map<String, String> queryParameters,
-      Map<String, String> headers,
-      byte[] body,
-      String contentType) {
-    return executeToString("ADMIN_REVOKE_TOKENS", pathVariables, queryParameters, headers, body, contentType);
+  ReactiveMinioAdminClient(ReactiveMinioEndpointExecutor executor) {
+    super(executor);
+  }
+
+  /** 调用 `ADMIN_SERVICE_V2`。 */
+  public Mono<String> serviceV2(String action, byte[] body, String contentType) {
+    return executeToString("ADMIN_SERVICE_V2", emptyMap(), map("action", action), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SERVICE_V2`，不携带请求体。 */
+  public Mono<String> serviceV2(String action) {
+    return serviceV2(action, null, null);
+  }
+
+  /** 调用 `ADMIN_SERVICE`。 */
+  public Mono<String> service(String action, byte[] body, String contentType) {
+    return executeToString("ADMIN_SERVICE", emptyMap(), map("action", action), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SERVICE`，不携带请求体。 */
+  public Mono<String> service(String action) {
+    return service(action, null, null);
+  }
+
+  /** 调用 `ADMIN_SERVER_UPDATE_V2`。 */
+  public Mono<String> serverUpdateV2(String updateURL, byte[] body, String contentType) {
+    return executeToString("ADMIN_SERVER_UPDATE_V2", emptyMap(), map("updateURL", updateURL), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SERVER_UPDATE_V2`，不携带请求体。 */
+  public Mono<String> serverUpdateV2(String updateURL) {
+    return serverUpdateV2(updateURL, null, null);
+  }
+
+  /** 调用 `ADMIN_SERVER_UPDATE`。 */
+  public Mono<String> serverUpdate(String updateURL, byte[] body, String contentType) {
+    return executeToString("ADMIN_SERVER_UPDATE", emptyMap(), map("updateURL", updateURL), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SERVER_UPDATE`，不携带请求体。 */
+  public Mono<String> serverUpdate(String updateURL) {
+    return serverUpdate(updateURL, null, null);
+  }
+
+  /** 调用 `ADMIN_SERVER_INFO`。 */
+  public Mono<String> serverInfo() {
+    return executeToString("ADMIN_SERVER_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_INSPECT_DATA_GET`。 */
+  public Mono<String> inspectDataGet() {
+    return executeToString("ADMIN_INSPECT_DATA_GET", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_INSPECT_DATA_POST`。 */
+  public Mono<String> inspectDataPost(byte[] body, String contentType) {
+    return executeToString("ADMIN_INSPECT_DATA_POST", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_INSPECT_DATA_POST`，不携带请求体。 */
+  public Mono<String> inspectDataPost() {
+    return inspectDataPost(null, null);
+  }
+
+  /** 调用 `ADMIN_STORAGE_INFO`。 */
+  public Mono<String> storageInfo() {
+    return executeToString("ADMIN_STORAGE_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_DATA_USAGE_INFO`。 */
+  public Mono<String> dataUsageInfo() {
+    return executeToString("ADMIN_DATA_USAGE_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_METRICS`。 */
+  public Mono<String> metrics() {
+    return executeToString("ADMIN_METRICS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_HEAL_ROOT`。 */
+  public Mono<String> healRoot(byte[] body, String contentType) {
+    return executeToString("ADMIN_HEAL_ROOT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_HEAL_ROOT`，不携带请求体。 */
+  public Mono<String> healRoot() {
+    return healRoot(null, null);
+  }
+
+  /** 调用 `ADMIN_HEAL_BUCKET`。 */
+  public Mono<String> healBucket(String bucket, byte[] body, String contentType) {
+    return executeToString("ADMIN_HEAL_BUCKET", map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_HEAL_BUCKET`，不携带请求体。 */
+  public Mono<String> healBucket(String bucket) {
+    return healBucket(bucket, null, null);
+  }
+
+  /** 调用 `ADMIN_HEAL_PREFIX`。 */
+  public Mono<String> healPrefix(String bucket, String prefix, byte[] body, String contentType) {
+    return executeToString("ADMIN_HEAL_PREFIX", map("bucket", bucket, "prefix", prefix), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_HEAL_PREFIX`，不携带请求体。 */
+  public Mono<String> healPrefix(String bucket, String prefix) {
+    return healPrefix(bucket, prefix, null, null);
+  }
+
+  /** 调用 `ADMIN_BACKGROUND_HEAL_STATUS`。 */
+  public Mono<String> backgroundHealStatus(byte[] body, String contentType) {
+    return executeToString("ADMIN_BACKGROUND_HEAL_STATUS", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_BACKGROUND_HEAL_STATUS`，不携带请求体。 */
+  public Mono<String> backgroundHealStatus() {
+    return backgroundHealStatus(null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_POOLS`。 */
+  public Mono<String> listPools() {
+    return executeToString("ADMIN_LIST_POOLS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_POOL_STATUS`。 */
+  public Mono<String> poolStatus(String pool) {
+    return executeToString("ADMIN_POOL_STATUS", emptyMap(), map("pool", pool), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_START_DECOMMISSION`。 */
+  public Mono<String> startDecommission(String pool, byte[] body, String contentType) {
+    return executeToString("ADMIN_START_DECOMMISSION", emptyMap(), map("pool", pool), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_START_DECOMMISSION`，不携带请求体。 */
+  public Mono<String> startDecommission(String pool) {
+    return startDecommission(pool, null, null);
+  }
+
+  /** 调用 `ADMIN_CANCEL_DECOMMISSION`。 */
+  public Mono<String> cancelDecommission(String pool, byte[] body, String contentType) {
+    return executeToString("ADMIN_CANCEL_DECOMMISSION", emptyMap(), map("pool", pool), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_CANCEL_DECOMMISSION`，不携带请求体。 */
+  public Mono<String> cancelDecommission(String pool) {
+    return cancelDecommission(pool, null, null);
+  }
+
+  /** 调用 `ADMIN_REBALANCE_START`。 */
+  public Mono<String> rebalanceStart(byte[] body, String contentType) {
+    return executeToString("ADMIN_REBALANCE_START", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REBALANCE_START`，不携带请求体。 */
+  public Mono<String> rebalanceStart() {
+    return rebalanceStart(null, null);
+  }
+
+  /** 调用 `ADMIN_REBALANCE_STATUS`。 */
+  public Mono<String> rebalanceStatus() {
+    return executeToString("ADMIN_REBALANCE_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_REBALANCE_STOP`。 */
+  public Mono<String> rebalanceStop(byte[] body, String contentType) {
+    return executeToString("ADMIN_REBALANCE_STOP", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REBALANCE_STOP`，不携带请求体。 */
+  public Mono<String> rebalanceStop() {
+    return rebalanceStop(null, null);
+  }
+
+  /** 调用 `ADMIN_PROFILING_START`。 */
+  public Mono<String> profilingStart(String profilerType, byte[] body, String contentType) {
+    return executeToString("ADMIN_PROFILING_START", emptyMap(), map("profilerType", profilerType), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_PROFILING_START`，不携带请求体。 */
+  public Mono<String> profilingStart(String profilerType) {
+    return profilingStart(profilerType, null, null);
+  }
+
+  /** 调用 `ADMIN_PROFILING_DOWNLOAD`。 */
+  public Mono<String> profilingDownload() {
+    return executeToString("ADMIN_PROFILING_DOWNLOAD", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_PROFILE`。 */
+  public Mono<String> profile(byte[] body, String contentType) {
+    return executeToString("ADMIN_PROFILE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_PROFILE`，不携带请求体。 */
+  public Mono<String> profile() {
+    return profile(null, null);
+  }
+
+  /** 调用 `ADMIN_GET_CONFIG_KV`。 */
+  public Mono<String> getConfigKv(String key) {
+    return executeToString("ADMIN_GET_CONFIG_KV", emptyMap(), map("key", key), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SET_CONFIG_KV`。 */
+  public Mono<String> setConfigKv(byte[] body, String contentType) {
+    return executeToString("ADMIN_SET_CONFIG_KV", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SET_CONFIG_KV`，不携带请求体。 */
+  public Mono<String> setConfigKv() {
+    return setConfigKv(null, null);
+  }
+
+  /** 调用 `ADMIN_DELETE_CONFIG_KV`。 */
+  public Mono<String> deleteConfigKv(byte[] body, String contentType) {
+    return executeToString("ADMIN_DELETE_CONFIG_KV", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_DELETE_CONFIG_KV`，不携带请求体。 */
+  public Mono<String> deleteConfigKv() {
+    return deleteConfigKv(null, null);
+  }
+
+  /** 调用 `ADMIN_HELP_CONFIG_KV`。 */
+  public Mono<String> helpConfigKv(String subSys, String key) {
+    return executeToString("ADMIN_HELP_CONFIG_KV", emptyMap(), map("subSys", subSys, "key", key), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_CONFIG_HISTORY_KV`。 */
+  public Mono<String> listConfigHistoryKv(String count) {
+    return executeToString("ADMIN_LIST_CONFIG_HISTORY_KV", emptyMap(), map("count", count), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_CLEAR_CONFIG_HISTORY_KV`。 */
+  public Mono<String> clearConfigHistoryKv(String restoreId, byte[] body, String contentType) {
+    return executeToString("ADMIN_CLEAR_CONFIG_HISTORY_KV", emptyMap(), map("restoreId", restoreId), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_CLEAR_CONFIG_HISTORY_KV`，不携带请求体。 */
+  public Mono<String> clearConfigHistoryKv(String restoreId) {
+    return clearConfigHistoryKv(restoreId, null, null);
+  }
+
+  /** 调用 `ADMIN_RESTORE_CONFIG_HISTORY_KV`。 */
+  public Mono<String> restoreConfigHistoryKv(String restoreId, byte[] body, String contentType) {
+    return executeToString("ADMIN_RESTORE_CONFIG_HISTORY_KV", emptyMap(), map("restoreId", restoreId), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_RESTORE_CONFIG_HISTORY_KV`，不携带请求体。 */
+  public Mono<String> restoreConfigHistoryKv(String restoreId) {
+    return restoreConfigHistoryKv(restoreId, null, null);
+  }
+
+  /** 调用 `ADMIN_GET_CONFIG`。 */
+  public Mono<String> getConfig() {
+    return executeToString("ADMIN_GET_CONFIG", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SET_CONFIG`。 */
+  public Mono<String> setConfig(byte[] body, String contentType) {
+    return executeToString("ADMIN_SET_CONFIG", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SET_CONFIG`，不携带请求体。 */
+  public Mono<String> setConfig() {
+    return setConfig(null, null);
+  }
+
+  /** 调用 `ADMIN_ADD_CANNED_POLICY`。 */
+  public Mono<String> addCannedPolicy(String name, byte[] body, String contentType) {
+    return executeToString("ADMIN_ADD_CANNED_POLICY", emptyMap(), map("name", name), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_ADD_CANNED_POLICY`，不携带请求体。 */
+  public Mono<String> addCannedPolicy(String name) {
+    return addCannedPolicy(name, null, null);
+  }
+
+  /** 调用 `ADMIN_ACCOUNT_INFO`。 */
+  public Mono<String> accountInfo() {
+    return executeToString("ADMIN_ACCOUNT_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_ADD_USER`。 */
+  public Mono<String> addUser(String accessKey, byte[] body, String contentType) {
+    return executeToString("ADMIN_ADD_USER", emptyMap(), map("accessKey", accessKey), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_ADD_USER`，不携带请求体。 */
+  public Mono<String> addUser(String accessKey) {
+    return addUser(accessKey, null, null);
+  }
+
+  /** 调用 `ADMIN_SET_USER_STATUS`。 */
+  public Mono<String> setUserStatus(String accessKey, String status, byte[] body, String contentType) {
+    return executeToString("ADMIN_SET_USER_STATUS", emptyMap(), map("accessKey", accessKey, "status", status), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SET_USER_STATUS`，不携带请求体。 */
+  public Mono<String> setUserStatus(String accessKey, String status) {
+    return setUserStatus(accessKey, status, null, null);
+  }
+
+  /** 调用 `ADMIN_ADD_SERVICE_ACCOUNT`。 */
+  public Mono<String> addServiceAccount(byte[] body, String contentType) {
+    return executeToString("ADMIN_ADD_SERVICE_ACCOUNT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_ADD_SERVICE_ACCOUNT`，不携带请求体。 */
+  public Mono<String> addServiceAccount() {
+    return addServiceAccount(null, null);
+  }
+
+  /** 调用 `ADMIN_UPDATE_SERVICE_ACCOUNT`。 */
+  public Mono<String> updateServiceAccount(String accessKey, byte[] body, String contentType) {
+    return executeToString("ADMIN_UPDATE_SERVICE_ACCOUNT", emptyMap(), map("accessKey", accessKey), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_UPDATE_SERVICE_ACCOUNT`，不携带请求体。 */
+  public Mono<String> updateServiceAccount(String accessKey) {
+    return updateServiceAccount(accessKey, null, null);
+  }
+
+  /** 调用 `ADMIN_INFO_SERVICE_ACCOUNT`。 */
+  public Mono<String> infoServiceAccount(String accessKey) {
+    return executeToString("ADMIN_INFO_SERVICE_ACCOUNT", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_SERVICE_ACCOUNTS`。 */
+  public Mono<String> listServiceAccounts() {
+    return executeToString("ADMIN_LIST_SERVICE_ACCOUNTS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_DELETE_SERVICE_ACCOUNT`。 */
+  public Mono<String> deleteServiceAccount(String accessKey, byte[] body, String contentType) {
+    return executeToString("ADMIN_DELETE_SERVICE_ACCOUNT", emptyMap(), map("accessKey", accessKey), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_DELETE_SERVICE_ACCOUNT`，不携带请求体。 */
+  public Mono<String> deleteServiceAccount(String accessKey) {
+    return deleteServiceAccount(accessKey, null, null);
+  }
+
+  /** 调用 `ADMIN_TEMPORARY_ACCOUNT_INFO`。 */
+  public Mono<String> temporaryAccountInfo(String accessKey) {
+    return executeToString("ADMIN_TEMPORARY_ACCOUNT_INFO", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_ACCESS_KEYS_BULK`。 */
+  public Mono<String> listAccessKeysBulk(String listType) {
+    return executeToString("ADMIN_LIST_ACCESS_KEYS_BULK", emptyMap(), map("listType", listType), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_INFO_ACCESS_KEY`。 */
+  public Mono<String> infoAccessKey(String accessKey) {
+    return executeToString("ADMIN_INFO_ACCESS_KEY", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_INFO_CANNED_POLICY`。 */
+  public Mono<String> infoCannedPolicy(String name) {
+    return executeToString("ADMIN_INFO_CANNED_POLICY", emptyMap(), map("name", name), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_BUCKET_POLICIES`。 */
+  public Mono<String> listBucketPolicies(String bucket) {
+    return executeToString("ADMIN_LIST_BUCKET_POLICIES", emptyMap(), map("bucket", bucket), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_CANNED_POLICIES`。 */
+  public Mono<String> listCannedPolicies() {
+    return executeToString("ADMIN_LIST_CANNED_POLICIES", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_BUILTIN_POLICY_ENTITIES`。 */
+  public Mono<String> listBuiltinPolicyEntities() {
+    return executeToString("ADMIN_LIST_BUILTIN_POLICY_ENTITIES", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_REMOVE_CANNED_POLICY`。 */
+  public Mono<String> removeCannedPolicy(String name, byte[] body, String contentType) {
+    return executeToString("ADMIN_REMOVE_CANNED_POLICY", emptyMap(), map("name", name), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REMOVE_CANNED_POLICY`，不携带请求体。 */
+  public Mono<String> removeCannedPolicy(String name) {
+    return removeCannedPolicy(name, null, null);
+  }
+
+  /** 调用 `ADMIN_SET_USER_OR_GROUP_POLICY`。 */
+  public Mono<String> setUserOrGroupPolicy(String policyName, String userOrGroup, String isGroup, byte[] body, String contentType) {
+    return executeToString("ADMIN_SET_USER_OR_GROUP_POLICY", emptyMap(), map("policyName", policyName, "userOrGroup", userOrGroup, "isGroup", isGroup), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SET_USER_OR_GROUP_POLICY`，不携带请求体。 */
+  public Mono<String> setUserOrGroupPolicy(String policyName, String userOrGroup, String isGroup) {
+    return setUserOrGroupPolicy(policyName, userOrGroup, isGroup, null, null);
+  }
+
+  /** 调用 `ADMIN_ATTACH_DETACH_BUILTIN_POLICY`。 */
+  public Mono<String> attachDetachBuiltinPolicy(String operation, byte[] body, String contentType) {
+    return executeToString("ADMIN_ATTACH_DETACH_BUILTIN_POLICY", map("operation", operation), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_ATTACH_DETACH_BUILTIN_POLICY`，不携带请求体。 */
+  public Mono<String> attachDetachBuiltinPolicy(String operation) {
+    return attachDetachBuiltinPolicy(operation, null, null);
+  }
+
+  /** 调用 `ADMIN_REMOVE_USER`。 */
+  public Mono<String> removeUser(String accessKey, byte[] body, String contentType) {
+    return executeToString("ADMIN_REMOVE_USER", emptyMap(), map("accessKey", accessKey), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REMOVE_USER`，不携带请求体。 */
+  public Mono<String> removeUser(String accessKey) {
+    return removeUser(accessKey, null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_BUCKET_USERS`。 */
+  public Mono<String> listBucketUsers(String bucket) {
+    return executeToString("ADMIN_LIST_BUCKET_USERS", emptyMap(), map("bucket", bucket), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_USERS`。 */
+  public Mono<String> listUsers() {
+    return executeToString("ADMIN_LIST_USERS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_USER_INFO`。 */
+  public Mono<String> userInfo(String accessKey) {
+    return executeToString("ADMIN_USER_INFO", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_UPDATE_GROUP_MEMBERS`。 */
+  public Mono<String> updateGroupMembers(byte[] body, String contentType) {
+    return executeToString("ADMIN_UPDATE_GROUP_MEMBERS", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_UPDATE_GROUP_MEMBERS`，不携带请求体。 */
+  public Mono<String> updateGroupMembers() {
+    return updateGroupMembers(null, null);
+  }
+
+  /** 调用 `ADMIN_GET_GROUP`。 */
+  public Mono<String> getGroup(String group) {
+    return executeToString("ADMIN_GET_GROUP", emptyMap(), map("group", group), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_GROUPS`。 */
+  public Mono<String> listGroups() {
+    return executeToString("ADMIN_LIST_GROUPS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SET_GROUP_STATUS`。 */
+  public Mono<String> setGroupStatus(String group, String status, byte[] body, String contentType) {
+    return executeToString("ADMIN_SET_GROUP_STATUS", emptyMap(), map("group", group, "status", status), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SET_GROUP_STATUS`，不携带请求体。 */
+  public Mono<String> setGroupStatus(String group, String status) {
+    return setGroupStatus(group, status, null, null);
+  }
+
+  /** 调用 `ADMIN_EXPORT_IAM`。 */
+  public Mono<String> exportIam() {
+    return executeToString("ADMIN_EXPORT_IAM", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_IMPORT_IAM`。 */
+  public Mono<String> importIam(byte[] body, String contentType) {
+    return executeToString("ADMIN_IMPORT_IAM", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_IMPORT_IAM`，不携带请求体。 */
+  public Mono<String> importIam() {
+    return importIam(null, null);
+  }
+
+  /** 调用 `ADMIN_IMPORT_IAM_V2`。 */
+  public Mono<String> importIamV2(byte[] body, String contentType) {
+    return executeToString("ADMIN_IMPORT_IAM_V2", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_IMPORT_IAM_V2`，不携带请求体。 */
+  public Mono<String> importIamV2() {
+    return importIamV2(null, null);
+  }
+
+  /** 调用 `ADMIN_ADD_IDP_CONFIG`。 */
+  public Mono<String> addIdpConfig(String type, String name, byte[] body, String contentType) {
+    return executeToString("ADMIN_ADD_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_ADD_IDP_CONFIG`，不携带请求体。 */
+  public Mono<String> addIdpConfig(String type, String name) {
+    return addIdpConfig(type, name, null, null);
+  }
+
+  /** 调用 `ADMIN_UPDATE_IDP_CONFIG`。 */
+  public Mono<String> updateIdpConfig(String type, String name, byte[] body, String contentType) {
+    return executeToString("ADMIN_UPDATE_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_UPDATE_IDP_CONFIG`，不携带请求体。 */
+  public Mono<String> updateIdpConfig(String type, String name) {
+    return updateIdpConfig(type, name, null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_IDP_CONFIG`。 */
+  public Mono<String> listIdpConfig(String type) {
+    return executeToString("ADMIN_LIST_IDP_CONFIG", map("type", type), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_GET_IDP_CONFIG`。 */
+  public Mono<String> getIdpConfig(String type, String name) {
+    return executeToString("ADMIN_GET_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_DELETE_IDP_CONFIG`。 */
+  public Mono<String> deleteIdpConfig(String type, String name, byte[] body, String contentType) {
+    return executeToString("ADMIN_DELETE_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_DELETE_IDP_CONFIG`，不携带请求体。 */
+  public Mono<String> deleteIdpConfig(String type, String name) {
+    return deleteIdpConfig(type, name, null, null);
+  }
+
+  /** 调用 `ADMIN_LDAP_ADD_SERVICE_ACCOUNT`。 */
+  public Mono<String> ldapAddServiceAccount(byte[] body, String contentType) {
+    return executeToString("ADMIN_LDAP_ADD_SERVICE_ACCOUNT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_LDAP_ADD_SERVICE_ACCOUNT`，不携带请求体。 */
+  public Mono<String> ldapAddServiceAccount() {
+    return ldapAddServiceAccount(null, null);
+  }
+
+  /** 调用 `ADMIN_LDAP_LIST_ACCESS_KEYS`。 */
+  public Mono<String> ldapListAccessKeys(String userDN, String listType) {
+    return executeToString("ADMIN_LDAP_LIST_ACCESS_KEYS", emptyMap(), map("userDN", userDN, "listType", listType), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LDAP_LIST_ACCESS_KEYS_BULK`。 */
+  public Mono<String> ldapListAccessKeysBulk(String listType) {
+    return executeToString("ADMIN_LDAP_LIST_ACCESS_KEYS_BULK", emptyMap(), map("listType", listType), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LDAP_POLICY_ENTITIES`。 */
+  public Mono<String> ldapPolicyEntities() {
+    return executeToString("ADMIN_LDAP_POLICY_ENTITIES", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LDAP_ATTACH_DETACH_POLICY`。 */
+  public Mono<String> ldapAttachDetachPolicy(String operation, byte[] body, String contentType) {
+    return executeToString("ADMIN_LDAP_ATTACH_DETACH_POLICY", map("operation", operation), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_LDAP_ATTACH_DETACH_POLICY`，不携带请求体。 */
+  public Mono<String> ldapAttachDetachPolicy(String operation) {
+    return ldapAttachDetachPolicy(operation, null, null);
+  }
+
+  /** 调用 `ADMIN_OPENID_LIST_ACCESS_KEYS_BULK`。 */
+  public Mono<String> openidListAccessKeysBulk(String listType) {
+    return executeToString("ADMIN_OPENID_LIST_ACCESS_KEYS_BULK", emptyMap(), map("listType", listType), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_GET_BUCKET_QUOTA`。 */
+  public Mono<String> getBucketQuota(String bucket) {
+    return executeToString("ADMIN_GET_BUCKET_QUOTA", emptyMap(), map("bucket", bucket), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SET_BUCKET_QUOTA`。 */
+  public Mono<String> setBucketQuota(String bucket, byte[] body, String contentType) {
+    return executeToString("ADMIN_SET_BUCKET_QUOTA", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SET_BUCKET_QUOTA`，不携带请求体。 */
+  public Mono<String> setBucketQuota(String bucket) {
+    return setBucketQuota(bucket, null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_REMOTE_TARGETS`。 */
+  public Mono<String> listRemoteTargets(String bucket, String type) {
+    return executeToString("ADMIN_LIST_REMOTE_TARGETS", emptyMap(), map("bucket", bucket, "type", type), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SET_REMOTE_TARGET`。 */
+  public Mono<String> setRemoteTarget(String bucket, byte[] body, String contentType) {
+    return executeToString("ADMIN_SET_REMOTE_TARGET", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SET_REMOTE_TARGET`，不携带请求体。 */
+  public Mono<String> setRemoteTarget(String bucket) {
+    return setRemoteTarget(bucket, null, null);
+  }
+
+  /** 调用 `ADMIN_REMOVE_REMOTE_TARGET`。 */
+  public Mono<String> removeRemoteTarget(String bucket, String arn, byte[] body, String contentType) {
+    return executeToString("ADMIN_REMOVE_REMOTE_TARGET", emptyMap(), map("bucket", bucket, "arn", arn), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REMOVE_REMOTE_TARGET`，不携带请求体。 */
+  public Mono<String> removeRemoteTarget(String bucket, String arn) {
+    return removeRemoteTarget(bucket, arn, null, null);
+  }
+
+  /** 调用 `ADMIN_REPLICATION_DIFF`。 */
+  public Mono<String> replicationDiff(String bucket, byte[] body, String contentType) {
+    return executeToString("ADMIN_REPLICATION_DIFF", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REPLICATION_DIFF`，不携带请求体。 */
+  public Mono<String> replicationDiff(String bucket) {
+    return replicationDiff(bucket, null, null);
+  }
+
+  /** 调用 `ADMIN_REPLICATION_MRF`。 */
+  public Mono<String> replicationMrf(String bucket) {
+    return executeToString("ADMIN_REPLICATION_MRF", emptyMap(), map("bucket", bucket), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_START_BATCH_JOB`。 */
+  public Mono<String> startBatchJob(byte[] body, String contentType) {
+    return executeToString("ADMIN_START_BATCH_JOB", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_START_BATCH_JOB`，不携带请求体。 */
+  public Mono<String> startBatchJob() {
+    return startBatchJob(null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_BATCH_JOBS`。 */
+  public Mono<String> listBatchJobs() {
+    return executeToString("ADMIN_LIST_BATCH_JOBS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_BATCH_JOB_STATUS`。 */
+  public Mono<String> batchJobStatus() {
+    return executeToString("ADMIN_BATCH_JOB_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_DESCRIBE_BATCH_JOB`。 */
+  public Mono<String> describeBatchJob() {
+    return executeToString("ADMIN_DESCRIBE_BATCH_JOB", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_CANCEL_BATCH_JOB`。 */
+  public Mono<String> cancelBatchJob(byte[] body, String contentType) {
+    return executeToString("ADMIN_CANCEL_BATCH_JOB", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_CANCEL_BATCH_JOB`，不携带请求体。 */
+  public Mono<String> cancelBatchJob() {
+    return cancelBatchJob(null, null);
+  }
+
+  /** 调用 `ADMIN_EXPORT_BUCKET_METADATA`。 */
+  public Mono<String> exportBucketMetadata() {
+    return executeToString("ADMIN_EXPORT_BUCKET_METADATA", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_IMPORT_BUCKET_METADATA`。 */
+  public Mono<String> importBucketMetadata(byte[] body, String contentType) {
+    return executeToString("ADMIN_IMPORT_BUCKET_METADATA", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_IMPORT_BUCKET_METADATA`，不携带请求体。 */
+  public Mono<String> importBucketMetadata() {
+    return importBucketMetadata(null, null);
+  }
+
+  /** 调用 `ADMIN_ADD_TIER`。 */
+  public Mono<String> addTier(byte[] body, String contentType) {
+    return executeToString("ADMIN_ADD_TIER", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_ADD_TIER`，不携带请求体。 */
+  public Mono<String> addTier() {
+    return addTier(null, null);
+  }
+
+  /** 调用 `ADMIN_EDIT_TIER`。 */
+  public Mono<String> editTier(String tier, byte[] body, String contentType) {
+    return executeToString("ADMIN_EDIT_TIER", map("tier", tier), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_EDIT_TIER`，不携带请求体。 */
+  public Mono<String> editTier(String tier) {
+    return editTier(tier, null, null);
+  }
+
+  /** 调用 `ADMIN_LIST_TIER`。 */
+  public Mono<String> listTier() {
+    return executeToString("ADMIN_LIST_TIER", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_REMOVE_TIER`。 */
+  public Mono<String> removeTier(String tier, byte[] body, String contentType) {
+    return executeToString("ADMIN_REMOVE_TIER", map("tier", tier), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REMOVE_TIER`，不携带请求体。 */
+  public Mono<String> removeTier(String tier) {
+    return removeTier(tier, null, null);
+  }
+
+  /** 调用 `ADMIN_VERIFY_TIER`。 */
+  public Mono<String> verifyTier(String tier) {
+    return executeToString("ADMIN_VERIFY_TIER", map("tier", tier), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_TIER_STATS`。 */
+  public Mono<String> tierStats() {
+    return executeToString("ADMIN_TIER_STATS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_ADD`。 */
+  public Mono<String> siteReplicationAdd(byte[] body, String contentType) {
+    return executeToString("ADMIN_SITE_REPLICATION_ADD", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_ADD`，不携带请求体。 */
+  public Mono<String> siteReplicationAdd() {
+    return siteReplicationAdd(null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_REMOVE`。 */
+  public Mono<String> siteReplicationRemove(byte[] body, String contentType) {
+    return executeToString("ADMIN_SITE_REPLICATION_REMOVE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_REMOVE`，不携带请求体。 */
+  public Mono<String> siteReplicationRemove() {
+    return siteReplicationRemove(null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_INFO`。 */
+  public Mono<String> siteReplicationInfo() {
+    return executeToString("ADMIN_SITE_REPLICATION_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_METAINFO`。 */
+  public Mono<String> siteReplicationMetainfo() {
+    return executeToString("ADMIN_SITE_REPLICATION_METAINFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_STATUS`。 */
+  public Mono<String> siteReplicationStatus() {
+    return executeToString("ADMIN_SITE_REPLICATION_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_DEVNULL`。 */
+  public Mono<String> siteReplicationDevnull(byte[] body, String contentType) {
+    return executeToString("ADMIN_SITE_REPLICATION_DEVNULL", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_DEVNULL`，不携带请求体。 */
+  public Mono<String> siteReplicationDevnull() {
+    return siteReplicationDevnull(null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_NETPERF`。 */
+  public Mono<String> siteReplicationNetperf(byte[] body, String contentType) {
+    return executeToString("ADMIN_SITE_REPLICATION_NETPERF", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_NETPERF`，不携带请求体。 */
+  public Mono<String> siteReplicationNetperf() {
+    return siteReplicationNetperf(null, null);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_JOIN`。 */
+  public Mono<String> srPeerJoin(byte[] body, String contentType) {
+    return executeToString("ADMIN_SR_PEER_JOIN", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_JOIN`，不携带请求体。 */
+  public Mono<String> srPeerJoin() {
+    return srPeerJoin(null, null);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_BUCKET_OPS`。 */
+  public Mono<String> srPeerBucketOps(String bucket, String operation, byte[] body, String contentType) {
+    return executeToString("ADMIN_SR_PEER_BUCKET_OPS", emptyMap(), map("bucket", bucket, "operation", operation), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_BUCKET_OPS`，不携带请求体。 */
+  public Mono<String> srPeerBucketOps(String bucket, String operation) {
+    return srPeerBucketOps(bucket, operation, null, null);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_IAM_ITEM`。 */
+  public Mono<String> srPeerIamItem(byte[] body, String contentType) {
+    return executeToString("ADMIN_SR_PEER_IAM_ITEM", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_IAM_ITEM`，不携带请求体。 */
+  public Mono<String> srPeerIamItem() {
+    return srPeerIamItem(null, null);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_BUCKET_META`。 */
+  public Mono<String> srPeerBucketMeta(byte[] body, String contentType) {
+    return executeToString("ADMIN_SR_PEER_BUCKET_META", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_BUCKET_META`，不携带请求体。 */
+  public Mono<String> srPeerBucketMeta() {
+    return srPeerBucketMeta(null, null);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_IDP_SETTINGS`。 */
+  public Mono<String> srPeerIdpSettings() {
+    return executeToString("ADMIN_SR_PEER_IDP_SETTINGS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_EDIT`。 */
+  public Mono<String> siteReplicationEdit(byte[] body, String contentType) {
+    return executeToString("ADMIN_SITE_REPLICATION_EDIT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_EDIT`，不携带请求体。 */
+  public Mono<String> siteReplicationEdit() {
+    return siteReplicationEdit(null, null);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_EDIT`。 */
+  public Mono<String> srPeerEdit(byte[] body, String contentType) {
+    return executeToString("ADMIN_SR_PEER_EDIT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_EDIT`，不携带请求体。 */
+  public Mono<String> srPeerEdit() {
+    return srPeerEdit(null, null);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_REMOVE`。 */
+  public Mono<String> srPeerRemove(byte[] body, String contentType) {
+    return executeToString("ADMIN_SR_PEER_REMOVE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SR_PEER_REMOVE`，不携带请求体。 */
+  public Mono<String> srPeerRemove() {
+    return srPeerRemove(null, null);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_RESYNC_OP`。 */
+  public Mono<String> siteReplicationResyncOp(String operation, byte[] body, String contentType) {
+    return executeToString("ADMIN_SITE_REPLICATION_RESYNC_OP", emptyMap(), map("operation", operation), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SITE_REPLICATION_RESYNC_OP`，不携带请求体。 */
+  public Mono<String> siteReplicationResyncOp(String operation) {
+    return siteReplicationResyncOp(operation, null, null);
+  }
+
+  /** 调用 `ADMIN_SR_STATE_EDIT`。 */
+  public Mono<String> srStateEdit(byte[] body, String contentType) {
+    return executeToString("ADMIN_SR_STATE_EDIT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SR_STATE_EDIT`，不携带请求体。 */
+  public Mono<String> srStateEdit() {
+    return srStateEdit(null, null);
+  }
+
+  /** 调用 `ADMIN_TOP_LOCKS`。 */
+  public Mono<String> topLocks() {
+    return executeToString("ADMIN_TOP_LOCKS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_FORCE_UNLOCK`。 */
+  public Mono<String> forceUnlock(String paths, byte[] body, String contentType) {
+    return executeToString("ADMIN_FORCE_UNLOCK", emptyMap(), map("paths", paths), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_FORCE_UNLOCK`，不携带请求体。 */
+  public Mono<String> forceUnlock(String paths) {
+    return forceUnlock(paths, null, null);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST`。 */
+  public Mono<String> speedtest(byte[] body, String contentType) {
+    return executeToString("ADMIN_SPEEDTEST", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST`，不携带请求体。 */
+  public Mono<String> speedtest() {
+    return speedtest(null, null);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_OBJECT`。 */
+  public Mono<String> speedtestObject(byte[] body, String contentType) {
+    return executeToString("ADMIN_SPEEDTEST_OBJECT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_OBJECT`，不携带请求体。 */
+  public Mono<String> speedtestObject() {
+    return speedtestObject(null, null);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_DRIVE`。 */
+  public Mono<String> speedtestDrive(byte[] body, String contentType) {
+    return executeToString("ADMIN_SPEEDTEST_DRIVE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_DRIVE`，不携带请求体。 */
+  public Mono<String> speedtestDrive() {
+    return speedtestDrive(null, null);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_NET`。 */
+  public Mono<String> speedtestNet(byte[] body, String contentType) {
+    return executeToString("ADMIN_SPEEDTEST_NET", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_NET`，不携带请求体。 */
+  public Mono<String> speedtestNet() {
+    return speedtestNet(null, null);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_SITE`。 */
+  public Mono<String> speedtestSite(byte[] body, String contentType) {
+    return executeToString("ADMIN_SPEEDTEST_SITE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_SITE`，不携带请求体。 */
+  public Mono<String> speedtestSite() {
+    return speedtestSite(null, null);
+  }
+
+  /** 调用 `ADMIN_CLIENT_DEVNULL`。 */
+  public Mono<String> clientDevnull(byte[] body, String contentType) {
+    return executeToString("ADMIN_CLIENT_DEVNULL", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_CLIENT_DEVNULL`，不携带请求体。 */
+  public Mono<String> clientDevnull() {
+    return clientDevnull(null, null);
+  }
+
+  /** 调用 `ADMIN_CLIENT_DEVNULL_EXTRA_TIME`。 */
+  public Mono<String> clientDevnullExtraTime(byte[] body, String contentType) {
+    return executeToString("ADMIN_CLIENT_DEVNULL_EXTRA_TIME", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_CLIENT_DEVNULL_EXTRA_TIME`，不携带请求体。 */
+  public Mono<String> clientDevnullExtraTime() {
+    return clientDevnullExtraTime(null, null);
+  }
+
+  /** 调用 `ADMIN_TRACE`。 */
+  public Mono<String> trace() {
+    return executeToString("ADMIN_TRACE", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_LOG`。 */
+  public Mono<String> log() {
+    return executeToString("ADMIN_LOG", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_KMS_STATUS`。 */
+  public Mono<String> kmsStatus(byte[] body, String contentType) {
+    return executeToString("ADMIN_KMS_STATUS", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_KMS_STATUS`，不携带请求体。 */
+  public Mono<String> kmsStatus() {
+    return kmsStatus(null, null);
+  }
+
+  /** 调用 `ADMIN_KMS_KEY_CREATE`。 */
+  public Mono<String> kmsKeyCreate(String keyId, byte[] body, String contentType) {
+    return executeToString("ADMIN_KMS_KEY_CREATE", emptyMap(), map("key-id", keyId), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_KMS_KEY_CREATE`，不携带请求体。 */
+  public Mono<String> kmsKeyCreate(String keyId) {
+    return kmsKeyCreate(keyId, null, null);
+  }
+
+  /** 调用 `ADMIN_KMS_KEY_STATUS`。 */
+  public Mono<String> kmsKeyStatus() {
+    return executeToString("ADMIN_KMS_KEY_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_OBD_INFO`。 */
+  public Mono<String> obdInfo() {
+    return executeToString("ADMIN_OBD_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_HEALTH_INFO`。 */
+  public Mono<String> healthInfo() {
+    return executeToString("ADMIN_HEALTH_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_REVOKE_TOKENS`。 */
+  public Mono<String> revokeTokens(String userProvider, byte[] body, String contentType) {
+    return executeToString("ADMIN_REVOKE_TOKENS", map("userProvider", userProvider), emptyMap(), emptyMap(), body, contentType);
+  }
+
+  /** 调用 `ADMIN_REVOKE_TOKENS`，不携带请求体。 */
+  public Mono<String> revokeTokens(String userProvider) {
+    return revokeTokens(userProvider, null, null);
   }
 
 }
