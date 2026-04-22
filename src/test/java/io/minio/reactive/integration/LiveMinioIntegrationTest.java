@@ -1,6 +1,9 @@
 package io.minio.reactive.integration;
 
+import io.minio.reactive.ReactiveMinioAdminClient;
 import io.minio.reactive.ReactiveMinioClient;
+import io.minio.reactive.ReactiveMinioHealthClient;
+import io.minio.reactive.ReactiveMinioRawClient;
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.CompletePart;
@@ -29,6 +32,9 @@ import org.springframework.http.HttpMethod;
 
 class LiveMinioIntegrationTest {
   private ReactiveMinioClient client;
+  private ReactiveMinioAdminClient adminClient;
+  private ReactiveMinioHealthClient healthClient;
+  private ReactiveMinioRawClient rawClient;
   private String bucket;
 
   @BeforeEach
@@ -44,6 +50,24 @@ class LiveMinioIntegrationTest {
 
     client =
         ReactiveMinioClient.builder()
+            .endpoint(endpoint)
+            .region(region)
+            .credentials(accessKey, secretKey)
+            .build();
+    adminClient =
+        ReactiveMinioAdminClient.builder()
+            .endpoint(endpoint)
+            .region(region)
+            .credentials(accessKey, secretKey)
+            .build();
+    healthClient =
+        ReactiveMinioHealthClient.builder()
+            .endpoint(endpoint)
+            .region(region)
+            .credentials(accessKey, secretKey)
+            .build();
+    rawClient =
+        ReactiveMinioRawClient.builder()
             .endpoint(endpoint)
             .region(region)
             .credentials(accessKey, secretKey)
@@ -77,11 +101,11 @@ class LiveMinioIntegrationTest {
 
     List<BucketInfo> buckets = client.listBuckets().block();
     Assertions.assertTrue(containsBucket(buckets, bucket));
+    Assertions.assertEquals(Integer.valueOf(200), healthClient.liveGet().block());
     Assertions.assertEquals(
-        Integer.valueOf(200), client.rawClient().executeToStatus(MinioApiCatalog.byName("HEALTH_LIVE_GET")).block());
+        Integer.valueOf(200), rawClient.executeToStatus(MinioApiCatalog.byName("HEALTH_LIVE_GET")).block());
     Assertions.assertTrue(
-        client
-            .rawClient()
+        rawClient
             .executeToString(
                 MinioApiCatalog.byName("S3_LIST_BUCKETS"),
                 emptyMap(),
@@ -91,10 +115,9 @@ class LiveMinioIntegrationTest {
                 null)
             .block()
             .contains(bucket));
-    String adminInfo = client.adminClient().serverInfo().block();
+    String adminInfo = adminClient.serverInfo().block();
     String rawAdminInfo =
-        client
-            .rawClient()
+        rawClient
             .executeToString(
                 MinioApiCatalog.byName("ADMIN_SERVER_INFO"),
                 emptyMap(),

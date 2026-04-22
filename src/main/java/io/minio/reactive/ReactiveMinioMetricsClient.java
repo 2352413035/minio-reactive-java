@@ -1,5 +1,10 @@
 package io.minio.reactive;
 
+import io.minio.reactive.credentials.ReactiveCredentialsProvider;
+import io.minio.reactive.credentials.StaticCredentialsProvider;
+import io.minio.reactive.http.ReactiveHttpClient;
+import io.minio.reactive.signer.S3RequestSigner;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 /**
@@ -11,6 +16,10 @@ import reactor.core.publisher.Mono;
 public final class ReactiveMinioMetricsClient extends ReactiveMinioCatalogClientSupport {
   ReactiveMinioMetricsClient(ReactiveMinioEndpointExecutor executor) {
     super(executor);
+  }
+
+  public static Builder builder() {
+    return new Builder();
   }
 
   /** 调用 `METRICS_PROMETHEUS_LEGACY`。 */
@@ -43,4 +52,59 @@ public final class ReactiveMinioMetricsClient extends ReactiveMinioCatalogClient
     return executeToString("METRICS_V3", map("pathComps", pathComps), emptyMap(), bearerHeaders(bearerToken), null, null);
   }
 
+
+
+  public static final class Builder {
+    private String endpoint;
+    private String region;
+    private ReactiveCredentialsProvider credentialsProvider;
+    private WebClient webClient;
+
+    private Builder() {}
+
+    public Builder endpoint(String endpoint) {
+      this.endpoint = endpoint;
+      return this;
+    }
+
+    public Builder region(String region) {
+      this.region = region;
+      return this;
+    }
+
+    public Builder credentials(String accessKey, String secretKey) {
+      this.credentialsProvider = new StaticCredentialsProvider(accessKey, secretKey);
+      return this;
+    }
+
+    public Builder credentials(String accessKey, String secretKey, String sessionToken) {
+      this.credentialsProvider = new StaticCredentialsProvider(accessKey, secretKey, sessionToken);
+      return this;
+    }
+
+    public Builder credentialsProvider(ReactiveCredentialsProvider credentialsProvider) {
+      this.credentialsProvider = credentialsProvider;
+      return this;
+    }
+
+    public Builder webClient(WebClient webClient) {
+      this.webClient = webClient;
+      return this;
+    }
+
+    public ReactiveMinioMetricsClient build() {
+      ReactiveMinioClientConfig config = ReactiveMinioClientConfig.of(endpoint, region);
+      WebClient actualWebClient =
+          webClient != null ? webClient : WebClient.builder().baseUrl(config.endpoint()).build();
+      ReactiveCredentialsProvider actualProvider =
+          credentialsProvider != null ? credentialsProvider : ReactiveCredentialsProvider.anonymous();
+      ReactiveMinioEndpointExecutor executor =
+          new ReactiveMinioEndpointExecutor(
+              config,
+              actualProvider,
+              new ReactiveHttpClient(actualWebClient, config),
+              new S3RequestSigner());
+      return new ReactiveMinioMetricsClient(executor);
+    }
+  }
 }

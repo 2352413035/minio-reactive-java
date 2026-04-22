@@ -41,7 +41,12 @@ ReactiveMinioClient client =
         .credentials(accessKey, secretKey)
         .build();
 
-ReactiveMinioRawClient raw = client.rawClient();
+ReactiveMinioRawClient raw =
+    ReactiveMinioRawClient.builder()
+        .endpoint("http://127.0.0.1:9000")
+        .region("us-east-1")
+        .credentials(accessKey, secretKey)
+        .build();
 
 String xml = raw.executeToString(
     MinioApiCatalog.byName("S3_LIST_BUCKETS"),

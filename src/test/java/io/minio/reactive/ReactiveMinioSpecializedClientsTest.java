@@ -10,16 +10,21 @@ import reactor.core.publisher.Mono;
 
 class ReactiveMinioSpecializedClientsTest {
   @Test
-  void shouldExposeSpecializedClientFactories() {
-    ReactiveMinioClient client =
-        ReactiveMinioClient.builder().endpoint("http://localhost:9000").region("us-east-1").build();
-
-    Assertions.assertNotNull(client.adminClient());
-    Assertions.assertNotNull(client.kmsClient());
-    Assertions.assertNotNull(client.stsClient());
-    Assertions.assertNotNull(client.metricsClient());
-    Assertions.assertNotNull(client.healthClient());
-    Assertions.assertNotNull(client.rawClient());
+  void shouldExposePeerClientBuilders() {
+    Assertions.assertNotNull(
+        ReactiveMinioClient.builder().endpoint("http://localhost:9000").region("us-east-1").build());
+    Assertions.assertNotNull(
+        ReactiveMinioAdminClient.builder().endpoint("http://localhost:9000").region("us-east-1").build());
+    Assertions.assertNotNull(
+        ReactiveMinioKmsClient.builder().endpoint("http://localhost:9000").region("us-east-1").build());
+    Assertions.assertNotNull(
+        ReactiveMinioStsClient.builder().endpoint("http://localhost:9000").region("us-east-1").build());
+    Assertions.assertNotNull(
+        ReactiveMinioMetricsClient.builder().endpoint("http://localhost:9000").region("us-east-1").build());
+    Assertions.assertNotNull(
+        ReactiveMinioHealthClient.builder().endpoint("http://localhost:9000").region("us-east-1").build());
+    Assertions.assertNotNull(
+        ReactiveMinioRawClient.builder().endpoint("http://localhost:9000").region("us-east-1").build());
   }
 
   @Test
