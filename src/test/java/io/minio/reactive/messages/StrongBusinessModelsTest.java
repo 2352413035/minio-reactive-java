@@ -6,6 +6,7 @@ import io.minio.reactive.messages.admin.AdminServerInfo;
 import io.minio.reactive.messages.kms.KmsJsonResult;
 import io.minio.reactive.messages.kms.KmsKeyStatus;
 import io.minio.reactive.messages.kms.KmsKeyList;
+import io.minio.reactive.messages.metrics.PrometheusMetricSample;
 import io.minio.reactive.messages.metrics.PrometheusMetrics;
 import io.minio.reactive.messages.sts.AssumeRoleResult;
 import io.minio.reactive.messages.sts.AssumeRoleWithWebIdentityRequest;
@@ -90,6 +91,20 @@ class StrongBusinessModelsTest {
 
     Assertions.assertEquals("token", request.webIdentityToken());
     Assertions.assertEquals("session", provider.getCredentials().block().sessionToken());
+  }
+
+  @Test
+  void shouldParsePrometheusSamples() {
+    PrometheusMetrics metrics =
+        new PrometheusMetrics("cluster", "# HELP x demo\nminio_requests_total{method=\"GET\",code=\"200\"} 3\nplain_metric 4.5\n");
+
+    java.util.List<PrometheusMetricSample> samples = metrics.samples();
+
+    Assertions.assertEquals(2, samples.size());
+    Assertions.assertEquals("minio_requests_total", samples.get(0).name());
+    Assertions.assertEquals("GET", samples.get(0).labels().get("method"));
+    Assertions.assertEquals(3.0, samples.get(0).value());
+    Assertions.assertEquals("plain_metric", samples.get(1).name());
   }
 
   @Test
