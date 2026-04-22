@@ -147,6 +147,30 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
 
+
+  @Test
+  void shouldMarkMigratedS3CatalogMethodsDeprecated() {
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3HeadObject");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObject");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3PutObject");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3DeleteObject");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3ListObjectsV2");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3CreateMultipartUpload");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3PutObjectPart");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3CompleteMultipartUpload");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3AbortMultipartUpload");
+  }
+
+
+  private static void assertDeprecatedMethodExists(Class<?> type, String name) {
+    for (Method method : type.getMethods()) {
+      if (method.getName().equals(name) && method.getAnnotation(Deprecated.class) != null) {
+        return;
+      }
+    }
+    Assertions.fail("缺少 @Deprecated 方法: " + type.getSimpleName() + "." + name);
+  }
+
   private static boolean containsAllQueryParts(java.util.List<String> queries, String... parts) {
     for (String query : queries) {
       boolean matched = true;

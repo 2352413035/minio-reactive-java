@@ -539,6 +539,7 @@ public final class ReactiveMinioClient {
   // 目录型 S3 原始接口入口开始
 
   /** 调用 `S3_HEAD_OBJECT`。 */
+  @Deprecated
   public Mono<Integer> s3HeadObject(String bucket, String object) {
     return endpointExecutor()
         .executeToStatus(endpoint("S3_HEAD_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
@@ -562,12 +563,14 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_PUT_OBJECT_PART`。 */
+  @Deprecated
   public Mono<String> s3PutObjectPart(String bucket, String object, String partNumber, String uploadId, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_OBJECT_PART"), map("bucket", bucket, "object", object), map("partNumber", partNumber, "uploadId", uploadId), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_OBJECT_PART`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutObjectPart(String bucket, String object, String partNumber, String uploadId) {
     return s3PutObjectPart(bucket, object, partNumber, uploadId, null, null);
   }
@@ -579,34 +582,40 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_COMPLETE_MULTIPART_UPLOAD`。 */
+  @Deprecated
   public Mono<String> s3CompleteMultipartUpload(String bucket, String object, String uploadId, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_COMPLETE_MULTIPART_UPLOAD"), map("bucket", bucket, "object", object), map("uploadId", uploadId), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_COMPLETE_MULTIPART_UPLOAD`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3CompleteMultipartUpload(String bucket, String object, String uploadId) {
     return s3CompleteMultipartUpload(bucket, object, uploadId, null, null);
   }
 
   /** 调用 `S3_CREATE_MULTIPART_UPLOAD`。 */
+  @Deprecated
   public Mono<String> s3CreateMultipartUpload(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_CREATE_MULTIPART_UPLOAD"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_CREATE_MULTIPART_UPLOAD`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3CreateMultipartUpload(String bucket, String object) {
     return s3CreateMultipartUpload(bucket, object, null, null);
   }
 
   /** 调用 `S3_ABORT_MULTIPART_UPLOAD`。 */
+  @Deprecated
   public Mono<String> s3AbortMultipartUpload(String bucket, String object, String uploadId, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_ABORT_MULTIPART_UPLOAD"), map("bucket", bucket, "object", object), map("uploadId", uploadId), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_ABORT_MULTIPART_UPLOAD`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3AbortMultipartUpload(String bucket, String object, String uploadId) {
     return s3AbortMultipartUpload(bucket, object, uploadId, null, null);
   }
@@ -686,6 +695,7 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_OBJECT`。 */
+  @Deprecated
   public Mono<String> s3GetObject(String bucket, String object) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
@@ -736,23 +746,27 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_PUT_OBJECT`。 */
+  @Deprecated
   public Mono<String> s3PutObject(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_OBJECT`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutObject(String bucket, String object) {
     return s3PutObject(bucket, object, null, null);
   }
 
   /** 调用 `S3_DELETE_OBJECT`。 */
+  @Deprecated
   public Mono<String> s3DeleteObject(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_DELETE_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_DELETE_OBJECT`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3DeleteObject(String bucket, String object) {
     return s3DeleteObject(bucket, object, null, null);
   }
@@ -938,6 +952,7 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_LIST_OBJECTS_V2`。 */
+  @Deprecated
   public Mono<String> s3ListObjectsV2(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_LIST_OBJECTS_V2"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
