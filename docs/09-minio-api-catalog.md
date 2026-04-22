@@ -55,8 +55,13 @@ String xml = raw.executeToString(
 建议使用方式：
 
 - 普通对象存储流程优先使用 `ReactiveMinioClient`。
-- 管理端、KMS、STS、监控、健康检查，或 MinIO 新增但尚未强类型封装的接口，使用 `ReactiveMinioRawClient`。
-- 后续如果为某类接口补充强类型模型，不应删除 `MinioApiCatalog` 中已有的原始接口覆盖。
+- 管理端能力优先使用 `ReactiveMinioAdminClient`。
+- KMS 能力优先使用 `ReactiveMinioKmsClient`。
+- 临时凭证能力优先使用 `ReactiveMinioStsClient`。
+- 监控指标优先使用 `ReactiveMinioMetricsClient`。
+- 健康检查优先使用 `ReactiveMinioHealthClient`。
+- 如果 SDK 暂时没有跟上某个新增 API，或者专用客户端还没有更细的返回模型，可以使用 `ReactiveMinioRawClient` 兜底调用。
+- 后续如果为某类接口补充更强的请求/响应模型，不应删除 `MinioApiCatalog` 中已有的原始接口覆盖。
 
 ## 认证语义
 
@@ -87,13 +92,17 @@ String xml = raw.executeToString(
 
 这些属于 MinIO 节点之间的内部通信协议，不是稳定的公开 SDK 接口。本项目当前不把它们纳入 Java SDK 的公开 API 面。如果未来确实要调研这些内部协议，应单独设计内部协议客户端，而不是混入普通 MinIO SDK。
 
-## 后续强类型化方向
+## 专用客户端拆分
 
-当前目录保证“不漏公开路由入口”。后续可以在此基础上逐步补强类型客户端：
+当前已经按接口分组提供专用客户端入口：
 
-1. `ReactiveMinioAdminClient`：用户、组、策略、服务状态、heal、配置、批处理等管理端接口。
-2. `ReactiveMinioKmsClient`：KMS 状态、key 创建、key 列表、key 状态等接口。
-3. `ReactiveMinioStsClient`：AssumeRole、WebIdentity、LDAP、ClientGrants 等临时凭证接口。
-4. `ReactiveMinioMetricsClient`：Prometheus 和 metrics v2/v3 结果读取。
+1. `ReactiveMinioClient`：对象存储相关接口。
+2. `ReactiveMinioAdminClient`：管理端接口。
+3. `ReactiveMinioKmsClient`：KMS 接口。
+4. `ReactiveMinioStsClient`：STS 临时凭证接口。
+5. `ReactiveMinioMetricsClient`：监控指标接口。
+6. `ReactiveMinioHealthClient`：健康检查接口。
+
+这些专用客户端的方法名来自 `MinioApiCatalog` 中的接口名。当前多数非对象存储接口先返回原始文本响应；后续可以在这些方法之上继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
 
 强类型客户端应复用 `MinioApiCatalog` 和 `ReactiveMinioRawClient`，避免重复维护路径、query、认证方式和签名逻辑。

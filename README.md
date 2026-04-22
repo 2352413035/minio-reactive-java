@@ -95,14 +95,22 @@ $env:MINIO_REGION='us-east-1'
 mvn -Dtest=LiveMinioIntegrationTest test
 ```
 
-## 完整 MinIO 接口覆盖
+## SDK 分层理念
 
-除常用 S3 对象存储方法外，项目还提供：
+本 SDK 的设计理念是：先把 MinIO 的公开接口统一登记到目录，再在目录之上提供不同层次的调用器。
 
-- `MinioApiCatalog`：覆盖本地 `minio` 路由文件中的 S3/Admin/KMS/STS/Health/Metrics 233 个 HTTP 接口。
-- `ReactiveMinioRawClient`：对 catalog 中任意接口执行响应式签名请求，适合 admin/KMS/STS 等暂未强类型建模的接口。
+- `MinioApiCatalog`：统一接口目录，汇总本地 `minio` 公开路由文件中的 S3/Admin/KMS/STS/Health/Metrics 233 个 HTTP 接口。
+- `ReactiveMinioRawClient`：兜底原始调用器。SDK 如果暂时没有跟上某个新增 API，用户仍然可以通过目录和 raw client 自己发起请求。
+- `ReactiveMinioClient`：对象存储专用客户端，适合日常项目集成时上传、下载、列对象、分片上传等常用场景。
+- `ReactiveMinioAdminClient`：管理端专用客户端，例如用户、策略、服务信息、配置、批处理等接口入口。
+- `ReactiveMinioKmsClient`：KMS 专用客户端。
+- `ReactiveMinioStsClient`：临时凭证 STS 专用客户端。
+- `ReactiveMinioMetricsClient`：监控指标专用客户端。
+- `ReactiveMinioHealthClient`：健康检查专用客户端。
 
-详见 `docs/09-minio-api-catalog.md`。
+一般业务项目优先使用 `ReactiveMinioClient`。只有需要管理端、KMS、STS、监控、健康检查等能力时，才使用对应专用客户端。`ReactiveMinioRawClient` 是最后的兜底层，用于尚未封装成专用方法的新接口或特殊接口。
+
+详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
 ## 文档目录
 
