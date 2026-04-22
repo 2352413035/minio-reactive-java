@@ -23,28 +23,55 @@ public final class ReactiveMinioStsClient extends ReactiveMinioCatalogClientSupp
   }
 
 
+  /** 使用 WebIdentity 请求对象换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithWebIdentityCredentials(
+      io.minio.reactive.messages.sts.AssumeRoleWithWebIdentityRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return assumeRoleWithWebIdentity(request.webIdentityToken())
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
   /** 使用 WebIdentity token 换取临时凭证。 */
   public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithWebIdentityCredentials(
       String webIdentityToken) {
-    requireText("webIdentityToken", webIdentityToken);
-    return assumeRoleWithWebIdentity(webIdentityToken)
+    return assumeRoleWithWebIdentityCredentials(
+        io.minio.reactive.messages.sts.AssumeRoleWithWebIdentityRequest.of(webIdentityToken));
+  }
+
+  /** 使用 ClientGrants 请求对象换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithClientGrantsCredentials(
+      io.minio.reactive.messages.sts.AssumeRoleWithClientGrantsRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return assumeRoleWithClientGrants(request.token())
         .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
   }
 
   /** 使用 ClientGrants token 换取临时凭证。 */
   public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithClientGrantsCredentials(
       String token) {
-    requireText("token", token);
-    return assumeRoleWithClientGrants(token).map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+    return assumeRoleWithClientGrantsCredentials(
+        io.minio.reactive.messages.sts.AssumeRoleWithClientGrantsRequest.of(token));
+  }
+
+  /** 使用 LDAP 请求对象换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithLdapCredentials(
+      io.minio.reactive.messages.sts.AssumeRoleWithLdapIdentityRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return assumeRoleWithLdapIdentity(request.username(), request.password())
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
   }
 
   /** 使用 LDAP 用户名密码换取临时凭证。 */
   public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithLdapCredentials(
       String username, String password) {
-    requireText("username", username);
-    requireText("password", password);
-    return assumeRoleWithLdapIdentity(username, password)
-        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+    return assumeRoleWithLdapCredentials(
+        io.minio.reactive.messages.sts.AssumeRoleWithLdapIdentityRequest.of(username, password));
   }
 
   /** 调用 `STS_ASSUME_ROLE_FORM`。 */
