@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Object summary and common response metadata. */
+/** 对象摘要以及常见响应元数据。 */
 public final class ObjectInfo {
   private final String key;
   private final String lastModified;

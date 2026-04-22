@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Bucket summary returned by S3 ListBuckets. */
+/** 桶摘要信息，来源于 S3 ListBuckets 响应。 */
 public final class BucketInfo {
   private final String name;
   private final String creationDate;

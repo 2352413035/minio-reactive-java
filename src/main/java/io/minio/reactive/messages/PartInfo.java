@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Multipart part metadata. */
+/** 分片上传中单个 part 的元数据。 */
 public final class PartInfo {
   private final int partNumber;
   private final String etag;

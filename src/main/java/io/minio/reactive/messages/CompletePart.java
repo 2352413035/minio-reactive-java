@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Part descriptor used when completing multipart upload. */
+/** 完成分片上传时提交给服务端的分片描述。 */
 public final class CompletePart {
   private final int partNumber;
   private final String etag;

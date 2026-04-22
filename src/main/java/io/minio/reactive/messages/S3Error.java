@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Structured S3 XML error payload. */
+/** S3 XML 错误响应解析后的结构化信息。 */
 public final class S3Error {
   private final String code;
   private final String message;

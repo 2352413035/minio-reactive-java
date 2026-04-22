@@ -109,7 +109,7 @@ public final class ReactiveHttpClient {
             .headers(headers -> apply(headers, request));
 
     if (request.hasBody()) {
-      // PUT Bucket 和 PUT Object 都依赖这里把请求体和 Content-Type 正确写出去。
+      // 创建桶和上传对象都依赖这里把请求体和 Content-Type 正确写出去。
       return bodySpec
           .contentType(request.contentType())
           .body(BodyInserters.fromValue(request.body()));

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Parsed DeleteObjects response. */
+/** 批量删除对象响应的解析结果。 */
 public final class DeleteObjectsResult {
   private final List<DeletedObject> deletedObjects;
 

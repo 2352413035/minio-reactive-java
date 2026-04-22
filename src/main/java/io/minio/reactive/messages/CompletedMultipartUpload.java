@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Parsed CompleteMultipartUpload response. */
+/** 完成分片上传响应的解析结果。 */
 public final class CompletedMultipartUpload {
   private final String location;
   private final String bucket;
