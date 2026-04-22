@@ -44,9 +44,9 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
   /** 获取单个用户信息，当前以通用 JSON 结果保留全部字段。 */
-  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getUserInfo(String accessKey) {
+  public Mono<io.minio.reactive.messages.admin.AdminUserInfo> getUserInfo(String accessKey) {
     requireText("accessKey", accessKey);
-    return userInfo(accessKey).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+    return userInfo(accessKey).map(io.minio.reactive.messages.admin.AdminUserInfo::parse);
   }
 
   /** 删除内部用户。 */
@@ -69,27 +69,27 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
 
   /** 列出全部内置策略，返回通用 JSON 结果。 */
-  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> listPolicies() {
-    return listCannedPolicies().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  public Mono<io.minio.reactive.messages.admin.AdminPolicyList> listPolicies() {
+    return listCannedPolicies().map(io.minio.reactive.messages.admin.AdminPolicyList::parse);
   }
 
   /** 列出指定 bucket 可用的内置策略，返回通用 JSON 结果。 */
-  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> listPolicies(String bucket) {
+  public Mono<io.minio.reactive.messages.admin.AdminPolicyList> listPolicies(String bucket) {
     requireText("bucket", bucket);
-    return listBucketPolicies(bucket).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+    return listBucketPolicies(bucket).map(io.minio.reactive.messages.admin.AdminPolicyList::parse);
   }
 
   /** 获取策略内容，返回通用 JSON 结果。 */
-  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getPolicy(String name) {
+  public Mono<io.minio.reactive.messages.admin.AdminPolicyInfo> getPolicy(String name) {
     requireText("name", name);
-    return infoCannedPolicy(name).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+    return infoCannedPolicy(name).map(io.minio.reactive.messages.admin.AdminPolicyInfo::parse);
   }
 
   /** 获取策略内容和时间戳信息，返回通用 JSON 结果。 */
-  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getPolicyV2(String name) {
+  public Mono<io.minio.reactive.messages.admin.AdminPolicyInfo> getPolicyV2(String name) {
     requireText("name", name);
     return executeToString("ADMIN_INFO_CANNED_POLICY", emptyMap(), map("name", name, "v", "2"), emptyMap(), null, null)
-        .map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+        .map(io.minio.reactive.messages.admin.AdminPolicyInfo::parse);
   }
 
   /** 新增或更新内置策略。 */
