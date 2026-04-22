@@ -38,6 +38,35 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return addUser(io.minio.reactive.messages.admin.AddUserRequest.of(accessKey, secretKey));
   }
 
+
+  /**
+   * 设置单条或多条配置 KV 文本。
+   *
+   * <p>这是破坏性管理端写操作，只负责生成 madmin 兼容加密载荷并发送；调用方需要确认配置内容正确。
+   */
+  public Mono<Void> setConfigKvText(String kvText) {
+    requireText("kvText", kvText);
+    return executeEncryptedBytesToVoid(
+        "ADMIN_SET_CONFIG_KV",
+        emptyMap(),
+        emptyMap(),
+        kvText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+  }
+
+  /**
+   * 设置完整 server config 文本。
+   *
+   * <p>这是高风险管理端写操作，只提供强类型入口和加密载荷生成，不在集成测试中直接修改环境。
+   */
+  public Mono<Void> setConfigText(String configText) {
+    requireText("configText", configText);
+    return executeEncryptedBytesToVoid(
+        "ADMIN_SET_CONFIG",
+        emptyMap(),
+        emptyMap(),
+        configText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+  }
+
   /** 获取服务端信息摘要，返回强类型稳定字段并保留原始 JSON。 */
   public Mono<io.minio.reactive.messages.admin.AdminServerInfo> getServerInfo() {
     return serverInfo().map(io.minio.reactive.messages.admin.AdminServerInfo::parse);

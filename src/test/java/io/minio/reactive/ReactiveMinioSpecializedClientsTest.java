@@ -213,6 +213,22 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(response.isEncrypted());
   }
 
+
+  @Test
+  void shouldExposeConfigWriteBusinessMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "setConfigKvText");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "setConfigText");
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setConfigKvText(" "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setConfigText(""));
+  }
+
   private static void assertDeprecatedMethodExists(Class<?> type, String name) {
     for (Method method : type.getMethods()) {
       if (method.getName().equals(name) && method.getAnnotation(Deprecated.class) != null) {
