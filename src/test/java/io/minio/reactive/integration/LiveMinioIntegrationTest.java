@@ -3,8 +3,12 @@ package io.minio.reactive.integration;
 import io.minio.reactive.ReactiveMinioAdminClient;
 import io.minio.reactive.ReactiveMinioClient;
 import io.minio.reactive.ReactiveMinioHealthClient;
+import io.minio.reactive.ReactiveMinioKmsClient;
 import io.minio.reactive.ReactiveMinioRawClient;
 import io.minio.reactive.catalog.MinioApiCatalog;
+import io.minio.reactive.errors.ReactiveMinioKmsException;
+import io.minio.reactive.errors.ReactiveS3Exception;
+import io.minio.reactive.messages.kms.KmsJsonResult;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.admin.AdminServerInfo;
 import io.minio.reactive.messages.CompletePart;
@@ -35,6 +39,7 @@ class LiveMinioIntegrationTest {
   private ReactiveMinioClient client;
   private ReactiveMinioAdminClient adminClient;
   private ReactiveMinioHealthClient healthClient;
+  private ReactiveMinioKmsClient kmsClient;
   private ReactiveMinioRawClient rawClient;
   private String bucket;
 
@@ -63,6 +68,12 @@ class LiveMinioIntegrationTest {
             .build();
     healthClient =
         ReactiveMinioHealthClient.builder()
+            .endpoint(endpoint)
+            .region(region)
+            .credentials(accessKey, secretKey)
+            .build();
+    kmsClient =
+        ReactiveMinioKmsClient.builder()
             .endpoint(endpoint)
             .region(region)
             .credentials(accessKey, secretKey)
@@ -134,6 +145,7 @@ class LiveMinioIntegrationTest {
     Assertions.assertTrue(rawAdminInfo.contains("deploymentID"));
     Assertions.assertTrue(adminInfo.contains("servers"));
     Assertions.assertTrue(rawAdminInfo.contains("servers"));
+    assertKmsStatusIsTypedOrDiagnostic();
 
     client.putObject(bucket, "folder/a.txt", "alpha", "text/plain").block();
     client.putObject(bucket, "folder/b.txt", "bravo", "text/plain").block();
@@ -142,6 +154,11 @@ class LiveMinioIntegrationTest {
     Assertions.assertEquals(2, listed.size());
     Assertions.assertEquals("alpha", client.getObjectAsString(bucket, "folder/a.txt").block());
     Assertions.assertFalse(client.statObject(bucket, "folder/a.txt").block().isEmpty());
+    ReactiveS3Exception missingObject =
+        Assertions.assertThrows(
+            ReactiveS3Exception.class, () -> client.getObjectAsBytes(bucket, "missing-object.txt").block());
+    Assertions.assertEquals(404, missingObject.statusCode());
+    Assertions.assertFalse(missingObject.responseBody().isEmpty());
 
     Map<String, String> tags = new HashMap<String, String>();
     tags.put("purpose", "integration");
@@ -187,6 +204,19 @@ class LiveMinioIntegrationTest {
                 "multipart.bin"))
         .block();
     Assertions.assertTrue(client.listObjects(bucket).collectList().block().isEmpty());
+  }
+
+
+  private void assertKmsStatusIsTypedOrDiagnostic() {
+    try {
+      KmsJsonResult status = kmsClient.getStatus().block();
+      Assertions.assertNotNull(status);
+      Assertions.assertNotNull(status.rawJson());
+    } catch (ReactiveMinioKmsException error) {
+      Assertions.assertEquals("kms", error.protocol());
+      Assertions.assertTrue(error.statusCode() >= 400);
+      Assertions.assertNotNull(error.rawBody());
+    }
   }
 
   private static Map<String, String> emptyMap() {
