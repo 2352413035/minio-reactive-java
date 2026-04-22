@@ -1,6 +1,8 @@
 package io.minio.reactive;
 
 import io.minio.reactive.catalog.MinioApiCatalog;
+import io.minio.reactive.messages.admin.AddUserRequest;
+import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
@@ -161,6 +163,23 @@ class ReactiveMinioSpecializedClientsTest {
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3AbortMultipartUpload");
   }
 
+
+
+  @Test
+  void shouldEncryptAddUserRequestPayload() {
+    byte[] encrypted =
+        MadminEncryptionSupport.encryptData(
+            "admin-secret",
+            io.minio.reactive.util.JsonSupport.toJsonBytes(
+                AddUserRequest.of("user1", "user-secret").toPayload()));
+
+    Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(encrypted));
+    Assertions.assertTrue(
+        new String(
+                MadminEncryptionSupport.decryptData("admin-secret", encrypted),
+                java.nio.charset.StandardCharsets.UTF_8)
+            .contains("user-secret"));
+  }
 
   private static void assertDeprecatedMethodExists(Class<?> type, String name) {
     for (Method method : type.getMethods()) {

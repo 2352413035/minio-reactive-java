@@ -109,6 +109,30 @@ abstract class ReactiveMinioCatalogClientSupport {
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
+  /** 使用当前凭证 secretKey 加密 JSON 请求体后执行无响应体接口。 */
+  protected Mono<Void> executeEncryptedJsonToVoid(
+      String endpointName,
+      Map<String, String> pathVariables,
+      Map<String, String> queryParameters,
+      Object payload) {
+    return executor
+        .credentials()
+        .flatMap(
+            credentials -> {
+              byte[] plain = io.minio.reactive.util.JsonSupport.toJsonBytes(payload);
+              byte[] encrypted =
+                  io.minio.reactive.util.MadminEncryptionSupport.encryptData(
+                      credentials.secretKey(), plain);
+              return executor.executeToVoid(
+                  endpoint(endpointName),
+                  pathVariables,
+                  queryParameters,
+                  emptyMap(),
+                  encrypted,
+                  "application/octet-stream");
+            });
+  }
+
   /** 查找目录接口，集中处理目录名称拼写错误。 */
   protected MinioApiEndpoint endpoint(String endpointName) {
     return MinioApiCatalog.byName(endpointName);
