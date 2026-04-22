@@ -22,7 +22,7 @@
 
 ## S3 catalog 风格方法迁移
 
-`ReactiveMinioClient` 中以 `s3` 开头、直接对应 catalog 的方法属于高级兼容入口。它们短期保留，但 README 不作为主推荐。
+`ReactiveMinioClient` 中以 `s3` 开头、直接对应 catalog 的方法属于高级兼容入口。已有明确替代路径的方法会先标记 `@Deprecated`，短期仍保留二进制兼容，但 README 不作为主推荐。
 
 | 高级入口类型 | 推荐替代 |
 | --- | --- |
