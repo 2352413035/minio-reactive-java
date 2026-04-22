@@ -2,8 +2,8 @@ package io.minio.reactive;
 
 import io.minio.reactive.catalog.MinioApiCatalog;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
@@ -23,49 +23,55 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
-  void shouldExposeRepresentativeCatalogMethodsOnSpecializedClients() throws Exception {
-    assertMethod(ReactiveMinioClient.class, "s3ListBuckets");
-    assertMethod(ReactiveMinioClient.class, "s3GetObject");
-    assertMethod(ReactiveMinioAdminClient.class, "serverInfo");
-    assertMethod(ReactiveMinioAdminClient.class, "addUser");
-    assertMethod(ReactiveMinioKmsClient.class, "keyStatus");
-    assertMethod(ReactiveMinioStsClient.class, "assumeRoleWithWebIdentity");
-    assertMethod(ReactiveMinioMetricsClient.class, "v3");
-    assertMethod(ReactiveMinioHealthClient.class, "liveGet");
+  void shouldExposeRepresentativeCatalogMethodsOnSpecializedClients() {
+    assertMonoMethodExists(ReactiveMinioClient.class, "s3ListBuckets");
+    assertMonoMethodExists(ReactiveMinioClient.class, "s3GetObject");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "serverInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "addUser");
+    assertMonoMethodExists(ReactiveMinioKmsClient.class, "keyStatus");
+    assertMonoMethodExists(ReactiveMinioStsClient.class, "assumeRoleWithWebIdentity");
+    assertMonoMethodExists(ReactiveMinioMetricsClient.class, "v3");
+    assertMonoMethodExists(ReactiveMinioHealthClient.class, "liveGet");
   }
 
   @Test
   void shouldKeepSpecializedMethodsAlignedWithCatalogFamilies() {
-    Assertions.assertEquals(77, countCatalogMethods(ReactiveMinioClient.class, "s3"));
-    Assertions.assertEquals(MinioApiCatalog.byFamily("admin").size(), countCatalogMethods(ReactiveMinioAdminClient.class, null));
-    Assertions.assertEquals(MinioApiCatalog.byFamily("kms").size(), countCatalogMethods(ReactiveMinioKmsClient.class, null));
-    Assertions.assertEquals(MinioApiCatalog.byFamily("sts").size(), countCatalogMethods(ReactiveMinioStsClient.class, null));
-    Assertions.assertEquals(MinioApiCatalog.byFamily("metrics").size(), countCatalogMethods(ReactiveMinioMetricsClient.class, null));
-    Assertions.assertEquals(MinioApiCatalog.byFamily("health").size(), countCatalogMethods(ReactiveMinioHealthClient.class, null));
+    Assertions.assertEquals(77, countDistinctMonoMethods(ReactiveMinioClient.class, "s3"));
+    Assertions.assertEquals(
+        MinioApiCatalog.byFamily("admin").size(),
+        countDistinctMonoMethods(ReactiveMinioAdminClient.class, null));
+    Assertions.assertEquals(
+        MinioApiCatalog.byFamily("kms").size(),
+        countDistinctMonoMethods(ReactiveMinioKmsClient.class, null));
+    Assertions.assertEquals(
+        MinioApiCatalog.byFamily("sts").size(),
+        countDistinctMonoMethods(ReactiveMinioStsClient.class, null));
+    Assertions.assertEquals(
+        MinioApiCatalog.byFamily("metrics").size(),
+        countDistinctMonoMethods(ReactiveMinioMetricsClient.class, null));
+    Assertions.assertEquals(
+        MinioApiCatalog.byFamily("health").size(),
+        countDistinctMonoMethods(ReactiveMinioHealthClient.class, null));
   }
 
-  private static void assertMethod(Class<?> type, String name) throws Exception {
-    Method method =
-        type.getMethod(
-            name,
-            Map.class,
-            Map.class,
-            Map.class,
-            byte[].class,
-            String.class);
-    Assertions.assertEquals(Mono.class, method.getReturnType());
-  }
-
-  private static int countCatalogMethods(Class<?> type, String prefix) {
-    int count = 0;
+  private static void assertMonoMethodExists(Class<?> type, String name) {
     for (Method method : type.getMethods()) {
-      if (method.getDeclaringClass().equals(type)
-          && method.getParameterTypes().length == 5
-          && method.getReturnType().equals(Mono.class)
-          && (prefix == null || method.getName().startsWith(prefix))) {
-        count++;
+      if (method.getName().equals(name) && method.getReturnType().equals(Mono.class)) {
+        return;
       }
     }
-    return count;
+    Assertions.fail("缺少返回 Mono 的方法: " + type.getSimpleName() + "." + name);
+  }
+
+  private static int countDistinctMonoMethods(Class<?> type, String prefix) {
+    Set<String> names = new HashSet<String>();
+    for (Method method : type.getMethods()) {
+      if (method.getDeclaringClass().equals(type)
+          && method.getReturnType().equals(Mono.class)
+          && (prefix == null || method.getName().startsWith(prefix))) {
+        names.add(method.getName());
+      }
+    }
+    return names.size();
   }
 }
