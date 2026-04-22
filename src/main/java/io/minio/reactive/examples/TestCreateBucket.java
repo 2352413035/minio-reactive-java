@@ -9,7 +9,7 @@ public class TestCreateBucket {
                 ReactiveMinioClient.builder()
 //                        .region("niuniuniujia")
                         .endpoint("http://127.0.0.1:9000")
-                        .credentials("nFpKQzMpRQlBn05PrjzT", "Sac0vCSvF3gEuDHUqulAXfLltuaXu1OGl09ILdJO")
+                        .credentials("your-access-key", "your-secret-key")
                         .build();
         Mono<String> then = client.makeBucket("test-bucket2").doOnSuccess((ignore)-> System.out.println("bucket created"))
                 .then(

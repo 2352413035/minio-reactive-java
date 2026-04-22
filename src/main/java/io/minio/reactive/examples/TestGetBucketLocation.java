@@ -9,7 +9,7 @@ public class TestGetBucketLocation {
         ReactiveMinioClient client =
                 ReactiveMinioClient.builder()
                         .endpoint("http://127.0.0.1:9000")
-                        .credentials("nFpKQzMpRQlBn05PrjzT", "Sac0vCSvF3gEuDHUqulAXfLltuaXu1OGl09ILdJO")
+                        .credentials("your-access-key", "your-secret-key")
 //                        .region("niuniuniujia")
                         .build();
 

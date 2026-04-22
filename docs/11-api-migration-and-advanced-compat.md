@@ -53,7 +53,7 @@
 | `deleteUser(accessKey)` | 删除内部用户 |
 | `setUserEnabled(accessKey, enabled)` | 启用或禁用用户 |
 
-注意：MinIO 多个管理端写接口使用 madmin 加密载荷，例如新增用户、设置配置、服务账号等。当前 SDK 暂未引入 madmin 加密兼容实现，因此这些写接口不会伪装成“已完整强类型”。在加密载荷支持完成前，相关方法保留为高级兼容入口或 raw 兜底。
+注意：MinIO 多个管理端写接口使用 madmin 加密载荷，例如新增用户、设置配置、服务账号等。当前 SDK 已实现 PBKDF2/AES-GCM 写入方向，并已验证 Java 生成载荷可被 madmin-go 解密；但服务端默认加密响应可能使用 Argon2id，Java 端尚不能解密。因此写入方向可以逐步强类型化，读取加密响应的完整解析仍需等待 Argon2id/ChaCha20 兼容能力。
 
 ## KMS / STS / Metrics / Health 迁移
 

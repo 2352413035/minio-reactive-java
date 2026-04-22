@@ -44,8 +44,8 @@ mvn -q -DfailIfNoTests=true test
 JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64 \
 PATH=/usr/lib/jvm/java-8-openjdk-amd64/bin:$PATH \
 MINIO_ENDPOINT=http://127.0.0.1:9000 \
-MINIO_ACCESS_KEY=nFpKQzMpRQlBn05PrjzT \
-MINIO_SECRET_KEY=Sac0vCSvF3gEuDHUqulAXfLltuaXu1OGl09ILdJO \
+MINIO_ACCESS_KEY=your-access-key \
+MINIO_SECRET_KEY=your-secret-key \
 MINIO_REGION=us-east-1 \
 mvn -q -Dtest=LiveMinioIntegrationTest test
 ```
@@ -61,8 +61,8 @@ mvn -q -DfailIfNoTests=true test
 JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
 PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:$PATH \
 MINIO_ENDPOINT=http://127.0.0.1:9000 \
-MINIO_ACCESS_KEY=nFpKQzMpRQlBn05PrjzT \
-MINIO_SECRET_KEY=Sac0vCSvF3gEuDHUqulAXfLltuaXu1OGl09ILdJO \
+MINIO_ACCESS_KEY=your-access-key \
+MINIO_SECRET_KEY=your-secret-key \
 MINIO_REGION=us-east-1 \
 mvn -q -Dtest=LiveMinioIntegrationTest test
 ```
