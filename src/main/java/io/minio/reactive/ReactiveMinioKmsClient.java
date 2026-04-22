@@ -22,6 +22,39 @@ public final class ReactiveMinioKmsClient extends ReactiveMinioCatalogClientSupp
     return new Builder();
   }
 
+
+  /** 获取 KMS 状态，并保留原始 JSON 字段。 */
+  public Mono<io.minio.reactive.messages.kms.KmsJsonResult> getStatus() {
+    return status().map(io.minio.reactive.messages.kms.KmsJsonResult::parse);
+  }
+
+  /** 获取 KMS API 列表或能力信息，并保留原始 JSON 字段。 */
+  public Mono<io.minio.reactive.messages.kms.KmsJsonResult> getApis() {
+    return apis().map(io.minio.reactive.messages.kms.KmsJsonResult::parse);
+  }
+
+  /** 获取 KMS 版本信息，并保留原始 JSON 字段。 */
+  public Mono<io.minio.reactive.messages.kms.KmsJsonResult> getVersion() {
+    return version().map(io.minio.reactive.messages.kms.KmsJsonResult::parse);
+  }
+
+  /** 列出匹配 pattern 的 KMS key。 */
+  public Mono<io.minio.reactive.messages.kms.KmsKeyList> listKeys(String pattern) {
+    requireText("pattern", pattern);
+    return keyList(pattern).map(io.minio.reactive.messages.kms.KmsKeyList::parse);
+  }
+
+  /** 创建 KMS key。 */
+  public Mono<Void> createKey(String keyId) {
+    requireText("keyId", keyId);
+    return executeToVoid("KMS_KEY_CREATE", emptyMap(), map("key-id", keyId), emptyMap(), null, null);
+  }
+
+  /** 获取 KMS key 状态，并保留原始 JSON 字段。 */
+  public Mono<io.minio.reactive.messages.kms.KmsJsonResult> getKeyStatus() {
+    return keyStatus().map(io.minio.reactive.messages.kms.KmsJsonResult::parse);
+  }
+
   /** 调用 `KMS_STATUS`。 */
   public Mono<String> status() {
     return executeToString("KMS_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);

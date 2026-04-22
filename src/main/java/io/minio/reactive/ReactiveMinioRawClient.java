@@ -72,6 +72,17 @@ public final class ReactiveMinioRawClient {
         endpoint, pathVariables, queryParameters, headers, body, contentType);
   }
 
+  /** 执行不带额外参数的接口，并把响应体整体读取为字符串。 */
+  public Mono<String> executeToString(MinioApiEndpoint endpoint) {
+    return executeToString(
+        endpoint,
+        Collections.<String, String>emptyMap(),
+        Collections.<String, String>emptyMap(),
+        Collections.<String, String>emptyMap(),
+        null,
+        null);
+  }
+
   /** 执行接口并把响应体整体读取为字符串，适合 XML、JSON、文本类管理接口。 */
   public Mono<String> executeToString(
       MinioApiEndpoint endpoint,

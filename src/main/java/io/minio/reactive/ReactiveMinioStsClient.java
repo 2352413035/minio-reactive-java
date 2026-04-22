@@ -22,6 +22,31 @@ public final class ReactiveMinioStsClient extends ReactiveMinioCatalogClientSupp
     return new Builder();
   }
 
+
+  /** 使用 WebIdentity token 换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithWebIdentityCredentials(
+      String webIdentityToken) {
+    requireText("webIdentityToken", webIdentityToken);
+    return assumeRoleWithWebIdentity(webIdentityToken)
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
+  /** 使用 ClientGrants token 换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithClientGrantsCredentials(
+      String token) {
+    requireText("token", token);
+    return assumeRoleWithClientGrants(token).map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
+  /** 使用 LDAP 用户名密码换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithLdapCredentials(
+      String username, String password) {
+    requireText("username", username);
+    requireText("password", password);
+    return assumeRoleWithLdapIdentity(username, password)
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
   /** 调用 `STS_ASSUME_ROLE_FORM`。 */
   public Mono<String> assumeRoleForm(byte[] body, String contentType) {
     return executeToString("STS_ASSUME_ROLE_FORM", emptyMap(), emptyMap(), emptyMap(), body, contentType);

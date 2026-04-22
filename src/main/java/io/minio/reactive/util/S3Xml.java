@@ -153,8 +153,26 @@ public final class S3Xml {
     return tags;
   }
 
+
+  public static io.minio.reactive.messages.sts.AssumeRoleResult parseAssumeRoleResult(
+      String xml) {
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    String accessKey = firstText(root, "AccessKeyId");
+    String secretKey = firstText(root, "SecretAccessKey");
+    String sessionToken = firstText(root, "SessionToken");
+    String expiration = firstText(root, "Expiration");
+    return new io.minio.reactive.messages.sts.AssumeRoleResult(
+        io.minio.reactive.credentials.ReactiveCredentials.of(accessKey, secretKey, sessionToken),
+        expiration,
+        xml);
+  }
+
   public static S3Error parseError(String xml) {
     if (isBlank(xml)) {
+      return null;
+    }
+    if (!xml.trim().startsWith("<")) {
       return null;
     }
     try {
@@ -264,6 +282,16 @@ public final class S3Xml {
     } catch (Exception e) {
       throw new IllegalArgumentException("Unable to parse S3 XML", e);
     }
+  }
+
+  private static String firstText(Element element, String tagName) {
+    NodeList nodes = element.getElementsByTagName(tagName);
+    if (nodes.getLength() == 0) {
+      return "";
+    }
+    Node node = nodes.item(0);
+    String value = node == null ? null : node.getTextContent();
+    return value == null ? "" : value.trim();
   }
 
   private static String text(Element element, String tagName) {

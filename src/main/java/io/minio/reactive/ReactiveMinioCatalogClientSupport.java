@@ -123,6 +123,13 @@ abstract class ReactiveMinioCatalogClientSupport {
     return result;
   }
 
+  /** 校验用户输入的必要文本参数，提前给出清晰错误。 */
+  protected static void requireText(String name, String value) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException(name + " 不能为空");
+    }
+  }
+
   /** 为 bearer 认证接口组装 Authorization 头；token 为空时返回空头，兼容公开 metrics 配置。 */
   protected static Map<String, String> bearerHeaders(String bearerToken) {
     if (bearerToken == null || bearerToken.trim().isEmpty()) {

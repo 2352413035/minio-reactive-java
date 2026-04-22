@@ -122,7 +122,8 @@ public final class ReactiveHttpClient {
     return response
         .bodyToMono(String.class)
         .defaultIfEmpty("")
-        .map(body -> new ReactiveS3Exception(response.statusCode().value(), body));
+        .map(body -> new ReactiveS3Exception(
+            response.statusCode().value(), body, response.headers().asHttpHeaders().getFirst("x-amz-request-id")));
   }
 
   private static void apply(HttpHeaders headers, S3Request request) {
