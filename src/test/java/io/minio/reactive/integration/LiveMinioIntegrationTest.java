@@ -11,6 +11,7 @@ import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.messages.kms.KmsJsonResult;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.admin.AdminServerInfo;
+import io.minio.reactive.messages.admin.AdminUserInfo;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.MultipartUpload;
@@ -206,6 +207,27 @@ class LiveMinioIntegrationTest {
     Assertions.assertTrue(client.listObjects(bucket).collectList().block().isEmpty());
   }
 
+
+
+  @Test
+  void shouldExerciseAdminUserLifecycle() {
+    String accessKey = "reactiveuser" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+    String secretKey = "reactive-secret-" + UUID.randomUUID().toString().replace("-", "");
+    try {
+      adminClient.addUser(accessKey, secretKey).block();
+      AdminUserInfo userInfo = adminClient.getUserInfo(accessKey).block();
+      Assertions.assertEquals("enabled", userInfo.status());
+
+      adminClient.setUserEnabled(accessKey, false).block();
+      AdminUserInfo disabled = adminClient.getUserInfo(accessKey).block();
+      Assertions.assertEquals("disabled", disabled.status());
+    } finally {
+      try {
+        adminClient.deleteUser(accessKey).onErrorResume(error -> reactor.core.publisher.Mono.empty()).block();
+      } catch (Exception ignored) {
+      }
+    }
+  }
 
   private void assertKmsStatusIsTypedOrDiagnostic() {
     try {
