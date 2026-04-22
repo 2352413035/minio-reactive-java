@@ -10,7 +10,9 @@ import io.minio.reactive.errors.ReactiveMinioKmsException;
 import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.messages.kms.KmsJsonResult;
 import io.minio.reactive.messages.BucketInfo;
+import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminServerInfo;
+import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.AdminUserInfo;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
@@ -224,6 +226,32 @@ class LiveMinioIntegrationTest {
     } finally {
       try {
         adminClient.deleteUser(accessKey).onErrorResume(error -> reactor.core.publisher.Mono.empty()).block();
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+
+  @Test
+  void shouldExerciseServiceAccountCreateAndDelete() {
+    String serviceAccessKey = "svc" + UUID.randomUUID().toString().replace("-", "").substring(0, 17);
+    String serviceSecretKey = "svc" + UUID.randomUUID().toString().replace("-", "").substring(0, 28);
+    try {
+      EncryptedAdminResponse response =
+          adminClient
+              .addServiceAccount(
+                  AddServiceAccountRequest.builder()
+                      .accessKey(serviceAccessKey)
+                      .secretKey(serviceSecretKey)
+                      .name("svc" + serviceAccessKey.substring(3, 10))
+                      .description("reactive integration service account")
+                      .build())
+              .block();
+      Assertions.assertNotNull(response);
+      Assertions.assertTrue(response.isEncrypted());
+    } finally {
+      try {
+        adminClient.deleteServiceAccount(serviceAccessKey).onErrorResume(error -> reactor.core.publisher.Mono.empty()).block();
       } catch (Exception ignored) {
       }
     }
