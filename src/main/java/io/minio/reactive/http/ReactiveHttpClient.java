@@ -34,6 +34,12 @@ public final class ReactiveHttpClient {
     this.config = config;
   }
 
+  /** 返回任意 HTTP 状态码，不把非 2xx 转成异常；健康检查等接口需要这种语义。 */
+  public Mono<Integer> exchangeToStatusAllowAll(S3Request request) {
+    return requestSpec(request)
+        .exchangeToMono(response -> response.releaseBody().thenReturn(response.statusCode().value()));
+  }
+
   public Mono<Integer> exchangeToStatus(S3Request request) {
     return requestSpec(request)
         .exchangeToMono(

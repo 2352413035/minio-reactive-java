@@ -25,7 +25,8 @@ public final class ReactiveMinioHealthClient extends ReactiveMinioCatalogClientS
 
   /** 检查 MinIO 存活状态，返回带名称和状态码的业务结果。 */
   public Mono<io.minio.reactive.messages.HealthCheckResult> checkLiveness() {
-    return liveGet().map(status -> new io.minio.reactive.messages.HealthCheckResult("live", status));
+    return executeToStatusAllowAll("HEALTH_LIVE_GET", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(status -> new io.minio.reactive.messages.HealthCheckResult("live", status));
   }
 
   /** 判断 MinIO 是否处于存活状态。 */
@@ -35,7 +36,8 @@ public final class ReactiveMinioHealthClient extends ReactiveMinioCatalogClientS
 
   /** 检查 MinIO 就绪状态，返回带名称和状态码的业务结果。 */
   public Mono<io.minio.reactive.messages.HealthCheckResult> checkReadiness() {
-    return readyGet().map(status -> new io.minio.reactive.messages.HealthCheckResult("ready", status));
+    return executeToStatusAllowAll("HEALTH_READY_GET", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(status -> new io.minio.reactive.messages.HealthCheckResult("ready", status));
   }
 
   /** 判断 MinIO 是否处于就绪状态。 */
@@ -45,12 +47,14 @@ public final class ReactiveMinioHealthClient extends ReactiveMinioCatalogClientS
 
   /** 检查集群写入健康状态。 */
   public Mono<io.minio.reactive.messages.HealthCheckResult> checkCluster() {
-    return clusterGet().map(status -> new io.minio.reactive.messages.HealthCheckResult("cluster", status));
+    return executeToStatusAllowAll("HEALTH_CLUSTER_GET", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(status -> new io.minio.reactive.messages.HealthCheckResult("cluster", status));
   }
 
   /** 检查集群只读健康状态。 */
   public Mono<io.minio.reactive.messages.HealthCheckResult> checkClusterRead() {
-    return clusterReadGet().map(status -> new io.minio.reactive.messages.HealthCheckResult("cluster-read", status));
+    return executeToStatusAllowAll("HEALTH_CLUSTER_READ_GET", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(status -> new io.minio.reactive.messages.HealthCheckResult("cluster-read", status));
   }
 
   /** 调用 `HEALTH_CLUSTER_GET`。 */

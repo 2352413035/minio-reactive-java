@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 class ReactiveMinioSpecializedClientsTest {
@@ -79,6 +82,29 @@ class ReactiveMinioSpecializedClientsTest {
         }
       }
     }
+  }
+
+
+  @Test
+  void shouldTreatHealthBusinessMethodsAsBooleanResults() {
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request ->
+                    Mono.just(
+                        ClientResponse.create(HttpStatus.SERVICE_UNAVAILABLE)
+                            .body("not ready")
+                            .build()))
+            .build();
+    ReactiveMinioHealthClient client =
+        ReactiveMinioHealthClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .build();
+
+    Assertions.assertEquals(Boolean.FALSE, client.isReady().block());
+    Assertions.assertEquals(503, client.checkReadiness().block().statusCode());
   }
 
   private static void assertMonoMethodExists(Class<?> type, String name) {

@@ -45,6 +45,17 @@ final class ReactiveMinioEndpointExecutor {
     this.signer = signer;
   }
 
+  Mono<Integer> executeToStatusAllowAll(
+      MinioApiEndpoint endpoint,
+      Map<String, String> pathVariables,
+      Map<String, String> queryParameters,
+      Map<String, String> headers,
+      byte[] body,
+      String contentType) {
+    return prepare(endpoint, pathVariables, queryParameters, headers, body, contentType)
+        .flatMap(httpClient::exchangeToStatusAllowAll);
+  }
+
   Mono<Integer> executeToStatus(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
