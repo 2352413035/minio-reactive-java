@@ -107,6 +107,59 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(503, client.checkReadiness().block().statusCode());
   }
 
+
+  @Test
+  void shouldBuildPolicyAndKmsBusinessRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).body("{}").build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioKmsClient kms =
+        ReactiveMinioKmsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    admin.putPolicy("readonly", "{\"Version\":\"2012-10-17\"}").block();
+    admin.setUserPolicy("readonly", "user1").block();
+    kms.getKeyStatus("key1").block();
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/add-canned-policy"));
+    Assertions.assertTrue(queries.contains("name=readonly"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "policyName=readonly", "userOrGroup=user1", "isGroup=false"));
+    Assertions.assertTrue(queries.contains("key-id=key1"));
+  }
+
+
+  private static boolean containsAllQueryParts(java.util.List<String> queries, String... parts) {
+    for (String query : queries) {
+      boolean matched = true;
+      for (String part : parts) {
+        matched = matched && query != null && query.contains(part);
+      }
+      if (matched) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static void assertMonoMethodExists(Class<?> type, String name) {
     for (Method method : type.getMethods()) {
       if (method.getName().equals(name) && method.getReturnType().equals(Mono.class)) {
