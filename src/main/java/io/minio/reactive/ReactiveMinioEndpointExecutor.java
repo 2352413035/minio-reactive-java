@@ -3,7 +3,12 @@ package io.minio.reactive;
 import io.minio.reactive.catalog.MinioApiEndpoint;
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.credentials.ReactiveCredentialsProvider;
+import io.minio.reactive.errors.ReactiveMinioAdminException;
+import io.minio.reactive.errors.ReactiveMinioHealthException;
+import io.minio.reactive.errors.ReactiveMinioKmsException;
+import io.minio.reactive.errors.ReactiveMinioMetricsException;
 import io.minio.reactive.errors.ReactiveMinioProtocolException;
+import io.minio.reactive.errors.ReactiveMinioStsException;
 import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.http.ReactiveHttpClient;
 import io.minio.reactive.http.S3Request;
@@ -204,8 +209,28 @@ final class ReactiveMinioEndpointExecutor {
       message = firstText(values, "message", "Message", "errorMessage", "ErrorMessage");
       requestId = firstText(values, "requestId", "requestID", "RequestId", "RequestID");
     }
-    return new ReactiveMinioProtocolException(
-        endpoint.family(), ex.statusCode(), code, message, requestId, ex.responseBody());
+    return protocolException(endpoint.family(), ex.statusCode(), code, message, requestId, ex.responseBody());
+  }
+
+
+  private static RuntimeException protocolException(
+      String protocol, int statusCode, String code, String message, String requestId, String rawBody) {
+    if ("admin".equals(protocol)) {
+      return new ReactiveMinioAdminException(statusCode, code, message, requestId, rawBody);
+    }
+    if ("kms".equals(protocol)) {
+      return new ReactiveMinioKmsException(statusCode, code, message, requestId, rawBody);
+    }
+    if ("sts".equals(protocol)) {
+      return new ReactiveMinioStsException(statusCode, code, message, requestId, rawBody);
+    }
+    if ("metrics".equals(protocol)) {
+      return new ReactiveMinioMetricsException(statusCode, code, message, requestId, rawBody);
+    }
+    if ("health".equals(protocol)) {
+      return new ReactiveMinioHealthException(statusCode, code, message, requestId, rawBody);
+    }
+    return new ReactiveMinioProtocolException(protocol, statusCode, code, message, requestId, rawBody);
   }
 
   private static Map<String, Object> safeJson(String body) {

@@ -2,6 +2,7 @@ package io.minio.reactive;
 
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.catalog.MinioApiEndpoint;
+import io.minio.reactive.errors.ReactiveMinioAdminException;
 import io.minio.reactive.errors.ReactiveMinioProtocolException;
 import io.minio.reactive.http.S3Request;
 import java.nio.charset.StandardCharsets;
@@ -190,9 +191,9 @@ class ReactiveMinioRawClientTest {
             .credentials("ak", "sk")
             .build();
 
-    ReactiveMinioProtocolException error =
+    ReactiveMinioAdminException error =
         Assertions.assertThrows(
-            ReactiveMinioProtocolException.class,
+            ReactiveMinioAdminException.class,
             () -> client.executeToString(MinioApiCatalog.byName("ADMIN_SERVER_INFO")).block());
 
     Assertions.assertEquals("admin", error.protocol());
