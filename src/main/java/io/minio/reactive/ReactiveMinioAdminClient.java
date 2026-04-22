@@ -67,6 +67,71 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         null);
   }
 
+
+  /** 列出全部内置策略，返回通用 JSON 结果。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> listPolicies() {
+    return listCannedPolicies().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 列出指定 bucket 可用的内置策略，返回通用 JSON 结果。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> listPolicies(String bucket) {
+    requireText("bucket", bucket);
+    return listBucketPolicies(bucket).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取策略内容，返回通用 JSON 结果。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getPolicy(String name) {
+    requireText("name", name);
+    return infoCannedPolicy(name).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取策略内容和时间戳信息，返回通用 JSON 结果。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getPolicyV2(String name) {
+    requireText("name", name);
+    return executeToString("ADMIN_INFO_CANNED_POLICY", emptyMap(), map("name", name, "v", "2"), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 新增或更新内置策略。 */
+  public Mono<Void> putPolicy(String name, String policyJson) {
+    requireText("name", name);
+    requireText("policyJson", policyJson);
+    byte[] body = policyJson.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    return executeToVoid("ADMIN_ADD_CANNED_POLICY", emptyMap(), map("name", name), emptyMap(), body, "application/json");
+  }
+
+  /** 删除内置策略。 */
+  public Mono<Void> deletePolicy(String name) {
+    requireText("name", name);
+    return executeToVoid("ADMIN_REMOVE_CANNED_POLICY", emptyMap(), map("name", name), emptyMap(), null, null);
+  }
+
+  /** 给用户绑定策略。 */
+  public Mono<Void> setUserPolicy(String policyName, String accessKey) {
+    requireText("policyName", policyName);
+    requireText("accessKey", accessKey);
+    return executeToVoid(
+        "ADMIN_SET_USER_OR_GROUP_POLICY",
+        emptyMap(),
+        map("policyName", policyName, "userOrGroup", accessKey, "isGroup", "false"),
+        emptyMap(),
+        null,
+        null);
+  }
+
+  /** 给用户组绑定策略。 */
+  public Mono<Void> setGroupPolicy(String policyName, String groupName) {
+    requireText("policyName", policyName);
+    requireText("groupName", groupName);
+    return executeToVoid(
+        "ADMIN_SET_USER_OR_GROUP_POLICY",
+        emptyMap(),
+        map("policyName", policyName, "userOrGroup", groupName, "isGroup", "true"),
+        emptyMap(),
+        null,
+        null);
+  }
+
   /** 调用 `ADMIN_SERVICE_V2`。 */
   public Mono<String> serviceV2(String action, byte[] body, String contentType) {
     return executeToString("ADMIN_SERVICE_V2", emptyMap(), map("action", action), emptyMap(), body, contentType);
