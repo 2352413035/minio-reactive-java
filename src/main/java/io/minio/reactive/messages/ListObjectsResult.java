@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Parsed ListObjectsV2 page. */
+/** 对象列表 V2 单页响应的解析结果。 */
 public final class ListObjectsResult {
   private final String name;
   private final String prefix;

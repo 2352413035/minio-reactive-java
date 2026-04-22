@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Multipart upload id returned by CreateMultipartUpload. */
+/** 分片上传会话信息，来源于 CreateMultipartUpload 响应。 */
 public final class MultipartUpload {
   private final String bucket;
   private final String key;

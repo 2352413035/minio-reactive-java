@@ -6,7 +6,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Describes one HTTP interface exposed by the MinIO server routers. */
+/**
+ * 一个 MinIO HTTP 接口的最小元数据。
+ *
+ * <p>它只描述“如何构造请求”：接口名、分组、HTTP 方法、路径模板、认证方式、默认 query
+ * 和必填 query。它不负责解析具体业务响应，避免管理端等大量协议模型一次性耦合进核心客户端。
+ */
 public final class MinioApiEndpoint {
   private final String name;
   private final String family;
@@ -17,6 +22,7 @@ public final class MinioApiEndpoint {
   private final Map<String, String> defaultQueryParameters;
   private final List<String> requiredQueryParameters;
 
+  /** 使用布尔认证标记创建接口；历史兼容入口中 true 表示 SigV4，false 表示无认证。 */
   MinioApiEndpoint(
       String name,
       String family,
@@ -38,6 +44,7 @@ public final class MinioApiEndpoint {
   }
 
 
+  /** 使用明确认证方案创建接口；用于 metrics 的 bearer、health 的 none 等非 SigV4 场景。 */
   MinioApiEndpoint(
       String name,
       String family,
@@ -82,6 +89,7 @@ public final class MinioApiEndpoint {
     return authScheme;
   }
 
+  /** 只有 SigV4 接口才交给签名器；Bearer 和无认证接口保留调用方提供的认证方式。 */
   public boolean requiresSigV4() {
     return "sigv4".equals(authScheme);
   }

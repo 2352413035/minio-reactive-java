@@ -24,7 +24,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-/** Small JDK-only XML helpers for S3 response/config payloads. */
+/** 只依赖 JDK 的 S3 XML 响应和配置载荷辅助工具。 */
 public final class S3Xml {
   private S3Xml() {}
 

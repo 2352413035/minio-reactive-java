@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Parsed ListParts response. */
+/** 分片列表响应的解析结果。 */
 public final class ListPartsResult {
   private final String bucket;
   private final String key;

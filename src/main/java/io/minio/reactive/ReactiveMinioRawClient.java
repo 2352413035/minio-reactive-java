@@ -19,10 +19,11 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Raw reactive executor for the complete MinIO HTTP route catalog.
+ * MinIO 公开 HTTP 接口目录的原始响应式执行器。
  *
- * <p>This class is intentionally protocol-level: it lets the SDK expose every MinIO server interface
- * even when a higher-level typed request/response model has not been introduced yet.
+ * <p>这个类刻意保持在“协议执行层”：它负责把目录条目、路径变量、query、header、body
+ * 合成一个可签名的请求，并复用统一 HTTP 层发送。这样即使某个管理端接口还没有强类型
+ * 请求/响应模型，SDK 也不会缺失它的调用入口。
  */
 public final class ReactiveMinioRawClient {
   private static final Pattern PATH_VARIABLE = Pattern.compile("\\{([^}/:]+)(?::[^}]*)?}");
@@ -47,6 +48,7 @@ public final class ReactiveMinioRawClient {
     return new Builder();
   }
 
+  /** 执行不带额外参数的接口，并只返回 HTTP 状态码。 */
   public Mono<Integer> executeToStatus(MinioApiEndpoint endpoint) {
     return executeToStatus(
         endpoint,
@@ -57,6 +59,7 @@ public final class ReactiveMinioRawClient {
         null);
   }
 
+  /** 执行接口并只关心状态码，适合 HEAD、健康检查或只需确认成功的操作。 */
   public Mono<Integer> executeToStatus(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -68,6 +71,7 @@ public final class ReactiveMinioRawClient {
         .flatMap(httpClient::exchangeToStatus);
   }
 
+  /** 执行接口并把响应体整体读取为字符串，适合 XML、JSON、文本类管理接口。 */
   public Mono<String> executeToString(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -79,6 +83,7 @@ public final class ReactiveMinioRawClient {
         .flatMap(httpClient::exchangeToString);
   }
 
+  /** 执行接口并把响应体整体读取为字节数组，适合导出、下载等小到中等体积响应。 */
   public Mono<byte[]> executeToBytes(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -90,6 +95,7 @@ public final class ReactiveMinioRawClient {
         .flatMap(httpClient::exchangeToByteArray);
   }
 
+  /** 执行接口并以分块字节流返回响应体，适合下载、日志、trace 等流式场景。 */
   public Flux<byte[]> executeToBody(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -101,6 +107,7 @@ public final class ReactiveMinioRawClient {
         .flatMapMany(httpClient::exchangeToBody);
   }
 
+  /** 执行接口并返回响应头，适合 stat、HEAD 或只关心元数据的操作。 */
   public Mono<Map<String, List<String>>> executeToHeaders(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -112,6 +119,7 @@ public final class ReactiveMinioRawClient {
         .flatMap(httpClient::exchangeToHeaders);
   }
 
+  /** 执行接口并释放响应体，适合删除、设置配置等无返回体操作。 */
   public Mono<Void> executeToVoid(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -123,6 +131,12 @@ public final class ReactiveMinioRawClient {
         .flatMap(httpClient::exchangeToVoid);
   }
 
+  /**
+   * 根据目录条目构造内部请求模型。
+   *
+   * <p>这一步只做请求语义合成，不直接发送网络请求。把它拆出来是为了让测试能直接验证
+   * 路径模板展开、query 合并、header 过滤、body 长度和签名 service 的选择是否正确。
+   */
   public S3Request requestFor(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -134,6 +148,7 @@ public final class ReactiveMinioRawClient {
     Map<String, String> safeQueryParameters = safe(queryParameters);
     Map<String, String> safeHeaders = safe(headers);
 
+    // 目录里的固定 query 先进入，再用调用方传入的动态 query 覆盖或补齐。
     Map<String, String> mergedQuery = new LinkedHashMap<String, String>();
     mergedQuery.putAll(endpoint.defaultQueryParameters());
     mergedQuery.putAll(safeQueryParameters);
@@ -163,6 +178,7 @@ public final class ReactiveMinioRawClient {
     return builder.build();
   }
 
+  /** 按认证方案决定是否执行 SigV4 签名；Bearer 和无认证接口不能被错误地 S3 签名。 */
   private Mono<S3Request> prepare(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,
@@ -181,6 +197,7 @@ public final class ReactiveMinioRawClient {
         .map(credentials -> signer.sign(request, config, credentials));
   }
 
+  /** 必填 query 缺失时尽早失败，避免把错误请求发到 MinIO 后才排查。 */
   private static void validateRequiredQuery(
       MinioApiEndpoint endpoint, Map<String, String> queryParameters) {
     for (String required : endpoint.requiredQueryParameters()) {
@@ -191,6 +208,7 @@ public final class ReactiveMinioRawClient {
     }
   }
 
+  /** 展开路径模板；展开后的路径仍会由 S3Escaper 做 canonical 编码。 */
   private static String expandPath(String template, Map<String, String> pathVariables) {
     Matcher matcher = PATH_VARIABLE.matcher(template);
     StringBuffer result = new StringBuffer();
@@ -208,6 +226,7 @@ public final class ReactiveMinioRawClient {
     return result.toString();
   }
 
+  /** 防止调用方覆盖签名器管理的关键头，Bearer 认证接口除 Authorization 外仍受保护。 */
   private static void validateCallerHeader(MinioApiEndpoint endpoint, String name) {
     if (name == null) {
       throw new IllegalArgumentException("header name must not be null");
@@ -223,6 +242,7 @@ public final class ReactiveMinioRawClient {
     }
   }
 
+  /** 限制单段路径变量，避免把一个模板段扩展成多个路径段或点段。 */
   private static void validatePathVariable(String name, String value) {
     if (value.indexOf('/') >= 0 && !allowsSlash(name)) {
       throw new IllegalArgumentException(
@@ -237,6 +257,7 @@ public final class ReactiveMinioRawClient {
     return "object".equals(name) || "prefix".equals(name) || "pathComps".equals(name);
   }
 
+  /** STS 签名必须使用 sts 服务范围，其它 MinIO/S3 路由沿用 s3 服务范围。 */
   private static String signingService(MinioApiEndpoint endpoint) {
     return "sts".equals(endpoint.family()) ? "sts" : "s3";
   }

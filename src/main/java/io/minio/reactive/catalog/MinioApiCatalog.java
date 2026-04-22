@@ -7,14 +7,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Catalog of MinIO server HTTP interfaces mirrored from the local minio router files. */
+/**
+ * MinIO 服务端公开 HTTP 接口目录。
+ *
+ * <p>这里的条目对照本地 `minio` 项目的公开路由文件整理，用于保证 SDK 至少能以
+ * 原始响应式请求的形式访问每个公开接口。强类型客户端后续可以建立在这些目录条目之上。
+ */
 public final class MinioApiCatalog {
   private static final List<MinioApiEndpoint> ENDPOINTS = build();
 
   private MinioApiCatalog() {}
 
+  /** 返回当前已登记的全部公开 MinIO 接口。 */
   public static List<MinioApiEndpoint> all() { return ENDPOINTS; }
 
+  /** 按稳定名称查找接口；名称不存在时主动失败，避免静默调用错误路径。 */
   public static MinioApiEndpoint byName(String name) {
     for (MinioApiEndpoint endpoint : ENDPOINTS) {
       if (endpoint.name().equals(name)) { return endpoint; }
@@ -22,6 +29,7 @@ public final class MinioApiCatalog {
     throw new IllegalArgumentException("Unknown MinIO API endpoint: " + name);
   }
 
+  /** 按接口分组筛选目录，例如 s3、admin、kms、health、metrics、sts。 */
   public static List<MinioApiEndpoint> byFamily(String family) {
     List<MinioApiEndpoint> result = new ArrayList<MinioApiEndpoint>();
     for (MinioApiEndpoint endpoint : ENDPOINTS) {
@@ -31,6 +39,7 @@ public final class MinioApiCatalog {
   }
 
   private static List<MinioApiEndpoint> build() {
+    // 这里故意集中登记路由元数据，方便和 MinIO router 文件逐项核对。
     List<MinioApiEndpoint> endpoints = new ArrayList<MinioApiEndpoint>();
     endpoints.add(e("S3_HEAD_OBJECT", "s3", "HEAD", "/{bucket}/{object}", true, q(), req()));
     endpoints.add(e("S3_GET_OBJECT_ATTRIBUTES", "s3", "GET", "/{bucket}/{object}", true, q("attributes", ""), req()));

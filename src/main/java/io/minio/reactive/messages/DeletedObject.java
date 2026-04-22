@@ -1,6 +1,6 @@
 package io.minio.reactive.messages;
 
-/** Entry returned by DeleteObjects. */
+/** 批量删除对象响应中的单个已删除对象记录。 */
 public final class DeletedObject {
   private final String key;
   private final String versionId;

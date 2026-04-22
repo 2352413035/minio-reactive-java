@@ -71,7 +71,7 @@ public final class S3RequestSigner {
     Map<String, String> canonicalHeaders = canonicalHeaders(unsignedRequest.headers());
     String signedHeaders = signedHeaders(canonicalHeaders);
 
-    // canonical request 是服务端验签时会按同样规则重建的文本，因此格式必须严格一致。
+    // 规范化请求是服务端验签时会按同样规则重建的文本，因此格式必须严格一致。
     String canonicalRequest =
         unsignedRequest.method().name()
             + "\n"
