@@ -139,6 +139,10 @@ final class ReactiveMinioEndpointExecutor {
             .flatMap(httpClient::exchangeToVoid));
   }
 
+  Mono<ReactiveCredentials> credentials() {
+    return credentialsProvider.getCredentials().defaultIfEmpty(ReactiveCredentials.anonymous());
+  }
+
   S3Request requestFor(
       MinioApiEndpoint endpoint,
       Map<String, String> pathVariables,

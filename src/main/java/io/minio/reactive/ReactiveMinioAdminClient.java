@@ -23,6 +23,21 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
 
+
+  /** 新增内部用户，自动生成 MinIO madmin 兼容加密载荷。 */
+  public Mono<Void> addUser(io.minio.reactive.messages.admin.AddUserRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return executeEncryptedJsonToVoid(
+        "ADMIN_ADD_USER", emptyMap(), map("accessKey", request.accessKey()), request.toPayload());
+  }
+
+  /** 新增启用状态的内部用户。 */
+  public Mono<Void> addUser(String accessKey, String secretKey) {
+    return addUser(io.minio.reactive.messages.admin.AddUserRequest.of(accessKey, secretKey));
+  }
+
   /** 获取服务端信息摘要，返回强类型稳定字段并保留原始 JSON。 */
   public Mono<io.minio.reactive.messages.admin.AdminServerInfo> getServerInfo() {
     return serverInfo().map(io.minio.reactive.messages.admin.AdminServerInfo::parse);
