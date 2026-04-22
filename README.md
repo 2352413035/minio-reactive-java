@@ -127,3 +127,4 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 - `docs/09-minio-api-catalog.md`
 - `docs/10-version-management.md`
+- `docs/11-api-migration-and-advanced-compat.md`

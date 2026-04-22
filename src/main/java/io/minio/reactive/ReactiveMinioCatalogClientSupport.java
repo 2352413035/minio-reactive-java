@@ -73,6 +73,18 @@ abstract class ReactiveMinioCatalogClientSupport {
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
   }
 
+  /** 按目录名称执行接口并返回任意状态码，不把非 2xx 转成异常。 */
+  protected Mono<Integer> executeToStatusAllowAll(
+      String endpointName,
+      Map<String, String> pathVariables,
+      Map<String, String> queryParameters,
+      Map<String, String> headers,
+      byte[] body,
+      String contentType) {
+    return executor.executeToStatusAllowAll(
+        endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
+  }
+
   /** 按目录名称执行接口并返回状态码。 */
   protected Mono<Integer> executeToStatus(
       String endpointName,
