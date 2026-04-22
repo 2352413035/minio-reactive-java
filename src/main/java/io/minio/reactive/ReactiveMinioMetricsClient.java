@@ -54,8 +54,9 @@ public final class ReactiveMinioMetricsClient extends ReactiveMinioCatalogClient
   /** 拉取 metrics v3 指定路径的指标文本。 */
   public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeV3(
       String pathComps, String bearerToken) {
-    return v3(pathComps, bearerToken)
-        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("v3" + pathComps, text));
+    String normalizedPath = normalizeMetricsV3Path(pathComps);
+    return v3(normalizedPath, bearerToken)
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("v3" + normalizedPath, text));
   }
 
   /** 调用 `METRICS_PROMETHEUS_LEGACY`。 */
@@ -85,7 +86,15 @@ public final class ReactiveMinioMetricsClient extends ReactiveMinioCatalogClient
 
   /** 调用 `METRICS_V3`。 */
   public Mono<String> v3(String pathComps, String bearerToken) {
-    return executeToString("METRICS_V3", map("pathComps", pathComps), emptyMap(), bearerHeaders(bearerToken), null, null);
+    return executeToString("METRICS_V3", map("pathComps", normalizeMetricsV3Path(pathComps)), emptyMap(), bearerHeaders(bearerToken), null, null);
+  }
+
+  private static String normalizeMetricsV3Path(String pathComps) {
+    if (pathComps == null || pathComps.trim().isEmpty()) {
+      return "";
+    }
+    String value = pathComps.trim();
+    return value.startsWith("/") ? value : "/" + value;
   }
 
 
