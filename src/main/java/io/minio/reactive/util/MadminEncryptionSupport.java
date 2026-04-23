@@ -15,7 +15,7 @@ import javax.crypto.spec.SecretKeySpec;
  *
  * <p>madmin-go 的加密数据格式为：32 字节 salt、1 字节算法 ID、8 字节 nonce、后续 DARE
  * 加密流。当前 Java 实现选择服务端已支持的 PBKDF2 + AES-GCM 算法 ID，避免引入 Argon2 或
- * ChaCha20 依赖，该实现已对齐 `madmin.DecryptData` 支持的 PBKDF2 AES-GCM 流式分片格式。它适合生成发往 MinIO 管理端写接口的加密载荷；但当前仍不能解密 madmin-go 默认生成的 Argon2id 载荷。
+ * ChaCha20 依赖，该实现已对齐 `madmin.DecryptData` 支持的 PBKDF2 AES-GCM 流式分片格式。它适合生成发往 MinIO 管理端写接口的加密载荷；但当前仍不能解密 madmin-go 默认生成的 Argon2id AES-GCM 或 Argon2id ChaCha20-Poly1305 载荷。
  */
 public final class MadminEncryptionSupport {
   private static final int SALT_LENGTH = 32;
@@ -26,22 +26,25 @@ public final class MadminEncryptionSupport {
   private static final int BUFFER_SIZE = 1 << 14;
   private static final int PBKDF2_COST = 8192;
   private static final int ALGORITHM_OFFSET = 32;
-  private static final byte ARGON2ID_AES_GCM = 0x00;
-  private static final byte ARGON2ID_CHACHA20_POLY1305 = 0x01;
-  private static final byte PBKDF2_AES_GCM = 0x02;
   private static final SecureRandom RANDOM = new SecureRandom();
 
   private MadminEncryptionSupport() {}
 
   /** 判断数据是否看起来像 madmin-go EncryptData 生成的加密载荷。 */
   public static boolean isEncrypted(byte[] data) {
+    return algorithmOf(data) != null;
+  }
+
+  /**
+   * 读取 madmin-go 载荷头部中的算法 ID。
+   *
+   * <p>返回 null 表示载荷太短或算法 ID 不在 madmin-go 公开格式范围内。
+   */
+  public static MadminEncryptionAlgorithm algorithmOf(byte[] data) {
     if (data == null || data.length <= SALT_LENGTH) {
-      return false;
+      return null;
     }
-    byte algorithm = data[ALGORITHM_OFFSET];
-    return algorithm == ARGON2ID_AES_GCM
-        || algorithm == ARGON2ID_CHACHA20_POLY1305
-        || algorithm == PBKDF2_AES_GCM;
+    return MadminEncryptionAlgorithm.fromId(data[ALGORITHM_OFFSET]);
   }
 
   /**
@@ -59,7 +62,7 @@ public final class MadminEncryptionSupport {
       byte[] associatedData = initialAssociatedData(key, noncePrefix);
       ByteArrayOutputStream output = new ByteArrayOutputStream();
       output.write(salt);
-      output.write(PBKDF2_AES_GCM);
+      output.write(MadminEncryptionAlgorithm.PBKDF2_AES_GCM.id());
       output.write(noncePrefix);
       writeEncryptedFragments(output, key, noncePrefix, associatedData, data);
       return output.toByteArray();
@@ -68,15 +71,19 @@ public final class MadminEncryptionSupport {
     }
   }
 
-  /** 解密 PBKDF2 + AES-GCM madmin 加密载荷；暂不支持 madmin-go 默认 Argon2id 载荷。 */
+  /** 解密 PBKDF2 + AES-GCM madmin 加密载荷；暂不支持 madmin-go 默认 Argon2id/ChaCha20 载荷。 */
   public static byte[] decryptData(String secretKey, byte[] encryptedData) {
     requireSecret(secretKey);
     if (encryptedData == null || encryptedData.length < SALT_LENGTH + 1 + STORED_NONCE_LENGTH + GCM_TAG_BYTES) {
       throw new IllegalArgumentException("madmin 加密载荷长度不足");
     }
-    byte algorithm = encryptedData[ALGORITHM_OFFSET];
-    if (algorithm != PBKDF2_AES_GCM) {
-      throw new IllegalArgumentException("当前只支持 PBKDF2 AES-GCM madmin 加密载荷");
+    MadminEncryptionAlgorithm algorithm = algorithmOf(encryptedData);
+    if (algorithm == null) {
+      throw new IllegalArgumentException("madmin 加密载荷算法 ID 无法识别");
+    }
+    if (!algorithm.decryptSupported()) {
+      throw new IllegalArgumentException(
+          "当前只支持 PBKDF2 AES-GCM madmin 加密载荷，暂不支持 " + algorithm.displayName());
     }
     try {
       byte[] salt = copy(encryptedData, 0, SALT_LENGTH);

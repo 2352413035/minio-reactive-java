@@ -25,11 +25,13 @@ JDK8 分支：
 
 - `3bb1b32`：核心 S3 reactive SDK 能力检查点。
 - `5053ca6`：MinIO 公开接口目录和原始响应式执行器检查点。
+- `c9ddb1e`：强业务客户端基础检查点，已完成 catalog/raw 兜底、平级专用客户端、第一批 typed 模型、madmin PBKDF2/AES-GCM 写入方向和双分支验证。
 
 JDK17+ 分支：
 
 - `7303e7e`：JDK17 线同步核心 S3 reactive SDK 能力检查点。
 - `b9073fc`：JDK17 线同步 MinIO 公开接口目录和原始响应式执行器检查点。
+- `7c598a1`：JDK17+ 线同步强业务客户端基础检查点，语义应与 JDK8 线保持一致。
 
 ## 验证命令
 

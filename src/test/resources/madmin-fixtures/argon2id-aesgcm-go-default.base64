@@ -1,0 +1,5 @@
+# 由 madmin-go v3.0.109 默认构建使用 `go run ./cmd/fixture` 生成。
+# secret: fixture-secret
+# plaintext: madmin fixture payload
+# algorithm: 0x00 Argon2id + AES-GCM
+iviAnAG2/BFLVeGQwUU2SYdHJTfLWyKeOplzHcDeJIIAh8pGWpOULdP/Q1ZEqb4I8FbGPuqqs+nS1e/mAHlx+tSRj41V0vGzzlFRkRH8vA==
