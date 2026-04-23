@@ -1,6 +1,7 @@
 package io.minio.reactive.util;
 
 import io.minio.reactive.messages.BucketInfo;
+import io.minio.reactive.messages.BucketVersioningConfiguration;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.DeletedObject;
@@ -137,6 +138,30 @@ public final class S3Xml {
               text(entry, "DeleteMarkerVersionId")));
     }
     return new DeleteObjectsResult(deleted);
+  }
+
+  public static BucketVersioningConfiguration parseBucketVersioning(String xml) {
+    if (isBlank(xml)) {
+      return BucketVersioningConfiguration.of("", "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    return BucketVersioningConfiguration.of(text(root, "Status"), text(root, "MfaDelete"));
+  }
+
+  public static String bucketVersioningXml(BucketVersioningConfiguration configuration) {
+    BucketVersioningConfiguration safe =
+        configuration == null ? BucketVersioningConfiguration.of("", "") : configuration;
+    StringBuilder builder = new StringBuilder();
+    builder.append("<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
+    if (!isBlank(safe.status())) {
+      builder.append("<Status>").append(escapeXml(safe.status())).append("</Status>");
+    }
+    if (!isBlank(safe.mfaDelete())) {
+      builder.append("<MfaDelete>").append(escapeXml(safe.mfaDelete())).append("</MfaDelete>");
+    }
+    builder.append("</VersioningConfiguration>");
+    return builder.toString();
   }
 
   public static Map<String, String> parseTagging(String xml) {

@@ -10,4 +10,17 @@ public final class ReactiveMinioAdminException extends ReactiveMinioException {
       String rawBody) {
     super("admin", statusCode, code, errorMessage, requestId, rawBody);
   }
+
+  public ReactiveMinioAdminException(
+      int statusCode,
+      String code,
+      String errorMessage,
+      String requestId,
+      String rawBody,
+      String endpointName,
+      String method,
+      String path,
+      String diagnosticHint) {
+    super("admin", statusCode, code, errorMessage, requestId, rawBody, endpointName, method, path, diagnosticHint);
+  }
 }

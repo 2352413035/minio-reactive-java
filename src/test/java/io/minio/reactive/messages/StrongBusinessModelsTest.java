@@ -2,6 +2,13 @@ package io.minio.reactive.messages;
 
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.messages.admin.AdminJsonResult;
+import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
+import io.minio.reactive.messages.admin.ServiceAccountList;
+import io.minio.reactive.messages.admin.ServiceAccountInfo;
+import io.minio.reactive.messages.admin.ServiceAccountCreateResult;
+import io.minio.reactive.messages.admin.AdminUserList;
+import io.minio.reactive.messages.admin.AdminGroupList;
+import io.minio.reactive.messages.admin.AdminGroupInfo;
 import io.minio.reactive.messages.admin.AdminPolicyInfo;
 import io.minio.reactive.messages.admin.AdminPolicyList;
 import io.minio.reactive.messages.admin.AdminUserInfo;
@@ -135,4 +142,53 @@ class StrongBusinessModelsTest {
     Assertions.assertFalse(metrics.isEmpty());
     Assertions.assertEquals("cluster", metrics.scope());
   }
+
+  @Test
+  void shouldParseAdminIdentityBusinessModels() {
+    AdminUserList users =
+        AdminUserList.parse(
+            "{\"user1\":{\"policyName\":\"readonly\",\"status\":\"enabled\"}}");
+    AdminGroupList groups = AdminGroupList.parse("[\"dev\",\"ops\"]");
+    AdminGroupInfo group =
+        AdminGroupInfo.parse(
+            "{\"name\":\"dev\",\"status\":\"enabled\",\"members\":[\"user1\"],\"policy\":\"readonly\"}");
+    UpdateGroupMembersRequest request =
+        UpdateGroupMembersRequest.add("dev", java.util.Collections.singletonList("user1"));
+
+    Assertions.assertTrue(users.users().containsKey("user1"));
+    Assertions.assertEquals("enabled", users.users().get("user1").status());
+    Assertions.assertEquals("ops", groups.groups().get(1));
+    Assertions.assertEquals("user1", group.members().get(0));
+    Assertions.assertEquals(Boolean.FALSE, request.toPayload().get("isRemove"));
+  }
+
+  @Test
+  void shouldParseServiceAccountBusinessModels() {
+    ServiceAccountList list =
+        ServiceAccountList.parse(
+            "{\"accounts\":[{\"parentUser\":\"root\",\"accountStatus\":\"enabled\",\"accessKey\":\"svc1\",\"name\":\"svc\"}]}");
+    ServiceAccountInfo info =
+        ServiceAccountInfo.parse(
+            "{\"parentUser\":\"root\",\"accountStatus\":\"enabled\",\"policy\":\"{}\"}");
+    ServiceAccountCreateResult result =
+        ServiceAccountCreateResult.fromResponseBytes(
+            "{\"credentials\":{\"accessKey\":\"ak\",\"secretKey\":\"sk\"}}"
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+    Assertions.assertEquals("svc1", list.accounts().get(0).accessKey());
+    Assertions.assertEquals("root", info.parentUser());
+    Assertions.assertFalse(result.encrypted());
+    Assertions.assertEquals("ak", result.credentials().accessKey());
+  }
+
+  @Test
+  void shouldParseAndRenderBucketVersioningModel() {
+    BucketVersioningConfiguration enabled = BucketVersioningConfiguration.enabled();
+    String xml = S3Xml.bucketVersioningXml(enabled);
+    BucketVersioningConfiguration parsed = S3Xml.parseBucketVersioning(xml);
+
+    Assertions.assertTrue(parsed.enabledStatus());
+    Assertions.assertTrue(xml.contains("<Status>Enabled</Status>"));
+  }
+
 }

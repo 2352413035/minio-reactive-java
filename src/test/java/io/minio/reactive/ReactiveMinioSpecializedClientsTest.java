@@ -3,6 +3,7 @@ package io.minio.reactive;
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
+import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
 import io.minio.reactive.messages.admin.AddUserRequest;
 import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
@@ -70,7 +71,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 15, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 26, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 0, 0);
@@ -122,6 +123,39 @@ class ReactiveMinioSpecializedClientsTest {
 
     Assertions.assertEquals(Boolean.FALSE, client.isReady().block());
     Assertions.assertEquals(503, client.checkReadiness().block().statusCode());
+  }
+
+
+  @Test
+  void shouldBuildAdminIdentityBusinessRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).body("{}").build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    admin.setGroupEnabled("dev", false).block();
+    admin.updateGroupMembers(UpdateGroupMembersRequest.add("dev", java.util.Collections.singletonList("user1"))).block();
+    admin.deleteServiceAccountTyped("svc1").block();
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/set-group-status"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/update-group-members"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/delete-service-account"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "group=dev", "status=disabled"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc1"));
   }
 
 
@@ -242,6 +276,34 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setConfigText(""));
   }
 
+
+
+  @Test
+  void shouldExposeS3VersioningBusinessMethods() {
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketVersioningConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setBucketVersioningConfiguration");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketVersioning");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3PutBucketVersioning");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectTagging");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutObjectTagging");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3DeleteObjectTagging");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutBucketTagging");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutBucketVersioning");
+  }
+
+
+  private static void assertAllPublicOverloadsDeprecated(Class<?> type, String name) {
+    int matched = 0;
+    for (Method method : type.getMethods()) {
+      if (method.getDeclaringClass().equals(type) && method.getName().equals(name)) {
+        matched++;
+        Assertions.assertNotNull(
+            method.getAnnotation(Deprecated.class),
+            "缺少 @Deprecated 重载: " + type.getSimpleName() + "." + name + java.util.Arrays.toString(method.getParameterTypes()));
+      }
+    }
+    Assertions.assertTrue(matched > 0, "缺少方法: " + type.getSimpleName() + "." + name);
+  }
 
   private static void assertAdvancedBaseline(
       Class<?> type, int monoStringCount, int deprecatedCount, int rawishCount) {

@@ -10,4 +10,17 @@ public final class ReactiveMinioHealthException extends ReactiveMinioException {
       String rawBody) {
     super("health", statusCode, code, errorMessage, requestId, rawBody);
   }
+
+  public ReactiveMinioHealthException(
+      int statusCode,
+      String code,
+      String errorMessage,
+      String requestId,
+      String rawBody,
+      String endpointName,
+      String method,
+      String path,
+      String diagnosticHint) {
+    super("health", statusCode, code, errorMessage, requestId, rawBody, endpointName, method, path, diagnosticHint);
+  }
 }

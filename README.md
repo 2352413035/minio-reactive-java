@@ -62,7 +62,7 @@ minio.content=hello from reactive minio sdk
 - `removeObject`
 - `removeObjects`
 - object/bucket tagging
-- bucket policy/lifecycle/versioning/notification/encryption/object-lock/replication XML/JSON 子资源入口
+- bucket policy/lifecycle/versioning/notification/encryption/object-lock/replication XML/JSON 子资源入口，其中 bucket versioning 已提供 typed 配置对象
 - multipart upload 基础流程：create/uploadPart/listParts/complete/abort
 
 这些能力已经通过 JDK8 单元测试以及真实 MinIO 集成测试进行了验证。
@@ -110,7 +110,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 一般业务项目优先直接创建并使用 `ReactiveMinioClient`。只有需要管理端、KMS、STS、监控、健康检查等能力时，才直接创建对应专用客户端。所有客户端都是平级入口；`ReactiveMinioRawClient` 是最后的兜底层，用于尚未封装成专用方法的新接口或特殊接口。
 
-当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics 提供 Prometheus 文本包装；STS 提供临时凭证解析入口；KMS 和 Admin 提供第一批 JSON 响应包装。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
+当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics 提供 Prometheus 文本包装；STS 提供临时凭证解析入口；KMS、Admin IAM、用户组、服务账号和部分 S3 子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
@@ -128,3 +128,6 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/09-minio-api-catalog.md`
 - `docs/10-version-management.md`
 - `docs/11-api-migration-and-advanced-compat.md`
+- `docs/12-madmin-encryption-compat.md`
+- `docs/13-admin-risk-levels.md`
+- `docs/14-typed-client-usage-guide.md`

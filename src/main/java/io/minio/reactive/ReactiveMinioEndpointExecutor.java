@@ -213,28 +213,46 @@ final class ReactiveMinioEndpointExecutor {
       message = firstText(values, "message", "Message", "errorMessage", "ErrorMessage");
       requestId = firstText(values, "requestId", "requestID", "RequestId", "RequestID");
     }
-    return protocolException(endpoint.family(), ex.statusCode(), code, message, requestId, ex.responseBody());
+    return protocolException(endpoint, ex.statusCode(), code, message, requestId, ex.responseBody());
   }
 
 
   private static RuntimeException protocolException(
-      String protocol, int statusCode, String code, String message, String requestId, String rawBody) {
+      MinioApiEndpoint endpoint, int statusCode, String code, String message, String requestId, String rawBody) {
+    String protocol = endpoint.family();
+    String hint = diagnosticHint(protocol, statusCode);
     if ("admin".equals(protocol)) {
-      return new ReactiveMinioAdminException(statusCode, code, message, requestId, rawBody);
+      return new ReactiveMinioAdminException(statusCode, code, message, requestId, rawBody, endpoint.name(), endpoint.method(), endpoint.pathTemplate(), hint);
     }
     if ("kms".equals(protocol)) {
-      return new ReactiveMinioKmsException(statusCode, code, message, requestId, rawBody);
+      return new ReactiveMinioKmsException(statusCode, code, message, requestId, rawBody, endpoint.name(), endpoint.method(), endpoint.pathTemplate(), hint);
     }
     if ("sts".equals(protocol)) {
-      return new ReactiveMinioStsException(statusCode, code, message, requestId, rawBody);
+      return new ReactiveMinioStsException(statusCode, code, message, requestId, rawBody, endpoint.name(), endpoint.method(), endpoint.pathTemplate(), hint);
     }
     if ("metrics".equals(protocol)) {
-      return new ReactiveMinioMetricsException(statusCode, code, message, requestId, rawBody);
+      return new ReactiveMinioMetricsException(statusCode, code, message, requestId, rawBody, endpoint.name(), endpoint.method(), endpoint.pathTemplate(), hint);
     }
     if ("health".equals(protocol)) {
-      return new ReactiveMinioHealthException(statusCode, code, message, requestId, rawBody);
+      return new ReactiveMinioHealthException(statusCode, code, message, requestId, rawBody, endpoint.name(), endpoint.method(), endpoint.pathTemplate(), hint);
     }
-    return new ReactiveMinioProtocolException(protocol, statusCode, code, message, requestId, rawBody);
+    return new ReactiveMinioProtocolException(protocol, statusCode, code, message, requestId, rawBody, endpoint.name(), endpoint.method(), endpoint.pathTemplate(), hint);
+  }
+
+  private static String diagnosticHint(String protocol, int statusCode) {
+    if (statusCode == 401 || statusCode == 403) {
+      return "请检查凭证、权限策略和 MinIO 服务端配置";
+    }
+    if ("kms".equals(protocol) && statusCode >= 400) {
+      return "请确认 MinIO KMS 是否启用，以及当前凭证是否有 KMS 权限";
+    }
+    if ("metrics".equals(protocol) && statusCode >= 400) {
+      return "请确认 metrics bearer token 或 Prometheus 访问配置";
+    }
+    if ("health".equals(protocol) && statusCode >= 500) {
+      return "请检查 MinIO 节点健康状态和集群读写 quorum";
+    }
+    return "请查看 endpoint、HTTP 状态码和原始响应体定位问题";
   }
 
   private static Map<String, Object> safeJson(String body) {
