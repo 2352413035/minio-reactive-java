@@ -13,6 +13,10 @@ public class ReactiveMinioException extends RuntimeException {
   private final String errorMessage;
   private final String requestId;
   private final String rawBody;
+  private final String endpointName;
+  private final String method;
+  private final String path;
+  private final String diagnosticHint;
 
   public ReactiveMinioException(
       String protocol,
@@ -21,13 +25,31 @@ public class ReactiveMinioException extends RuntimeException {
       String errorMessage,
       String requestId,
       String rawBody) {
-    super(buildMessage(protocol, statusCode, code, errorMessage, requestId, rawBody));
+    this(protocol, statusCode, code, errorMessage, requestId, rawBody, "", "", "", "");
+  }
+
+  public ReactiveMinioException(
+      String protocol,
+      int statusCode,
+      String code,
+      String errorMessage,
+      String requestId,
+      String rawBody,
+      String endpointName,
+      String method,
+      String path,
+      String diagnosticHint) {
+    super(buildMessage(protocol, statusCode, code, errorMessage, requestId, rawBody, endpointName, method, path, diagnosticHint));
     this.protocol = protocol;
     this.statusCode = statusCode;
     this.code = code == null ? "" : code;
     this.errorMessage = errorMessage == null ? "" : errorMessage;
     this.requestId = requestId == null ? "" : requestId;
     this.rawBody = rawBody == null ? "" : rawBody;
+    this.endpointName = endpointName == null ? "" : endpointName;
+    this.method = method == null ? "" : method;
+    this.path = path == null ? "" : path;
+    this.diagnosticHint = diagnosticHint == null ? "" : diagnosticHint;
   }
 
   public String protocol() {
@@ -54,13 +76,33 @@ public class ReactiveMinioException extends RuntimeException {
     return rawBody;
   }
 
+  public String endpointName() {
+    return endpointName;
+  }
+
+  public String method() {
+    return method;
+  }
+
+  public String path() {
+    return path;
+  }
+
+  public String diagnosticHint() {
+    return diagnosticHint;
+  }
+
   private static String buildMessage(
       String protocol,
       int statusCode,
       String code,
       String errorMessage,
       String requestId,
-      String rawBody) {
+      String rawBody,
+      String endpointName,
+      String method,
+      String path,
+      String diagnosticHint) {
     StringBuilder builder = new StringBuilder();
     builder.append(protocol == null || protocol.isEmpty() ? "MinIO" : protocol);
     builder.append(" request failed with HTTP status ").append(statusCode);
@@ -72,6 +114,18 @@ public class ReactiveMinioException extends RuntimeException {
     }
     if (requestId != null && !requestId.isEmpty()) {
       builder.append(", requestId=").append(requestId);
+    }
+    if (endpointName != null && !endpointName.isEmpty()) {
+      builder.append(", endpoint=").append(endpointName);
+    }
+    if (method != null && !method.isEmpty()) {
+      builder.append(", method=").append(method);
+    }
+    if (path != null && !path.isEmpty()) {
+      builder.append(", path=").append(path);
+    }
+    if (diagnosticHint != null && !diagnosticHint.isEmpty()) {
+      builder.append(", hint=").append(diagnosticHint);
     }
     if ((code == null || code.isEmpty()) && (errorMessage == null || errorMessage.isEmpty())) {
       String body = rawBody == null ? "" : rawBody.trim().replaceAll("\\s+", " ");

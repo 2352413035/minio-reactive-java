@@ -5,7 +5,7 @@
 1. `ReactiveMinioClient`：面向常用 S3 对象存储场景的强类型、Reactor 风格便捷客户端。
 2. `ReactiveMinioRawClient` + `MinioApiCatalog`：面向 MinIO 服务端公开 HTTP 路由的完整目录和原始响应式执行器。
 
-这两层的关系是：常用对象存储操作优先使用强类型客户端；管理端、KMS、STS、监控、健康检查等接口，在没有进一步强类型建模前，先通过原始执行器完整暴露。
+这两层的关系是：常用对象存储操作优先使用强类型客户端；管理端、KMS、STS、监控、健康检查等接口优先使用对应专用客户端；尚未建模或新出现的接口再通过原始执行器完整暴露。
 
 ## 已覆盖的路由来源
 
@@ -65,7 +65,7 @@ String xml = raw.executeToString(
 - 临时凭证能力优先使用 `ReactiveMinioStsClient`。
 - 监控指标优先使用 `ReactiveMinioMetricsClient`。
 - 健康检查优先使用 `ReactiveMinioHealthClient`。
-- 如果 SDK 暂时没有跟上某个新增 API，或者专用客户端还没有更细的返回模型，可以使用 `ReactiveMinioRawClient` 兜底调用。
+- 如果 SDK 暂时没有跟上某个新增 API，或者专用客户端还没有更细的返回模型，可以使用 `ReactiveMinioRawClient` 兜底调用；raw 不作为普通业务首选路径。
 - 后续如果为某类接口补充更强的请求/响应模型，不应删除 `MinioApiCatalog` 中已有的原始接口覆盖。
 
 ## 认证语义

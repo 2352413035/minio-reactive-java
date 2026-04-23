@@ -201,6 +201,10 @@ class ReactiveMinioRawClientTest {
     Assertions.assertEquals("BadRequest", error.code());
     Assertions.assertEquals("bad admin request", error.errorMessage());
     Assertions.assertEquals("req-1", error.requestId());
+    Assertions.assertEquals("ADMIN_SERVER_INFO", error.endpointName());
+    Assertions.assertEquals("GET", error.method());
+    Assertions.assertTrue(error.getMessage().contains("endpoint=ADMIN_SERVER_INFO"));
+    Assertions.assertFalse(error.diagnosticHint().isEmpty());
   }
 
 }

@@ -13,6 +13,7 @@ import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminServerInfo;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
+import io.minio.reactive.messages.admin.ServiceAccountCreateResult;
 import io.minio.reactive.messages.admin.AdminUserInfo;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
@@ -219,6 +220,7 @@ class LiveMinioIntegrationTest {
       adminClient.addUser(accessKey, secretKey).block();
       AdminUserInfo userInfo = adminClient.getUserInfo(accessKey).block();
       Assertions.assertEquals("enabled", userInfo.status());
+      Assertions.assertTrue(adminClient.listUsersEncrypted().block().isEncrypted());
 
       adminClient.setUserEnabled(accessKey, false).block();
       AdminUserInfo disabled = adminClient.getUserInfo(accessKey).block();
@@ -237,9 +239,9 @@ class LiveMinioIntegrationTest {
     String serviceAccessKey = "svc" + UUID.randomUUID().toString().replace("-", "").substring(0, 17);
     String serviceSecretKey = "svc" + UUID.randomUUID().toString().replace("-", "").substring(0, 28);
     try {
-      EncryptedAdminResponse response =
+      ServiceAccountCreateResult createResult =
           adminClient
-              .addServiceAccount(
+              .createServiceAccount(
                   AddServiceAccountRequest.builder()
                       .accessKey(serviceAccessKey)
                       .secretKey(serviceSecretKey)
@@ -247,8 +249,9 @@ class LiveMinioIntegrationTest {
                       .description("reactive integration service account")
                       .build())
               .block();
-      Assertions.assertNotNull(response);
-      Assertions.assertTrue(response.isEncrypted());
+      Assertions.assertNotNull(createResult);
+      Assertions.assertTrue(createResult.encrypted());
+      Assertions.assertTrue(createResult.encryptedResponse().isEncrypted());
     } finally {
       try {
         adminClient.deleteServiceAccount(serviceAccessKey).onErrorResume(error -> reactor.core.publisher.Mono.empty()).block();

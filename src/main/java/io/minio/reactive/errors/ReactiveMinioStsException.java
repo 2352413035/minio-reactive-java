@@ -10,4 +10,17 @@ public final class ReactiveMinioStsException extends ReactiveMinioException {
       String rawBody) {
     super("sts", statusCode, code, errorMessage, requestId, rawBody);
   }
+
+  public ReactiveMinioStsException(
+      int statusCode,
+      String code,
+      String errorMessage,
+      String requestId,
+      String rawBody,
+      String endpointName,
+      String method,
+      String path,
+      String diagnosticHint) {
+    super("sts", statusCode, code, errorMessage, requestId, rawBody, endpointName, method, path, diagnosticHint);
+  }
 }

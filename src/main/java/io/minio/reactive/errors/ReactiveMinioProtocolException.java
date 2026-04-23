@@ -16,4 +16,18 @@ public final class ReactiveMinioProtocolException extends ReactiveMinioException
       String rawBody) {
     super(protocol, statusCode, code, errorMessage, requestId, rawBody);
   }
+
+  public ReactiveMinioProtocolException(
+      String protocol,
+      int statusCode,
+      String code,
+      String errorMessage,
+      String requestId,
+      String rawBody,
+      String endpointName,
+      String method,
+      String path,
+      String diagnosticHint) {
+    super(protocol, statusCode, code, errorMessage, requestId, rawBody, endpointName, method, path, diagnosticHint);
+  }
 }

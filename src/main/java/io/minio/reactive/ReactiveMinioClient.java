@@ -9,6 +9,7 @@ import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.http.ReactiveHttpClient;
 import io.minio.reactive.http.S3Request;
 import io.minio.reactive.messages.BucketInfo;
+import io.minio.reactive.messages.BucketVersioningConfiguration;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.DeleteObjectsResult;
@@ -301,6 +302,23 @@ public final class ReactiveMinioClient {
 
   public Mono<Void> setBucketVersioning(String bucket, String versioningXml) {
     return putBucketSubresource(bucket, "versioning", versioningXml, "application/xml");
+  }
+
+  /** 获取 bucket versioning 配置，返回强类型对象。 */
+  public Mono<BucketVersioningConfiguration> getBucketVersioningConfiguration(String bucket) {
+    return getBucketVersioning(bucket).map(S3Xml::parseBucketVersioning);
+  }
+
+  /** 设置 bucket versioning 配置。 */
+  public Mono<Void> setBucketVersioningConfiguration(
+      String bucket, BucketVersioningConfiguration configuration) {
+    return setBucketVersioning(bucket, S3Xml.bucketVersioningXml(configuration));
+  }
+
+  /** 根据布尔值启用或暂停 bucket versioning。 */
+  public Mono<Void> setBucketVersioningEnabled(String bucket, boolean enabled) {
+    return setBucketVersioningConfiguration(
+        bucket, enabled ? BucketVersioningConfiguration.enabled() : BucketVersioningConfiguration.suspended());
   }
 
   public Mono<String> getBucketNotification(String bucket) {
@@ -638,29 +656,34 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_OBJECT_TAGGING`。 */
+  @Deprecated
   public Mono<String> s3GetObjectTagging(String bucket, String object) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_OBJECT_TAGGING"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_PUT_OBJECT_TAGGING`。 */
+  @Deprecated
   public Mono<String> s3PutObjectTagging(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_OBJECT_TAGGING"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_OBJECT_TAGGING`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutObjectTagging(String bucket, String object) {
     return s3PutObjectTagging(bucket, object, null, null);
   }
 
   /** 调用 `S3_DELETE_OBJECT_TAGGING`。 */
+  @Deprecated
   public Mono<String> s3DeleteObjectTagging(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_DELETE_OBJECT_TAGGING"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_DELETE_OBJECT_TAGGING`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3DeleteObjectTagging(String bucket, String object) {
     return s3DeleteObjectTagging(bucket, object, null, null);
   }
@@ -819,6 +842,7 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_BUCKET_VERSIONING`。 */
+  @Deprecated
   public Mono<String> s3GetBucketVersioning(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_VERSIONING"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
@@ -912,6 +936,7 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_BUCKET_TAGGING`。 */
+  @Deprecated
   public Mono<String> s3GetBucketTagging(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_TAGGING"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
@@ -1032,23 +1057,27 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_PUT_BUCKET_TAGGING`。 */
+  @Deprecated
   public Mono<String> s3PutBucketTagging(String bucket, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_BUCKET_TAGGING"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_BUCKET_TAGGING`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutBucketTagging(String bucket) {
     return s3PutBucketTagging(bucket, null, null);
   }
 
   /** 调用 `S3_PUT_BUCKET_VERSIONING`。 */
+  @Deprecated
   public Mono<String> s3PutBucketVersioning(String bucket, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_BUCKET_VERSIONING"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_BUCKET_VERSIONING`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutBucketVersioning(String bucket) {
     return s3PutBucketVersioning(bucket, null, null);
   }

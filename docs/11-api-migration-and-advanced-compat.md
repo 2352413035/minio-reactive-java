@@ -27,14 +27,14 @@
 
 | 客户端 | public `Mono<String>` | `@Deprecated` | raw-ish `executeTo*` | 说明 |
 | --- | ---: | ---: | ---: | --- |
-| `ReactiveMinioClient` | 129 | 15 | 5 | 对象存储主客户端，仍含 S3 catalog 风格高级入口和少量底层执行入口。 |
+| `ReactiveMinioClient` | 129 | 26 | 5 | 对象存储主客户端，仍含 S3 catalog 风格高级入口和少量底层执行入口。 |
 | `ReactiveMinioAdminClient` | 201 | 0 | 0 | 管理端 advanced 入口最多，是后续 typed 化重点。 |
 | `ReactiveMinioKmsClient` | 8 | 0 | 0 | KMS 已有第一批 typed 方法，兼容入口短期保留。 |
 | `ReactiveMinioStsClient` | 14 | 0 | 0 | STS 已有请求对象和凭证结果模型，兼容入口短期保留。 |
 | `ReactiveMinioMetricsClient` | 6 | 0 | 0 | Metrics 已有 Prometheus 文本模型，兼容入口短期保留。 |
 | `ReactiveMinioHealthClient` | 0 | 0 | 0 | Health 当前已基本业务化。 |
 | `ReactiveMinioRawClient` | 3 | 0 | 8 | raw 是永久兜底入口，不作为普通业务主路径收敛目标。 |
-| 合计 | 361 | 15 | 13 | 后续每阶段记录净新增 typed、净替代 advanced 和仍需 raw 的数量。 |
+| 合计 | 361 | 26 | 13 | 后续每阶段记录净新增 typed、净替代 advanced 和仍需 raw 的数量。 |
 
 统计命令示例：
 
@@ -57,6 +57,9 @@ mvn -q -Dtest=ReactiveMinioSpecializedClientsTest#shouldKeepAdvancedCompatibilit
 | `s3PutObjectPart` | `uploadPart` |
 | `s3CompleteMultipartUpload` | `completeMultipartUpload` |
 | `s3AbortMultipartUpload` | `abortMultipartUpload` |
+| `s3GetObjectTagging` / `s3PutObjectTagging` / `s3DeleteObjectTagging` | `getObjectTags` / `setObjectTags` / `deleteObjectTags` |
+| `s3GetBucketTagging` / `s3PutBucketTagging` | `getBucketTags` / `setBucketTags` |
+| `s3GetBucketVersioning` / `s3PutBucketVersioning` | `getBucketVersioningConfiguration` / `setBucketVersioningConfiguration` / `setBucketVersioningEnabled` |
 | 其它高级 S3 子资源 | 后续逐步补业务方法；补齐前可继续使用高级入口或 raw 兜底 |
 
 ## Admin 高级兼容入口迁移
@@ -74,6 +77,11 @@ mvn -q -Dtest=ReactiveMinioSpecializedClientsTest#shouldKeepAdvancedCompatibilit
 | `getUserInfo(accessKey)` | 返回 `AdminJsonResult` |
 | `deleteUser(accessKey)` | 删除内部用户 |
 | `setUserEnabled(accessKey, enabled)` | 启用或禁用用户 |
+| `listUsersEncrypted()` | 默认 madmin 加密响应未解密前，明确返回 `EncryptedAdminResponse` |
+| `listGroupsTyped()` / `getGroupInfo(group)` | 返回用户组 typed 模型 |
+| `setGroupEnabled(group, enabled)` / `updateGroupMembers(request)` | 用户组可回滚写操作 |
+| `createServiceAccount(request)` | 返回 `ServiceAccountCreateResult`，默认加密响应未解密时保留加密原文 |
+| `getServiceAccountInfoEncrypted(accessKey)` / `listServiceAccountsEncrypted()` | 明确返回加密响应，不伪装成明文模型 |
 
 注意：MinIO 多个管理端写接口使用 madmin 加密载荷，例如新增用户、设置配置、服务账号等。当前 SDK 已实现 PBKDF2/AES-GCM 写入方向，并已验证 Java 生成载荷可被 madmin-go 解密；但服务端默认加密响应可能使用 Argon2id，Java 端尚不能解密。因此写入方向可以逐步强类型化，读取加密响应的完整解析仍需等待 Argon2id/ChaCha20 兼容能力。
 

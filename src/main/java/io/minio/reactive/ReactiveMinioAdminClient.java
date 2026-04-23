@@ -177,11 +177,94 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
 
+  /** 列出全部用户的加密响应；默认响应解密能力完成前不伪装成明文用户列表。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listUsersEncrypted() {
+    return executeToBytes("ADMIN_LIST_USERS", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 列出全部用户组，返回强类型用户组名称列表。 */
+  public Mono<io.minio.reactive.messages.admin.AdminGroupList> listGroupsTyped() {
+    return listGroups().map(io.minio.reactive.messages.admin.AdminGroupList::parse);
+  }
+
+  /** 获取单个用户组信息。 */
+  public Mono<io.minio.reactive.messages.admin.AdminGroupInfo> getGroupInfo(String group) {
+    requireText("group", group);
+    return getGroup(group).map(io.minio.reactive.messages.admin.AdminGroupInfo::parse);
+  }
+
+  /** 设置用户组启用或禁用状态。 */
+  public Mono<Void> setGroupEnabled(String group, boolean enabled) {
+    requireText("group", group);
+    return executeToVoid(
+        "ADMIN_SET_GROUP_STATUS",
+        emptyMap(),
+        map("group", group, "status", enabled ? "enabled" : "disabled"),
+        emptyMap(),
+        null,
+        null);
+  }
+
+  /** 更新用户组成员，使用 madmin-go 对齐的 JSON 请求对象。 */
+  public Mono<Void> updateGroupMembers(
+      io.minio.reactive.messages.admin.UpdateGroupMembersRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return executeToVoid(
+        "ADMIN_UPDATE_GROUP_MEMBERS",
+        emptyMap(),
+        emptyMap(),
+        emptyMap(),
+        io.minio.reactive.util.JsonSupport.toJsonBytes(request.toPayload()),
+        "application/json");
+  }
+
+  /**
+   * 创建服务账号，返回可解释的创建结果。
+   *
+   * <p>当前阶段尚不能解密服务端默认 Argon2id/ChaCha20 响应，因此结果可能只包含加密响应原文。
+   */
+  public Mono<io.minio.reactive.messages.admin.ServiceAccountCreateResult> createServiceAccount(
+      io.minio.reactive.messages.admin.AddServiceAccountRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return executeEncryptedJsonToBytes(
+            "ADMIN_ADD_SERVICE_ACCOUNT", emptyMap(), emptyMap(), request.toPayload())
+        .map(io.minio.reactive.messages.admin.ServiceAccountCreateResult::fromResponseBytes);
+  }
+
+  /** 获取服务账号信息的加密响应；默认响应解密能力完成前不伪装成明文模型。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getServiceAccountInfoEncrypted(
+      String accessKey) {
+    requireText("accessKey", accessKey);
+    return executeToBytes(
+            "ADMIN_INFO_SERVICE_ACCOUNT", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 列出当前用户的服务账号加密响应；默认响应解密能力完成前不伪装成明文模型。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listServiceAccountsEncrypted() {
+    return executeToBytes(
+            "ADMIN_LIST_SERVICE_ACCOUNTS", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 删除服务账号，返回空结果而不是兼容入口的字符串。 */
+  public Mono<Void> deleteServiceAccountTyped(String accessKey) {
+    requireText("accessKey", accessKey);
+    return executeToVoid(
+        "ADMIN_DELETE_SERVICE_ACCOUNT", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null);
+  }
+
+
   /**
    * 创建服务账号，返回服务端加密响应载荷。
    *
    * <p>MinIO 服务端会用 madmin 默认加密算法返回服务账号凭证。当前 Java 端尚不能解密默认
-   * Argon2id 响应，因此这里返回 `EncryptedAdminResponse`，不伪装成已解析凭证。
+   * Argon2id/ChaCha20 响应，因此这里返回 `EncryptedAdminResponse`，不伪装成已解析凭证。
    */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> addServiceAccount(
       io.minio.reactive.messages.admin.AddServiceAccountRequest request) {
