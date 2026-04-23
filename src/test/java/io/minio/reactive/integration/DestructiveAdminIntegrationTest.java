@@ -1,5 +1,9 @@
 package io.minio.reactive.integration;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
@@ -10,9 +14,25 @@ import org.junit.jupiter.api.Test;
  */
 class DestructiveAdminIntegrationTest {
   @Test
-  void shouldStayDisabledUnlessExplicitlyAllowed() {
+  void shouldRequireVerifiedLabEnvironmentBeforeDestructiveSuite() throws Exception {
     Assumptions.assumeTrue(
         "true".equalsIgnoreCase(System.getenv("MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS")),
         "破坏性 Admin 测试默认跳过；需要独立可回滚 MinIO 环境并设置 MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true");
+
+    Process process =
+        new ProcessBuilder("bash", "scripts/minio-lab/verify-env.sh")
+            .directory(new java.io.File(System.getProperty("user.dir")))
+            .redirectErrorStream(true)
+            .start();
+    StringBuilder output = new StringBuilder();
+    try (BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        output.append(line).append('\n');
+      }
+    }
+    int exitCode = process.waitFor();
+    Assertions.assertEquals(0, exitCode, output.toString());
   }
 }

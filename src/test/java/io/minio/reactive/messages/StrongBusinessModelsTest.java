@@ -2,6 +2,8 @@ package io.minio.reactive.messages;
 
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.messages.admin.AdminJsonResult;
+import io.minio.reactive.messages.admin.AdminAccessKeyList;
+import io.minio.reactive.messages.admin.AdminAccessKeyInfo;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
 import io.minio.reactive.messages.admin.ServiceAccountList;
 import io.minio.reactive.messages.admin.ServiceAccountInfo;
@@ -132,6 +134,23 @@ class StrongBusinessModelsTest {
     Assertions.assertEquals(3.0, samples.get(0).value());
     Assertions.assertEquals("plain_metric", samples.get(1).name());
   }
+
+
+  @Test
+  void shouldParseAccessKeyBusinessModels() {
+    AdminAccessKeyInfo info =
+        AdminAccessKeyInfo.parse(
+            "{\"parentUser\":\"root\",\"accountStatus\":\"enabled\",\"accessKey\":\"svc1\",\"name\":\"svc\",\"policy\":\"{}\"}");
+    AdminAccessKeyList list =
+        AdminAccessKeyList.parse(
+            "{\"serviceAccounts\":[{\"accessKey\":\"svc1\",\"parentUser\":\"root\"}],\"stsKeys\":[{\"accessKey\":\"sts1\",\"parentUser\":\"oidc\"}]}");
+
+    Assertions.assertEquals("svc1", info.accessKey());
+    Assertions.assertEquals("root", info.parentUser());
+    Assertions.assertEquals(1, list.serviceAccounts().size());
+    Assertions.assertEquals("sts1", list.stsKeys().get(0).accessKey());
+  }
+
 
   @Test
   void shouldExposeHealthAndMetricsBusinessObjects() {

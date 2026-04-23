@@ -44,7 +44,7 @@ admin.setUserEnabled("test-user", false).block();
 admin.deleteUser("test-user").block();
 ```
 
-用户、用户组、策略、服务账号逐步提供 typed 方法。服务账号创建响应在默认 Argon2id 解密能力完成前可能返回加密载荷，SDK 不会把它伪装成已解析凭证。
+用户、用户组、策略、服务账号、access key 信息逐步提供 typed 方法。服务账号创建响应在默认 Argon2id 解密能力完成前可能返回加密载荷，SDK 不会把它伪装成已解析凭证。
 
 ## 错误诊断
 
@@ -71,3 +71,7 @@ String body = raw.executeToString(
 ```
 
 使用 raw 前应先确认接口风险等级，尤其是 Admin 写操作。
+
+## 能力总表
+
+后续发布或里程碑说明统一引用 `scripts/report-capability-matrix.py` 产物，而不是手写统计值。

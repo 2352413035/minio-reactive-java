@@ -1,5 +1,5 @@
-# 由 madmin-go v3.0.109 使用 `go run -tags fips ./cmd/fixture` 生成。
+# 由 madmin-go v3.0.109 使用 "go run -tags fips ." 生成。
 # secret: fixture-secret
 # plaintext: madmin fixture payload
 # algorithm: 0x02 PBKDF2 + AES-GCM
-z4L79j87bMA8ka9ZlUztSj5YKLzE2fNRxjXghleriFwCyCERlWlz3XD1nDSBYmpX5XEZC867q8WK47xXgEAh4opuYiHJYQNqyRmyAthTrg==
+u+Sxz0yQCcfKS/54YxebxqISZhHKcCEGz3hDMA4fD8oCwQKEh8rvt99s1hlYQvp+otJfcYCyrI6b2VT5D7mJYFhvBN4fevs7HPwFE6oSyg==
