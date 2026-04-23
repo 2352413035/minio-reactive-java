@@ -576,6 +576,23 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return setUserStatus(accessKey, status, null, null);
   }
 
+
+
+  /** 获取 access key 信息，返回 typed 模型。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeyInfo> getAccessKeyInfoTyped(
+      String accessKey) {
+    requireText("accessKey", accessKey);
+    return infoAccessKey(accessKey).map(io.minio.reactive.messages.admin.AdminAccessKeyInfo::parse);
+  }
+
+  /** 列出 access key 批量信息，返回 typed 列表模型。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeyList> listAccessKeysTyped(
+      String listType) {
+    requireText("listType", listType);
+    return listAccessKeysBulk(listType)
+        .map(io.minio.reactive.messages.admin.AdminAccessKeyList::parse);
+  }
+
   /** 调用 `ADMIN_ADD_SERVICE_ACCOUNT`。 */
   public Mono<String> addServiceAccount(byte[] body, String contentType) {
     return executeToString("ADMIN_ADD_SERVICE_ACCOUNT", emptyMap(), emptyMap(), emptyMap(), body, contentType);

@@ -20,6 +20,7 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 3. 写入测试配置后立即恢复原配置。
 4. 测试失败也要执行恢复逻辑。
 5. 通过 `MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true` 显式开启。
+6. 执行前运行 `scripts/minio-lab/verify-env.sh`。
 
 ## 使用建议
 

@@ -95,6 +95,18 @@ $env:MINIO_REGION='us-east-1'
 mvn -Dtest=LiveMinioIntegrationTest test
 ```
 
+
+## 推荐入口矩阵
+
+| 场景 | 首选客户端 | 说明 |
+| --- | --- | --- |
+| 普通对象存储（上传、下载、列对象、分片） | `ReactiveMinioClient` | 业务项目默认先用它。 |
+| 管理端 IAM / 用户 / 用户组 / 策略 | `ReactiveMinioAdminClient` | typed 优先；默认加密响应未解锁时会明确返回加密边界对象。 |
+| KMS | `ReactiveMinioKmsClient` | 适合 status / key 生命周期场景。 |
+| STS | `ReactiveMinioStsClient` | 适合临时凭证与 credentials provider 场景。 |
+| Metrics / Health | `ReactiveMinioMetricsClient` / `ReactiveMinioHealthClient` | 监控与健康检查分离。 |
+| SDK 尚未及时跟上新增接口 | `ReactiveMinioRawClient` | raw 是兜底，不是普通业务主路径。 |
+
 ## SDK 分层理念
 
 本 SDK 的设计理念是：先把 MinIO 的公开接口统一登记到目录，再在目录之上提供不同层次的调用器。
@@ -114,7 +126,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
-## 文档目录
+## 文档与脚本目录
 
 - `docs/01-minio-s3-basics.md`
 - `docs/02-minio-java-architecture.md`
@@ -131,3 +143,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/12-madmin-encryption-compat.md`
 - `docs/13-admin-risk-levels.md`
 - `docs/14-typed-client-usage-guide.md`
+- `docs/release-gates.md`
+- `scripts/madmin-fixtures/`
+- `scripts/minio-lab/`
+- `scripts/report-capability-matrix.py`

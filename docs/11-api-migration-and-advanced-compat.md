@@ -82,6 +82,7 @@ mvn -q -Dtest=ReactiveMinioSpecializedClientsTest#shouldKeepAdvancedCompatibilit
 | `setGroupEnabled(group, enabled)` / `updateGroupMembers(request)` | 用户组可回滚写操作 |
 | `createServiceAccount(request)` | 返回 `ServiceAccountCreateResult`，默认加密响应未解密时保留加密原文 |
 | `getServiceAccountInfoEncrypted(accessKey)` / `listServiceAccountsEncrypted()` | 明确返回加密响应，不伪装成明文模型 |
+| `getAccessKeyInfoTyped(accessKey)` / `listAccessKeysTyped(listType)` | 返回 access key typed 模型，适用于非默认加密阻塞的查询场景 |
 
 注意：MinIO 多个管理端写接口使用 madmin 加密载荷，例如新增用户、设置配置、服务账号等。当前 SDK 已实现 PBKDF2/AES-GCM 写入方向，并已验证 Java 生成载荷可被 madmin-go 解密；但服务端默认加密响应可能使用 Argon2id，Java 端尚不能解密。因此写入方向可以逐步强类型化，读取加密响应的完整解析仍需等待 Argon2id/ChaCha20 兼容能力。
 

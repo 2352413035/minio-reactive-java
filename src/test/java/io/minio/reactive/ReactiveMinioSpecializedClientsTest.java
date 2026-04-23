@@ -279,6 +279,13 @@ class ReactiveMinioSpecializedClientsTest {
 
 
   @Test
+  void shouldExposeAccessKeyBusinessMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getAccessKeyInfoTyped");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listAccessKeysTyped");
+  }
+
+
+  @Test
   void shouldExposeS3VersioningBusinessMethods() {
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketVersioningConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "setBucketVersioningConfiguration");

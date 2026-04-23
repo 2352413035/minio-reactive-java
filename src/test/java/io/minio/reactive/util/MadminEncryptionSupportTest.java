@@ -107,11 +107,47 @@ class MadminEncryptionSupportTest {
     Assertions.assertTrue(error.getMessage().contains("ChaCha20-Poly1305"));
   }
 
+
+  @Test
+  void shouldDiagnoseUnsupportedDefaultArgon2idChaChaFixtureWhenPresent() {
+    org.junit.jupiter.api.Assumptions.assumeTrue(
+        fixtureExists("argon2id-chacha20-go-default.base64"),
+        "当前仓库或外部 fixture 目录未提供 Argon2id + ChaCha20-Poly1305 fixture");
+    byte[] fixture = readFixture("argon2id-chacha20-go-default.base64");
+
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> MadminEncryptionSupport.decryptData("fixture-secret", fixture));
+
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305,
+        MadminEncryptionSupport.algorithmOf(fixture));
+    Assertions.assertTrue(error.getMessage().contains("ChaCha20-Poly1305"));
+  }
+
+
+  private static boolean fixtureExists(String name) {
+    String fixtureDir = System.getenv("MADMIN_FIXTURE_DIR");
+    if (fixtureDir != null && !fixtureDir.trim().isEmpty()) {
+      return new java.io.File(fixtureDir, name).isFile();
+    }
+    return MadminEncryptionSupportTest.class.getResource("/madmin-fixtures/" + name) != null;
+  }
+
   private static byte[] readFixture(String name) {
     try {
       ByteArrayOutputStream output = new ByteArrayOutputStream();
-      try (InputStream input =
-          MadminEncryptionSupportTest.class.getResourceAsStream("/madmin-fixtures/" + name)) {
+      String fixtureDir = System.getenv("MADMIN_FIXTURE_DIR");
+      InputStream classpathInput =
+          fixtureDir == null || fixtureDir.trim().isEmpty()
+              ? MadminEncryptionSupportTest.class.getResourceAsStream("/madmin-fixtures/" + name)
+              : null;
+      InputStream fileInput =
+          fixtureDir == null || fixtureDir.trim().isEmpty()
+              ? null
+              : new java.io.FileInputStream(new java.io.File(fixtureDir, name));
+      try (InputStream input = fileInput != null ? fileInput : classpathInput) {
         if (input == null) {
           throw new IllegalStateException("找不到 madmin 测试夹具: " + name);
         }
