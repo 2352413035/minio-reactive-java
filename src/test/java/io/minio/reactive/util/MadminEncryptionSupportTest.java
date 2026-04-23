@@ -1,5 +1,9 @@
 package io.minio.reactive.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,13 +13,20 @@ class MadminEncryptionSupportTest {
     byte[] argonAes = new byte[41];
     byte[] argonChaCha = new byte[41];
     byte[] pbkdf = new byte[41];
-    argonAes[32] = 0x00;
-    argonChaCha[32] = 0x01;
-    pbkdf[32] = 0x02;
+    argonAes[32] = MadminEncryptionAlgorithm.ARGON2ID_AES_GCM.id();
+    argonChaCha[32] = MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305.id();
+    pbkdf[32] = MadminEncryptionAlgorithm.PBKDF2_AES_GCM.id();
 
     Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(argonAes));
     Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(argonChaCha));
     Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(pbkdf));
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.ARGON2ID_AES_GCM, MadminEncryptionSupport.algorithmOf(argonAes));
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305,
+        MadminEncryptionSupport.algorithmOf(argonChaCha));
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.PBKDF2_AES_GCM, MadminEncryptionSupport.algorithmOf(pbkdf));
   }
 
   @Test
@@ -50,5 +61,78 @@ class MadminEncryptionSupportTest {
     byte[] decrypted = MadminEncryptionSupport.decryptData("secret", encrypted);
 
     Assertions.assertArrayEquals(plain, decrypted);
+  }
+
+  @Test
+  void shouldDecryptPbkdf2AesGcmMadminGoFixture() {
+    byte[] fixture = readFixture("pbkdf2-aesgcm-go.base64");
+
+    byte[] decrypted = MadminEncryptionSupport.decryptData("fixture-secret", fixture);
+
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.PBKDF2_AES_GCM, MadminEncryptionSupport.algorithmOf(fixture));
+    Assertions.assertEquals("madmin fixture payload", new String(decrypted, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  void shouldDiagnoseUnsupportedDefaultArgon2idAesGcmFixture() {
+    byte[] fixture = readFixture("argon2id-aesgcm-go-default.base64");
+
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> MadminEncryptionSupport.decryptData("fixture-secret", fixture));
+
+    Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(fixture));
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.ARGON2ID_AES_GCM, MadminEncryptionSupport.algorithmOf(fixture));
+    Assertions.assertTrue(error.getMessage().contains("当前只支持 PBKDF2 AES-GCM"));
+    Assertions.assertTrue(error.getMessage().contains("Argon2id + AES-GCM"));
+  }
+
+  @Test
+  void shouldDiagnoseUnsupportedArgon2idChaCha20Header() {
+    byte[] fixture = new byte[32 + 1 + 8 + 16];
+    fixture[32] = MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305.id();
+
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> MadminEncryptionSupport.decryptData("fixture-secret", fixture));
+
+    Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(fixture));
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305,
+        MadminEncryptionSupport.algorithmOf(fixture));
+    Assertions.assertTrue(error.getMessage().contains("ChaCha20-Poly1305"));
+  }
+
+  private static byte[] readFixture(String name) {
+    try {
+      ByteArrayOutputStream output = new ByteArrayOutputStream();
+      try (InputStream input =
+          MadminEncryptionSupportTest.class.getResourceAsStream("/madmin-fixtures/" + name)) {
+        if (input == null) {
+          throw new IllegalStateException("找不到 madmin 测试夹具: " + name);
+        }
+        byte[] buffer = new byte[1024];
+        int read;
+        while ((read = input.read(buffer)) >= 0) {
+          output.write(buffer, 0, read);
+        }
+      }
+      StringBuilder base64 = new StringBuilder();
+      String text = new String(output.toByteArray(), StandardCharsets.UTF_8);
+      String[] lines = text.split("\\r?\\n");
+      for (String line : lines) {
+        String trimmed = line.trim();
+        if (!trimmed.isEmpty() && !trimmed.startsWith("#")) {
+          base64.append(trimmed);
+        }
+      }
+      return Base64.getDecoder().decode(base64.toString());
+    } catch (Exception e) {
+      throw new IllegalStateException("无法读取 madmin 测试夹具: " + name, e);
+    }
   }
 }

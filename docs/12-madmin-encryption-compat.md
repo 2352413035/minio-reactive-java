@@ -1,0 +1,41 @@
+# 12 madmin 加密兼容决策门
+
+## 1. 当前结论
+
+本阶段只完成 madmin 默认加密响应的决策门，不引入新依赖，也不修改 `pom.xml`。当前 Java SDK 支持：
+
+1. 生成 PBKDF2 + AES-GCM madmin 写入载荷。
+2. 解密 PBKDF2 + AES-GCM madmin 载荷。
+3. 识别 madmin-go 默认 Argon2id + AES-GCM 和 Argon2id + ChaCha20-Poly1305 载荷。
+4. 对尚未支持的默认算法给出中文可解释错误，而不是把它伪装成普通坏数据。
+
+当前 Java SDK 暂不支持：
+
+1. Argon2id 密钥派生。
+2. ChaCha20-Poly1305 AEAD。
+3. 服务端默认加密响应的完整 typed 解析。
+
+## 2. 为什么不能直接实现默认响应解密
+
+MinIO madmin-go 默认路径会根据构建和运行环境选择 Argon2id + AES-GCM 或 Argon2id + ChaCha20-Poly1305。JDK8 标准库没有 Argon2id，也没有通用的 ChaCha20-Poly1305 JCE 支持。如果要完整解密默认响应，通常需要引入第三方 crypto 依赖。
+
+crypto 依赖属于安全和长期维护决策，不能在普通功能提交中顺手加入。必须先完成 ADR，确认许可证、JDK8/JDK17 支持、是否 native、维护活跃度、安全风险、测试矩阵和回退方案。
+
+## 3. 测试夹具
+
+`src/test/resources/madmin-fixtures/` 中只保存测试 secret 和测试明文生成的载荷，不保存任何真实 MinIO access key 或 secret key。当前夹具包括：
+
+| 文件 | 生成方式 | 预期 |
+| --- | --- | --- |
+| `pbkdf2-aesgcm-go.base64` | madmin-go v3.0.109，`go run -tags fips ./cmd/fixture` | Java 必须能解密为 `madmin fixture payload`。 |
+| `argon2id-aesgcm-go-default.base64` | madmin-go v3.0.109，`go run ./cmd/fixture` | Java 必须能识别为 madmin 加密载荷，并明确报“不支持 Argon2id + AES-GCM”。 |
+
+## 4. 后续允许升级的条件
+
+只有满足以下条件后，才能进入“实现默认响应解密”的阶段：
+
+1. ADR 写明候选依赖、许可证、JDK8/JDK17 兼容性、native 风险、维护状态和替代方案。
+2. `security-reviewer` 明确 APPROVE 安全、许可证和密钥/响应泄露风险。
+3. `architect` 明确 APPROVE 双分支语义、依赖边界和长期维护影响。
+4. JDK8 与 JDK17+ 都有 fixture 测试证明默认 madmin-go 响应可解密。
+5. 失败回退仍保留 `EncryptedAdminResponse`，不能让调用方误以为凭证已经被解析。

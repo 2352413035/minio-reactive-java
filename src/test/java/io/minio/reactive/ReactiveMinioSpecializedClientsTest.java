@@ -6,6 +6,7 @@ import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.AddUserRequest;
 import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
@@ -64,6 +65,18 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(
         countDistinctMonoMethods(ReactiveMinioHealthClient.class, null)
             >= MinioApiCatalog.byFamily("health").size());
+  }
+
+
+  @Test
+  void shouldKeepAdvancedCompatibilityBaselineForMigration() {
+    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 15, 5);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
+    assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
+    assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 0, 0);
+    assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
+    assertAdvancedBaseline(ReactiveMinioHealthClient.class, 0, 0, 0);
+    assertAdvancedBaseline(ReactiveMinioRawClient.class, 3, 0, 8);
   }
 
 
@@ -227,6 +240,46 @@ class ReactiveMinioSpecializedClientsTest {
 
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setConfigKvText(" "));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setConfigText(""));
+  }
+
+
+  private static void assertAdvancedBaseline(
+      Class<?> type, int monoStringCount, int deprecatedCount, int rawishCount) {
+    Assertions.assertEquals(monoStringCount, countPublicMonoStringMethods(type), type.getSimpleName());
+    Assertions.assertEquals(deprecatedCount, countDeprecatedMethods(type), type.getSimpleName());
+    Assertions.assertEquals(rawishCount, countRawishExecuteMethods(type), type.getSimpleName());
+  }
+
+  private static int countPublicMonoStringMethods(Class<?> type) {
+    int count = 0;
+    for (Method method : type.getDeclaredMethods()) {
+      if (Modifier.isPublic(method.getModifiers())
+          && method.getReturnType().equals(Mono.class)
+          && method.getGenericReturnType().toString().contains("java.lang.String")) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private static int countDeprecatedMethods(Class<?> type) {
+    int count = 0;
+    for (Method method : type.getDeclaredMethods()) {
+      if (Modifier.isPublic(method.getModifiers()) && method.getAnnotation(Deprecated.class) != null) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private static int countRawishExecuteMethods(Class<?> type) {
+    int count = 0;
+    for (Method method : type.getDeclaredMethods()) {
+      if (Modifier.isPublic(method.getModifiers()) && method.getName().startsWith("executeTo")) {
+        count++;
+      }
+    }
+    return count;
   }
 
   private static void assertDeprecatedMethodExists(Class<?> type, String name) {

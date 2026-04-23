@@ -20,6 +20,28 @@
 - Health 场景优先使用 `ReactiveMinioHealthClient` 的强业务方法。
 - 未封装或临时新增接口使用 `ReactiveMinioRawClient`。
 
+
+## 当前 advanced 基线
+
+本基线用于后续迁移时判断“新增 typed 方法是否真的替代了高级入口”，而不是继续扩大公开 API 面。统计口径为反射读取 `src/main/java/io/minio/reactive` 下各 public client 的公开 `Mono<String>` 方法、`@Deprecated` 方法和 raw-ish `executeTo*` 入口；重载方法逐个计数。
+
+| 客户端 | public `Mono<String>` | `@Deprecated` | raw-ish `executeTo*` | 说明 |
+| --- | ---: | ---: | ---: | --- |
+| `ReactiveMinioClient` | 129 | 15 | 5 | 对象存储主客户端，仍含 S3 catalog 风格高级入口和少量底层执行入口。 |
+| `ReactiveMinioAdminClient` | 201 | 0 | 0 | 管理端 advanced 入口最多，是后续 typed 化重点。 |
+| `ReactiveMinioKmsClient` | 8 | 0 | 0 | KMS 已有第一批 typed 方法，兼容入口短期保留。 |
+| `ReactiveMinioStsClient` | 14 | 0 | 0 | STS 已有请求对象和凭证结果模型，兼容入口短期保留。 |
+| `ReactiveMinioMetricsClient` | 6 | 0 | 0 | Metrics 已有 Prometheus 文本模型，兼容入口短期保留。 |
+| `ReactiveMinioHealthClient` | 0 | 0 | 0 | Health 当前已基本业务化。 |
+| `ReactiveMinioRawClient` | 3 | 0 | 8 | raw 是永久兜底入口，不作为普通业务主路径收敛目标。 |
+| 合计 | 361 | 15 | 13 | 后续每阶段记录净新增 typed、净替代 advanced 和仍需 raw 的数量。 |
+
+统计命令示例：
+
+```bash
+mvn -q -Dtest=ReactiveMinioSpecializedClientsTest#shouldKeepAdvancedCompatibilityBaselineForMigration test
+```
+
 ## S3 catalog 风格方法迁移
 
 `ReactiveMinioClient` 中以 `s3` 开头、直接对应 catalog 的方法属于高级兼容入口。已有明确替代路径的方法会先标记 `@Deprecated`，短期仍保留二进制兼容，但 README 不作为主推荐。
