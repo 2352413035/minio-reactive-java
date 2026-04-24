@@ -1,0 +1,2608 @@
+{
+  "source": "minio-router-baseline",
+  "minioRoot": "minio",
+  "sourceFiles": [
+    "cmd/api-router.go",
+    "cmd/admin-router.go",
+    "cmd/kms-router.go",
+    "cmd/sts-handlers.go",
+    "cmd/metrics-router.go",
+    "cmd/healthcheck-router.go"
+  ],
+  "routes": [
+    {
+      "family": "s3",
+      "method": "HEAD",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "attributes": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "partNumber",
+        "uploadId"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "partNumber",
+        "uploadId"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "uploadId"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "POST",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "uploadId"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "POST",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "uploads": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "uploadId"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "acl": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "acl": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "tagging": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "tagging": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "tagging": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "POST",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "select": "",
+        "select-type": "2"
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "retention": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "legal-hold": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "lambdaArn"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "retention": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "legal-hold": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "POST",
+      "pathTemplate": "/{bucket}/{object}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "restore": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "location": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "policy": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "lifecycle": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "encryption": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "object-lock": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "versioning": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "notification": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "events"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication-reset-status": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "acl": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "acl": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "cors": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "cors": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "cors": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "website": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "accelerate": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "requestPayment": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "logging": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "tagging": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "website": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "tagging": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "uploads": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "list-type": "2",
+        "metadata": "true"
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "list-type": "2"
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "versions": "",
+        "metadata": "true"
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "versions": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "policyStatus": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "lifecycle": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "encryption": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "policy": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "object-lock": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "tagging": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "versioning": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "notification": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication-reset": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "PUT",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "HEAD",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "POST",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "POST",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "delete": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "policy": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "lifecycle": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "encryption": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "DELETE",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication-metrics": "2"
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication-metrics": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "replication-check": ""
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "events"
+      ],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "s3",
+      "method": "GET",
+      "pathTemplate": "/",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/api-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/service",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "type": "2"
+      },
+      "requiredQueryParameters": [
+        "action"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/service",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "action"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/update",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {
+        "type": "2"
+      },
+      "requiredQueryParameters": [
+        "updateURL"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/update",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "updateURL"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/info",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/inspect-data",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/inspect-data",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/storageinfo",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/datausageinfo",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/metrics",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/heal/",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/heal/{bucket}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/heal/{bucket}/{prefix}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/background-heal/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/pools/list",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/pools/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "pool"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/pools/decommission",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "pool"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/pools/cancel",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "pool"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/rebalance/start",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/rebalance/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/rebalance/stop",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/profiling/start",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "profilerType"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/profiling/download",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/profile",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/get-config-kv",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "key"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/set-config-kv",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/del-config-kv",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/help-config-kv",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "key",
+        "subSys"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-config-history-kv",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "count"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/clear-config-history-kv",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "restoreId"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/restore-config-history-kv",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "restoreId"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/config",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/config",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "enableConfigOps 控制"
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/add-canned-policy",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "name"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/accountinfo",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/add-user",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/set-user-status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey",
+        "status"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/add-service-account",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/update-service-account",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/info-service-account",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-service-accounts",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/delete-service-account",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/temporary-account-info",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-access-keys-bulk",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "listType"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/info-access-key",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/info-canned-policy",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "name"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-canned-policies",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-canned-policies",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/idp/builtin/policy-entities",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/remove-canned-policy",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "name"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/set-user-or-group-policy",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "isGroup",
+        "policyName",
+        "userOrGroup"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/idp/builtin/policy/{operation}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/remove-user",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-users",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-users",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/user-info",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "accessKey"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/update-group-members",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/group",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "group"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/groups",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/set-group-status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "group",
+        "status"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/export-iam",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/import-iam",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/import-iam-v2",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/idp-config/{type}/{name}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/idp-config/{type}/{name}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/idp-config/{type}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/idp-config/{type}/{name}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/idp-config/{type}/{name}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/idp/ldap/add-service-account",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/idp/ldap/list-access-keys",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "listType",
+        "userDN"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/idp/ldap/list-access-keys-bulk",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "listType"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/idp/ldap/policy-entities",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/idp/ldap/policy/{operation}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/idp/openid/list-access-keys-bulk",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "listType"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/get-bucket-quota",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/set-bucket-quota",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-remote-targets",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket",
+        "type"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/set-remote-target",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/remove-remote-target",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "arn",
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/replication/diff",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/replication/mrf",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/start-job",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/list-jobs",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/status-job",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/describe-job",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/cancel-job",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/export-bucket-metadata",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/import-bucket-metadata",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/tier",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/tier/{tier}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/tier",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "DELETE",
+      "pathTemplate": "/minio/admin/v3/tier/{tier}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/tier/{tier}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/tier-stats",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/add",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/remove",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/site-replication/info",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/site-replication/metainfo",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/site-replication/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/site-replication/devnull",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/site-replication/netperf",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/peer/join",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/peer/bucket-ops",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "bucket",
+        "operation"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/peer/iam-item",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/peer/bucket-meta",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/site-replication/peer/idp-settings",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/edit",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/peer/edit",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/peer/remove",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/resync/op",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "operation"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "PUT",
+      "pathTemplate": "/minio/admin/v3/site-replication/state/edit",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/top/locks",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/force-unlock",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "paths"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/speedtest",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/speedtest/object",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/speedtest/drive",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/speedtest/net",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/speedtest/site",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/speedtest/client/devnull",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/speedtest/client/devnull/extratime",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/trace",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/log",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/kms/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/kms/key/create",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "key-id"
+      ],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/kms/key/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/obdinfo",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "admin",
+      "method": "GET",
+      "pathTemplate": "/minio/admin/v3/healthinfo",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": "分布式或纠删码模式才注册"
+    },
+    {
+      "family": "admin",
+      "method": "POST",
+      "pathTemplate": "/minio/admin/v3/revoke-tokens/{userProvider}",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/admin-router.go",
+      "condition": ""
+    },
+    {
+      "family": "kms",
+      "method": "GET",
+      "pathTemplate": "/minio/kms/v1/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/kms-router.go",
+      "condition": ""
+    },
+    {
+      "family": "kms",
+      "method": "GET",
+      "pathTemplate": "/minio/kms/v1/metrics",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/kms-router.go",
+      "condition": ""
+    },
+    {
+      "family": "kms",
+      "method": "GET",
+      "pathTemplate": "/minio/kms/v1/apis",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/kms-router.go",
+      "condition": ""
+    },
+    {
+      "family": "kms",
+      "method": "GET",
+      "pathTemplate": "/minio/kms/v1/version",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/kms-router.go",
+      "condition": ""
+    },
+    {
+      "family": "kms",
+      "method": "POST",
+      "pathTemplate": "/minio/kms/v1/key/create",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "key-id"
+      ],
+      "source": "cmd/kms-router.go",
+      "condition": ""
+    },
+    {
+      "family": "kms",
+      "method": "GET",
+      "pathTemplate": "/minio/kms/v1/key/list",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [
+        "pattern"
+      ],
+      "source": "cmd/kms-router.go",
+      "condition": ""
+    },
+    {
+      "family": "kms",
+      "method": "GET",
+      "pathTemplate": "/minio/kms/v1/key/status",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/kms-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "GET",
+      "pathTemplate": "/minio/health/cluster",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "HEAD",
+      "pathTemplate": "/minio/health/cluster",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "GET",
+      "pathTemplate": "/minio/health/cluster/read",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "HEAD",
+      "pathTemplate": "/minio/health/cluster/read",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "GET",
+      "pathTemplate": "/minio/health/live",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "HEAD",
+      "pathTemplate": "/minio/health/live",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "GET",
+      "pathTemplate": "/minio/health/ready",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "health",
+      "method": "HEAD",
+      "pathTemplate": "/minio/health/ready",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/healthcheck-router.go",
+      "condition": ""
+    },
+    {
+      "family": "metrics",
+      "method": "GET",
+      "pathTemplate": "/minio/prometheus/metrics",
+      "authScheme": "bearer",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/metrics-router.go",
+      "condition": ""
+    },
+    {
+      "family": "metrics",
+      "method": "GET",
+      "pathTemplate": "/minio/v2/metrics/cluster",
+      "authScheme": "bearer",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/metrics-router.go",
+      "condition": ""
+    },
+    {
+      "family": "metrics",
+      "method": "GET",
+      "pathTemplate": "/minio/v2/metrics/bucket",
+      "authScheme": "bearer",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/metrics-router.go",
+      "condition": ""
+    },
+    {
+      "family": "metrics",
+      "method": "GET",
+      "pathTemplate": "/minio/v2/metrics/node",
+      "authScheme": "bearer",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/metrics-router.go",
+      "condition": ""
+    },
+    {
+      "family": "metrics",
+      "method": "GET",
+      "pathTemplate": "/minio/v2/metrics/resource",
+      "authScheme": "bearer",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/metrics-router.go",
+      "condition": ""
+    },
+    {
+      "family": "metrics",
+      "method": "GET",
+      "pathTemplate": "/minio/metrics/v3{pathComps}",
+      "authScheme": "bearer",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/metrics-router.go",
+      "condition": ""
+    },
+    {
+      "family": "sts",
+      "method": "POST",
+      "pathTemplate": "/",
+      "authScheme": "sigv4",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/sts-handlers.go",
+      "condition": "表单请求且 SigV4"
+    },
+    {
+      "family": "sts",
+      "method": "POST",
+      "pathTemplate": "/",
+      "authScheme": "none",
+      "defaultQueryParameters": {},
+      "requiredQueryParameters": [],
+      "source": "cmd/sts-handlers.go",
+      "condition": "表单请求且无 query"
+    },
+    {
+      "family": "sts",
+      "method": "POST",
+      "pathTemplate": "/",
+      "authScheme": "none",
+      "defaultQueryParameters": {
+        "Action": "AssumeRoleWithClientGrants",
+        "Version": "2011-06-15"
+      },
+      "requiredQueryParameters": [
+        "Token"
+      ],
+      "source": "cmd/sts-handlers.go",
+      "condition": ""
+    },
+    {
+      "family": "sts",
+      "method": "POST",
+      "pathTemplate": "/",
+      "authScheme": "none",
+      "defaultQueryParameters": {
+        "Action": "AssumeRoleWithWebIdentity",
+        "Version": "2011-06-15"
+      },
+      "requiredQueryParameters": [
+        "WebIdentityToken"
+      ],
+      "source": "cmd/sts-handlers.go",
+      "condition": ""
+    },
+    {
+      "family": "sts",
+      "method": "POST",
+      "pathTemplate": "/",
+      "authScheme": "none",
+      "defaultQueryParameters": {
+        "Action": "AssumeRoleWithLDAPIdentity",
+        "Version": "2011-06-15"
+      },
+      "requiredQueryParameters": [
+        "LDAPPassword",
+        "LDAPUsername"
+      ],
+      "source": "cmd/sts-handlers.go",
+      "condition": ""
+    },
+    {
+      "family": "sts",
+      "method": "POST",
+      "pathTemplate": "/",
+      "authScheme": "none",
+      "defaultQueryParameters": {
+        "Action": "AssumeRoleWithCertificate",
+        "Version": "2011-06-15"
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/sts-handlers.go",
+      "condition": ""
+    },
+    {
+      "family": "sts",
+      "method": "POST",
+      "pathTemplate": "/",
+      "authScheme": "none",
+      "defaultQueryParameters": {
+        "Action": "AssumeRoleWithCustomToken",
+        "Version": "2011-06-15"
+      },
+      "requiredQueryParameters": [],
+      "source": "cmd/sts-handlers.go",
+      "condition": ""
+    }
+  ]
+}

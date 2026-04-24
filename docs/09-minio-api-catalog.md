@@ -110,4 +110,31 @@ String xml = raw.executeToString(
 
 这些专用客户端的方法名来自 `MinioApiCatalog` 中的接口名。当前已经为 Health、Metrics、STS、KMS、Admin 增加了第一批强业务入口，例如健康检查布尔结果、Prometheus 文本包装、STS 临时凭证解析、KMS/Admin JSON 包装。其它非对象存储接口仍可能先返回原始文本响应；后续会继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
 
-强类型客户端应复用 `MinioApiCatalog` 和 `ReactiveMinioRawClient`，避免重复维护路径、query、认证方式和签名逻辑。
+强类型客户端不应只是把 `ReactiveMinioRawClient` 再包一层，而应像 `ReactiveMinioClient` 一样表达清楚请求对象、响应模型、错误语义和安全边界。它们可以复用 `MinioApiCatalog` 的路径、query、认证方式等元数据来避免重复维护，也可以复用底层签名和 HTTP 发送能力；`ReactiveMinioRawClient` 的定位是兜底调用器，用于 SDK 尚未产品化某个接口或用户需要直接访问新增 MinIO route 的场景。
+
+## 路由对标（route parity）机器门禁
+
+阶段 14 开始，`MinioApiCatalog` 不再只依赖手工计数说明。维护者应使用 `scripts/report-route-parity.py` 从本地 `minio` 服务端路由文件抽取 route baseline，并和 SDK catalog 做语义对照。
+
+推荐命令：
+
+```bash
+python3 scripts/report-route-parity.py \
+  --minio-root /dxl/minio-project/minio \
+  --worktree /dxl/minio-project/minio-reactive-java \
+  --format markdown \
+  --output /dxl/minio-project/.omx/reports/route-parity-jdk8.md
+```
+
+这个门禁对照的不是单纯数量，而是以下关键语义：
+
+- family：接口所属分组，例如 s3、admin、kms、sts、metrics、health。
+- method：HTTP 方法。
+- path template：路径模板，正则路由会收敛成稳定占位符。
+- default query：固定 query，例如 `type=2`、`Action=AssumeRoleWithWebIdentity`。
+- required query：必填 query，例如 `bucket`、`accessKey`、`uploadId`。
+- auth scheme：`sigv4`、`bearer`、`none`。
+
+脚本会排除 MinIO 服务端明确拒绝或未实现的 dummy/rejected route，避免把不可用路由包装成 SDK 产品能力。条件路由会在报告中保留说明，例如分布式/纠删码模式才注册的 heal、pool、rebalance，以及受 `enableConfigOps` 控制的配置接口。
+
+`src/test/resources/minio-route-baseline.json` 是当前 MinIO router 抽取出的测试基线，`MinioApiCatalogTest` 会用它校验 SDK catalog 的 family/method/path/query/auth 语义。如果升级 `minio` 对照项目后该测试失败，必须先看路由对标报告，不要只修改计数。

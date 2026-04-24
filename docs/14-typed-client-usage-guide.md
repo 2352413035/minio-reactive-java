@@ -74,4 +74,4 @@ String body = raw.executeToString(
 
 ## 能力总表
 
-后续发布或里程碑说明统一引用 `scripts/report-capability-matrix.py` 产物，而不是手写统计值。
+后续发布或里程碑说明统一引用 `scripts/report-route-parity.py` 和 `scripts/report-capability-matrix.py` 产物，而不是手写统计值。路由对标（route parity）证明 SDK catalog 是否继续对齐 MinIO router；能力总表再说明 `route-catalog`、`product-typed`、`advanced-compatible`、`raw-fallback`、`encrypted-blocked`、`destructive-blocked` 六类口径。
