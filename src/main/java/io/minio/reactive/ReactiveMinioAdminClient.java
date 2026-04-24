@@ -441,14 +441,35 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return siteReplicationInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取站点复制基础摘要，提取启用状态、站点数、名称和 apiVersion，不暴露服务账号 access key。 */
+  public Mono<io.minio.reactive.messages.admin.AdminSiteReplicationInfoSummary>
+      getSiteReplicationInfoSummary() {
+    return siteReplicationInfo()
+        .map(io.minio.reactive.messages.admin.AdminSiteReplicationInfoSummary::parse);
+  }
+
   /** 获取站点复制状态，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getSiteReplicationStatus() {
     return siteReplicationStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取站点复制状态摘要，提取站点数、最大对象规模和 mismatch 明细计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminSiteReplicationStatusSummary>
+      getSiteReplicationStatusSummary() {
+    return siteReplicationStatus()
+        .map(io.minio.reactive.messages.admin.AdminSiteReplicationStatusSummary::parse);
+  }
+
   /** 获取站点复制元信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getSiteReplicationMetainfo() {
     return siteReplicationMetainfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取站点复制元信息摘要，提取本地 metadata 的 bucket、policy、user、group 等计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminSiteReplicationMetaInfoSummary>
+      getSiteReplicationMetainfoSummary() {
+    return siteReplicationMetainfo()
+        .map(io.minio.reactive.messages.admin.AdminSiteReplicationMetaInfoSummary::parse);
   }
 
   /**

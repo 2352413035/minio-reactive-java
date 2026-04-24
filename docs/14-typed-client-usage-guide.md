@@ -121,6 +121,12 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 - `getTopLocksSummary()` 返回 `AdminTopLocksSummary`，用于快速查看读写锁数量和最长持有时间。
 - `getObdInfoSummary()` / `getHealthInfoSummary()` 返回 `AdminHealthInfoSummary`，用于快速查看部署 ID、region、server/bucket/object 数量和错误状态。
 
+阶段 68 起，站点复制只读查询也有摘要入口：
+
+- `getSiteReplicationInfoSummary()` 返回 `AdminSiteReplicationInfoSummary`，只暴露服务账号 access key 是否存在，不暴露具体值。
+- `getSiteReplicationStatusSummary()` 返回 `AdminSiteReplicationStatusSummary`，用于查看站点数、最大对象规模和 mismatch 明细数量。
+- `getSiteReplicationMetainfoSummary()` 返回 `AdminSiteReplicationMetaInfoSummary`，用于查看本地站点 metadata 规模。
+
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
     .endpoint(endpoint)
