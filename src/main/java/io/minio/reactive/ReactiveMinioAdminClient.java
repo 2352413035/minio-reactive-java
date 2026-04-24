@@ -2238,9 +2238,28 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToString("ADMIN_BATCH_JOB_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
+  /** 调用 `ADMIN_BATCH_JOB_STATUS`，携带服务端要求的 jobId 查询参数。 */
+  public Mono<String> batchJobStatus(String jobId) {
+    requireText("jobId", jobId);
+    return executeToString("ADMIN_BATCH_JOB_STATUS", emptyMap(), map("jobId", jobId), emptyMap(), null, null);
+  }
+
   /** 获取 batch job 状态通用 JSON 包装。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getBatchJobStatusInfo() {
     return batchJobStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取指定 batch job 状态通用 JSON 包装。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getBatchJobStatusInfo(
+      String jobId) {
+    return batchJobStatus(jobId).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取指定 batch job 状态摘要，提取 jobId、类型、状态和重试次数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBatchJobStatusSummary>
+      getBatchJobStatusSummary(String jobId) {
+    return batchJobStatus(jobId)
+        .map(io.minio.reactive.messages.admin.AdminBatchJobStatusSummary::parse);
   }
 
   /** 调用 `ADMIN_DESCRIBE_BATCH_JOB`。 */
@@ -2249,9 +2268,22 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToString("ADMIN_DESCRIBE_BATCH_JOB", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
+  /** 调用 `ADMIN_DESCRIBE_BATCH_JOB`，携带服务端要求的 jobId 查询参数。 */
+  public Mono<String> describeBatchJob(String jobId) {
+    requireText("jobId", jobId);
+    return executeToString("ADMIN_DESCRIBE_BATCH_JOB", emptyMap(), map("jobId", jobId), emptyMap(), null, null);
+  }
+
   /** 获取 batch job 详情通用 JSON 包装。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> describeBatchJobInfo() {
     return describeBatchJob().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取指定 batch job 脱敏描述摘要；服务端返回 YAML，模型只提取安全元信息。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBatchJobDescriptionSummary>
+      describeBatchJobSummary(String jobId) {
+    return describeBatchJob(jobId)
+        .map(io.minio.reactive.messages.admin.AdminBatchJobDescriptionSummary::parse);
   }
 
   /** 调用 `ADMIN_CANCEL_BATCH_JOB`。 */
