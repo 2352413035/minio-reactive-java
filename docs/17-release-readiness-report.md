@@ -367,6 +367,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/45-stage47-admin-sensitive-export.md`。
 
+## 5.29 阶段 48 补充
+
+阶段 48 补充 Admin 诊断/压测/探测产品边界：
+
+- client devnull、site replication devnull/netperf、speedtest 系列入口返回 `AdminTextResult`。
+- 共享 live 不执行真实压测，只通过 mock 验证路径和 raw 兜底。
+- 调用方需要自行控制维护窗口、超时和日志。
+- Admin product-typed 提升到 75 / 128。
+
+详见 `docs/46-stage48-admin-diagnostic-probes.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：

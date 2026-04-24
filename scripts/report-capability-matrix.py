@@ -54,7 +54,11 @@ TYPED_METHODS = {
         'downloadProfilingData','getProfileResult',
         'listLdapPolicyEntities','listLdapAccessKeySummaries',
         'listOpenidAccessKeySummaries','getSiteReplicationPeerIdpSettings',
-        'exportIamData','exportBucketMetadataData'
+        'exportIamData','exportBucketMetadataData',
+        'runClientDevnull','runClientDevnullExtraTime',
+        'runSiteReplicationDevnull','runSiteReplicationNetperf',
+        'runSpeedtest','runObjectSpeedtest','runDriveSpeedtest',
+        'runNetworkSpeedtest','runSiteSpeedtest'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {
