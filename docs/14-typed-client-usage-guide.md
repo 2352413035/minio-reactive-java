@@ -143,6 +143,12 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 - `getReplicationMrfSummary(bucket)` 返回 `AdminReplicationMrfSummary`，用于统计 backlog 条目数、错误条目数和重试次数。
 - 原 `getReplicationMrfInfo(bucket)` 与 `replicationMrf(bucket)` 继续保留，用于兼容旧调用或读取完整原文。
 
+阶段 72 起，IDP 配置读取也有显式加密边界入口：
+
+- `listIdpConfigsEncrypted(type)` 返回 `EncryptedAdminResponse`，用于真实 MinIO 的加密配置列表响应。
+- `getIdpConfigEncrypted(type, name)` 返回 `EncryptedAdminResponse`，用于真实 MinIO 的单个加密配置响应。
+- 默认 Crypto Gate 未通过前，不把 IDP 配置值伪装成已解密明文模型。
+
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
     .endpoint(endpoint)

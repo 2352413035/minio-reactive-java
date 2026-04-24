@@ -1366,6 +1366,29 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
+  /** 列出 IDP 配置的加密响应；服务端按 madmin 协议加密返回，不能伪装成明文列表。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse>
+      listIdpConfigsEncrypted(String type) {
+    requireText("type", type);
+    return executeToBytes("ADMIN_LIST_IDP_CONFIG", map("type", type), emptyMap(), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 获取单个 IDP 配置的加密响应；默认解密 Gate 通过前只暴露边界对象。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse>
+      getIdpConfigEncrypted(String type, String name) {
+    requireText("type", type);
+    requireText("name", name);
+    return executeToBytes(
+            "ADMIN_GET_IDP_CONFIG",
+            map("type", type, "name", name),
+            emptyMap(),
+            emptyMap(),
+            null,
+            null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
   /** 列出全部用户组，返回强类型用户组名称列表。 */
   public Mono<io.minio.reactive.messages.admin.AdminGroupList> listGroupsTyped() {
     return listGroups().map(io.minio.reactive.messages.admin.AdminGroupList::parse);
