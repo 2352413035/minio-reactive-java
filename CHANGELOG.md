@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 67 Admin 诊断模型补充
+
+- 新增 `AdminTopLocksSummary`，并在 `ReactiveMinioAdminClient` 增加 `getTopLocksSummary()`。
+- 新增 `AdminHealthInfoSummary`，并在 `ReactiveMinioAdminClient` 增加 `getObdInfoSummary()` 与 `getHealthInfoSummary()`。
+- 原 `getTopLocksInfo()`、`getObdInfo()`、`getHealthInfo()` 继续保留通用 JSON 入口，方便读取完整响应。
+- 新增 `docs/65-stage67-admin-diagnostic-models.md` 记录只读诊断模型的设计边界和验证口径。
+
 ## 阶段 66 Admin 状态模型补充
 
 - 新增 `AdminBackgroundHealStatus`、`AdminRebalanceStatus`、`AdminTierStatsSummary` 三个只读状态/统计摘要模型。

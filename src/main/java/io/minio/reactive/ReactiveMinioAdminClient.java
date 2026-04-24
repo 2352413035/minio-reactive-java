@@ -864,14 +864,29 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return topLocks().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取锁热点摘要，提取读写锁数量、最长持有时间和疑似 quorum 不足计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTopLocksSummary> getTopLocksSummary() {
+    return topLocks().map(io.minio.reactive.messages.admin.AdminTopLocksSummary::parse);
+  }
+
   /** 获取 OBD 诊断信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getObdInfo() {
     return obdInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取 OBD 诊断摘要；OBD 与 healthinfo 使用同一类 MinIO health payload。 */
+  public Mono<io.minio.reactive.messages.admin.AdminHealthInfoSummary> getObdInfoSummary() {
+    return obdInfo().map(io.minio.reactive.messages.admin.AdminHealthInfoSummary::parse);
+  }
+
   /** 获取 Admin health info，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getHealthInfo() {
     return healthInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取 Admin health 摘要，提取状态、部署 ID、region、server/bucket/object 计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminHealthInfoSummary> getHealthInfoSummary() {
+    return healthInfo().map(io.minio.reactive.messages.admin.AdminHealthInfoSummary::parse);
   }
 
   /** 拉取 Admin metrics，并按 Prometheus 文本格式包装；原文仍可通过 text() 读取。 */

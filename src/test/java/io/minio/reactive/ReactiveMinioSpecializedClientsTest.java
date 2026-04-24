@@ -7,6 +7,8 @@ import io.minio.reactive.messages.admin.AdminBatchJobList;
 import io.minio.reactive.messages.admin.AdminBackgroundHealStatus;
 import io.minio.reactive.messages.admin.AdminRebalanceStatus;
 import io.minio.reactive.messages.admin.AdminTierStatsSummary;
+import io.minio.reactive.messages.admin.AdminTopLocksSummary;
+import io.minio.reactive.messages.admin.AdminHealthInfoSummary;
 import io.minio.reactive.messages.admin.AdminBinaryResult;
 import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminConfigHelp;
@@ -447,6 +449,27 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(3L, tierStats.totalVersions());
     Assertions.assertEquals(2L, tierStats.totalObjects());
 
+    AdminTopLocksSummary topLocks =
+        AdminTopLocksSummary.parse(
+            "[{\"type\":\"Write\",\"elapsed\":300,\"serverlist\":[\"node1\"],\"quorum\":2},{\"type\":\"Read\",\"elapsed\":100,\"serverlist\":[\"node1\",\"node2\"],\"quorum\":2}]");
+    Assertions.assertEquals(2, topLocks.lockCount());
+    Assertions.assertEquals(1, topLocks.writeLockCount());
+    Assertions.assertEquals(1, topLocks.readLockCount());
+    Assertions.assertEquals(1, topLocks.belowQuorumLockCount());
+    Assertions.assertEquals(300L, topLocks.maxElapsedNanos());
+
+    AdminHealthInfoSummary healthInfo =
+        AdminHealthInfoSummary.parse(
+            "{\"version\":\"3\",\"timestamp\":\"2026-04-24T00:00:00Z\",\"minio\":{\"info\":{\"deploymentID\":\"dep\",\"region\":\"us-east-1\",\"buckets\":{\"count\":2},\"objects\":{\"count\":5},\"servers\":[{},{}]}}}");
+    Assertions.assertEquals("success", healthInfo.status());
+    Assertions.assertEquals("3", healthInfo.version());
+    Assertions.assertEquals("dep", healthInfo.deploymentId());
+    Assertions.assertEquals("us-east-1", healthInfo.region());
+    Assertions.assertEquals(2, healthInfo.serverCount());
+    Assertions.assertEquals(2L, healthInfo.bucketCount());
+    Assertions.assertEquals(5L, healthInfo.objectCount());
+    Assertions.assertEquals("error", AdminHealthInfoSummary.parse("{\"error\":\"boom\"}").status());
+
     AdminBucketQuota quota =
         AdminBucketQuota.parse("{\"quota\":1024,\"size\":2048,\"rate\":0,\"requests\":0,\"quotatype\":\"hard\"}");
     Assertions.assertEquals(1024, quota.quota());
@@ -535,8 +558,11 @@ class ReactiveMinioSpecializedClientsTest {
     admin.getSiteReplicationInfo().block();
     admin.getSiteReplicationStatus().block();
     Assertions.assertEquals("ok", admin.getSiteReplicationMetainfo().block().values().get("status"));
+    Assertions.assertEquals(1, admin.getTopLocksSummary().block().writeLockCount());
     admin.getTopLocksInfo().block();
+    Assertions.assertEquals("dep", admin.getObdInfoSummary().block().deploymentId());
     admin.getObdInfo().block();
+    Assertions.assertEquals(2, admin.getHealthInfoSummary().block().serverCount());
     admin.getHealthInfo().block();
     Assertions.assertEquals(
         "trace-line",
@@ -609,8 +635,11 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationStatus");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationMetainfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTopLocksInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTopLocksSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getObdInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getObdInfoSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getHealthInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getHealthInfoSummary");
     assertFluxMethodExists(ReactiveMinioAdminClient.class, "traceStream");
     assertFluxMethodExists(ReactiveMinioAdminClient.class, "logStream");
     ReactiveMinioAdminClient admin =
@@ -2037,14 +2066,17 @@ class ReactiveMinioSpecializedClientsTest {
     if (path.endsWith("/tier-stats")) {
       return "[{\"Name\":\"ARCHIVE\",\"Type\":\"s3\",\"Stats\":{\"totalSize\":1024,\"numVersions\":3,\"numObjects\":2}}]";
     }
+    if (path.endsWith("/top/locks")) {
+      return "[{\"type\":\"Write\",\"elapsed\":300,\"serverlist\":[\"node1\"],\"quorum\":2},{\"type\":\"Read\",\"elapsed\":100,\"serverlist\":[\"node1\",\"node2\"],\"quorum\":2}]";
+    }
+    if (path.endsWith("/obdinfo") || path.endsWith("/healthinfo")) {
+      return "{\"version\":\"3\",\"timestamp\":\"2026-04-24T00:00:00Z\",\"minio\":{\"info\":{\"deploymentID\":\"dep\",\"region\":\"us-east-1\",\"buckets\":{\"count\":2},\"objects\":{\"count\":5},\"servers\":[{},{}]}}}";
+    }
     if (path.endsWith("/pools/list")
         || path.endsWith("/pools/status")
         || path.endsWith("/site-replication/info")
         || path.endsWith("/site-replication/metainfo")
-        || path.endsWith("/site-replication/status")
-        || path.endsWith("/top/locks")
-        || path.endsWith("/obdinfo")
-        || path.endsWith("/healthinfo")) {
+        || path.endsWith("/site-replication/status")) {
       return "{\"status\":\"ok\"}";
     }
     if (path.endsWith("/trace")) {
