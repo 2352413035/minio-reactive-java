@@ -144,6 +144,18 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return siteReplicationMetainfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /**
+   * 获取站点复制 peer 的 IDP 设置摘要。
+   *
+   * <p>该接口用于对比站点复制 peer 的身份源配置；响应里可能包含 OIDC provider 的哈希密钥字段，
+   * 因此产品模型只提取安全摘要，不保留 raw JSON。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings>
+      getSiteReplicationPeerIdpSettings() {
+    return srPeerIdpSettings()
+        .map(io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings::parse);
+  }
+
   /** 获取锁热点信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTopLocksInfo() {
     return topLocks().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
@@ -1339,7 +1351,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SITE_REPLICATION_ADD`。 */
   public Mono<String> siteReplicationAdd(byte[] body, String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_ADD", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SITE_REPLICATION_ADD", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_ADD`，不携带请求体。 */
@@ -1349,7 +1362,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SITE_REPLICATION_REMOVE`。 */
   public Mono<String> siteReplicationRemove(byte[] body, String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_REMOVE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SITE_REPLICATION_REMOVE", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_REMOVE`，不携带请求体。 */
@@ -1359,17 +1373,20 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SITE_REPLICATION_INFO`。 */
   public Mono<String> siteReplicationInfo() {
-    return executeToString("ADMIN_SITE_REPLICATION_INFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+    return executeToString(
+        "ADMIN_SITE_REPLICATION_INFO", emptyMap(), siteReplicationApiVersion(), emptyMap(), null, null);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_METAINFO`。 */
   public Mono<String> siteReplicationMetainfo() {
-    return executeToString("ADMIN_SITE_REPLICATION_METAINFO", emptyMap(), emptyMap(), emptyMap(), null, null);
+    return executeToString(
+        "ADMIN_SITE_REPLICATION_METAINFO", emptyMap(), siteReplicationApiVersion(), emptyMap(), null, null);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_STATUS`。 */
   public Mono<String> siteReplicationStatus() {
-    return executeToString("ADMIN_SITE_REPLICATION_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
+    return executeToString(
+        "ADMIN_SITE_REPLICATION_STATUS", emptyMap(), siteReplicationApiVersion(), emptyMap(), null, null);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_DEVNULL`。 */
@@ -1394,7 +1411,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_PEER_JOIN`。 */
   public Mono<String> srPeerJoin(byte[] body, String contentType) {
-    return executeToString("ADMIN_SR_PEER_JOIN", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SR_PEER_JOIN", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SR_PEER_JOIN`，不携带请求体。 */
@@ -1404,7 +1422,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_PEER_BUCKET_OPS`。 */
   public Mono<String> srPeerBucketOps(String bucket, String operation, byte[] body, String contentType) {
-    return executeToString("ADMIN_SR_PEER_BUCKET_OPS", emptyMap(), map("bucket", bucket, "operation", operation), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SR_PEER_BUCKET_OPS",
+        emptyMap(),
+        map("bucket", bucket, "operation", operation, "api-version", "1"),
+        emptyMap(),
+        body,
+        contentType);
   }
 
   /** 调用 `ADMIN_SR_PEER_BUCKET_OPS`，不携带请求体。 */
@@ -1414,7 +1438,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_PEER_IAM_ITEM`。 */
   public Mono<String> srPeerIamItem(byte[] body, String contentType) {
-    return executeToString("ADMIN_SR_PEER_IAM_ITEM", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SR_PEER_IAM_ITEM", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SR_PEER_IAM_ITEM`，不携带请求体。 */
@@ -1424,7 +1449,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_PEER_BUCKET_META`。 */
   public Mono<String> srPeerBucketMeta(byte[] body, String contentType) {
-    return executeToString("ADMIN_SR_PEER_BUCKET_META", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SR_PEER_BUCKET_META", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SR_PEER_BUCKET_META`，不携带请求体。 */
@@ -1434,12 +1460,14 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_PEER_IDP_SETTINGS`。 */
   public Mono<String> srPeerIdpSettings() {
-    return executeToString("ADMIN_SR_PEER_IDP_SETTINGS", emptyMap(), emptyMap(), emptyMap(), null, null);
+    return executeToString(
+        "ADMIN_SR_PEER_IDP_SETTINGS", emptyMap(), siteReplicationApiVersion(), emptyMap(), null, null);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_EDIT`。 */
   public Mono<String> siteReplicationEdit(byte[] body, String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_EDIT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SITE_REPLICATION_EDIT", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_EDIT`，不携带请求体。 */
@@ -1449,7 +1477,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_PEER_EDIT`。 */
   public Mono<String> srPeerEdit(byte[] body, String contentType) {
-    return executeToString("ADMIN_SR_PEER_EDIT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SR_PEER_EDIT", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SR_PEER_EDIT`，不携带请求体。 */
@@ -1459,7 +1488,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_PEER_REMOVE`。 */
   public Mono<String> srPeerRemove(byte[] body, String contentType) {
-    return executeToString("ADMIN_SR_PEER_REMOVE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SR_PEER_REMOVE", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SR_PEER_REMOVE`，不携带请求体。 */
@@ -1469,7 +1499,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SITE_REPLICATION_RESYNC_OP`。 */
   public Mono<String> siteReplicationResyncOp(String operation, byte[] body, String contentType) {
-    return executeToString("ADMIN_SITE_REPLICATION_RESYNC_OP", emptyMap(), map("operation", operation), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SITE_REPLICATION_RESYNC_OP",
+        emptyMap(),
+        map("operation", operation, "api-version", "1"),
+        emptyMap(),
+        body,
+        contentType);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_RESYNC_OP`，不携带请求体。 */
@@ -1479,7 +1515,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_SR_STATE_EDIT`。 */
   public Mono<String> srStateEdit(byte[] body, String contentType) {
-    return executeToString("ADMIN_SR_STATE_EDIT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_SR_STATE_EDIT", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_SR_STATE_EDIT`，不携带请求体。 */
@@ -1627,6 +1664,16 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return revokeTokens(userProvider, null, null);
   }
 
+
+  /**
+   * MinIO madmin-go 的 site replication 客户端会固定携带 api-version=1。
+   *
+   * <p>catalog 仍只描述服务端 router 上可见的 path/query 语义，专用客户端在这里补齐 madmin 协议版本，
+   * 避免影响 route parity 报告。
+   */
+  private static java.util.Map<String, String> siteReplicationApiVersion() {
+    return map("api-version", "1");
+  }
 
 
   public static final class Builder {

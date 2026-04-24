@@ -11,6 +11,7 @@ import io.minio.reactive.messages.admin.AdminStorageSummary;
 import io.minio.reactive.messages.admin.AdminIdpConfigList;
 import io.minio.reactive.messages.admin.AdminPolicyEntities;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
+import io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings;
 import io.minio.reactive.messages.admin.AdminTierList;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
@@ -711,6 +712,72 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "listType=sts"));
   }
 
+  @Test
+  void shouldExposeStage42SiteReplicationPeerIdpSummaryMethod() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationPeerIdpSettings");
+    assertNoPublicMethod(AdminSiteReplicationPeerIdpSettings.class, "rawJson");
+  }
+
+  @Test
+  void shouldBuildStage42SiteReplicationPeerIdpRequestWithoutRawSecrets() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage42SiteReplicationPeerBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    AdminSiteReplicationPeerIdpSettings settings =
+        admin.getSiteReplicationPeerIdpSettings().block();
+    Assertions.assertTrue(settings.ldapEnabled());
+    Assertions.assertTrue(settings.openidEnabled());
+    Assertions.assertEquals("us-east-1", settings.openidRegion());
+    Assertions.assertEquals(1, settings.openidRoleCount());
+    Assertions.assertEquals("arn:minio:iam:::role/readonly", settings.openidRoleNames().get(0));
+    Assertions.assertTrue(settings.claimProviderConfigured());
+    Assertions.assertTrue(settings.identityProviderConfigured());
+
+    AdminSiteReplicationPeerIdpSettings legacy =
+        AdminSiteReplicationPeerIdpSettings.parse(
+            "{\"IsLDAPEnabled\":false,\"LDAPUserDNSearchBase\":\"\",\"LDAPUserDNSearchFilter\":\"\"}");
+    Assertions.assertFalse(legacy.identityProviderConfigured());
+    Assertions.assertTrue(
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_SR_PEER_IDP_SETTINGS"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.singletonMap("api-version", "1"),
+                java.util.Collections.<String, String>emptyMap(),
+                null,
+                null)
+            .block()
+            .contains("LDAP"));
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/idp-settings"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "api-version=1"));
+  }
+
 
   @Test
   void shouldExposeS3VersioningBusinessMethods() {
@@ -1067,6 +1134,14 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.fail("缺少 @Deprecated 方法: " + type.getSimpleName() + "." + name);
   }
 
+  private static void assertNoPublicMethod(Class<?> type, String name) {
+    for (Method method : type.getMethods()) {
+      if (method.getName().equals(name) && Modifier.isPublic(method.getModifiers())) {
+        Assertions.fail("不应暴露 public 方法: " + type.getSimpleName() + "." + name);
+      }
+    }
+  }
+
   private static boolean containsAllQueryParts(java.util.List<String> queries, String... parts) {
     for (String query : queries) {
       boolean matched = true;
@@ -1185,6 +1260,18 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (path.endsWith("/idp/openid/list-access-keys-bulk")) {
       return "{\"serviceAccounts\":[{\"accessKey\":\"openid-ak\",\"secretKey\":\"不应暴露\",\"accountStatus\":\"enabled\"}],\"stsKeys\":[]}";
+    }
+    return "{}";
+  }
+
+  private static String stage42SiteReplicationPeerBody(String path) {
+    if (path.endsWith("/site-replication/peer/idp-settings")) {
+      return "{\"LDAP\":{\"IsLDAPEnabled\":true,\"LDAPUserDNSearchBase\":\"ou=users,dc=example,dc=com\","
+          + "\"LDAPUserDNSearchFilter\":\"(uid=%s)\",\"LDAPGroupSearchBase\":\"ou=groups,dc=example,dc=com\","
+          + "\"LDAPGroupSearchFilter\":\"(member=%d)\"},\"OpenID\":{\"Enabled\":true,\"Region\":\"us-east-1\","
+          + "\"Roles\":{\"arn:minio:iam:::role/readonly\":{\"ClaimName\":\"policy\",\"ClientID\":\"不应暴露\","
+          + "\"HashedClientSecret\":\"不应暴露\"}},\"ClaimProvider\":{\"ClaimName\":\"policy\","
+          + "\"HashedClientSecret\":\"不应暴露\"}}}";
     }
     return "{}";
   }

@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 63 | 128 | 0 | 9 | 29 |
+| admin | 128 | 64 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -273,7 +273,7 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 阶段 39 重新复审当前发布候选：
 
 - 双分支 route parity 仍为 233 / 233，catalog 缺失 0、额外 0。
-- 能力矩阵仍为 S3 77 / 77、Admin 63 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。
+- 能力矩阵仍为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。
 - `raw-fallback = 0`，说明所有 catalog 路由至少有专用 typed 或 advanced 兼容入口。
 - 剩余主要是 Admin typed 成熟度、独立 lab 真实执行证据和 Crypto Gate Pass 准备。
 
@@ -300,6 +300,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - Admin product-typed 从 60 / 128 提升到 63 / 128。
 
 详见 `docs/39-stage41-admin-iam-idp-readonly.md`。
+
+## 5.23 阶段 42 补充
+
+阶段 42 继续处理 site replication 中可安全产品化的只读能力：
+
+- `getSiteReplicationPeerIdpSettings()` 返回站点复制 peer 的 IDP 设置摘要。
+- `AdminSiteReplicationPeerIdpSettings` 不保存 raw JSON，只暴露 LDAP/OpenID 是否启用、LDAP 搜索条件、OpenID 区域和角色数量。
+- site replication 相关专用客户端入口按 madmin-go 补齐 `api-version=1` 查询参数，避免调用方手动补协议版本。
+- Admin product-typed 从 63 / 128 提升到 64 / 128。
+
+详见 `docs/40-stage42-site-replication-peer-idp.md`。
 
 ## 6. 验证命令
 
