@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | route parity | 233 / 233，missing 0，extra 0 | SDK catalog 与本地 `minio` router 在 family/method/path/query/auth 语义上对齐。 |
 | callability | raw-fallback 0 | 每个公开 catalog 路由至少有 typed 或 advanced 兼容入口。 |
-| product typed | S3 77 / 77、Admin 97 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8 | 这是用户友好强类型成熟度，不代表剩余路由不能调用。 |
+| product typed | S3 77 / 77、Admin 103 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8 | 这是用户友好强类型成熟度，不代表剩余路由不能调用。 |
 | blocked risk | encrypted-blocked 9、destructive-blocked 29 | 这些接口受 madmin 加密响应或破坏性操作边界限制，不能在共享环境中伪装成普通 typed 完成。 |
 
 机器报告统一由 `scripts/report-route-parity.py` 和 `scripts/report-capability-matrix.py` 生成，当前结果见：

@@ -688,6 +688,16 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage56SiteReplicationPeerLabBoundaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "joinSiteReplicationPeer");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "applySiteReplicationPeerBucketOperation");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "applySiteReplicationPeerIamItem");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "applySiteReplicationPeerBucketMetadata");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runSiteReplicationResyncOperation");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "editSiteReplicationState");
+  }
+
+  @Test
   void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -925,6 +935,80 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
+  }
+
+  @Test
+  void shouldBuildStage56SiteReplicationPeerLabBoundaryRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage56SiteReplicationPeerBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    byte[] body = "{\"op\":\"lab\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    Assertions.assertEquals("site-replication-peer-join", admin.joinSiteReplicationPeer(body).block().source());
+    Assertions.assertEquals(
+        "peer-bucket-ops-ok",
+        admin.applySiteReplicationPeerBucketOperation("bucket1", "enable", body).block().rawText());
+    Assertions.assertEquals(
+        "peer-iam-item-ok", admin.applySiteReplicationPeerIamItem(body).block().rawText());
+    Assertions.assertEquals(
+        "peer-bucket-meta-ok",
+        admin.applySiteReplicationPeerBucketMetadata(body).block().rawText());
+    Assertions.assertEquals(
+        "resync-op-ok", admin.runSiteReplicationResyncOperation("start", body).block().rawText());
+    Assertions.assertEquals("state-edit-ok", admin.editSiteReplicationState(body).block().rawText());
+    Assertions.assertEquals(
+        "peer-iam-item-ok",
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_SR_PEER_IAM_ITEM"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.singletonMap("api-version", "1"),
+                java.util.Collections.<String, String>emptyMap(),
+                body,
+                "application/json")
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/join"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/bucket-ops"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/iam-item"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/bucket-meta"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/resync/op"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/state/edit"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "api-version=1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "operation=enable"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "operation=start", "api-version=1"));
+    Assertions.assertTrue(contentTypes.contains("application/json"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.joinSiteReplicationPeer(new byte[0]));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> admin.applySiteReplicationPeerBucketOperation("bucket1", " ", body));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.editSiteReplicationState(null));
   }
 
   @Test
@@ -1764,6 +1848,28 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"key-id\":\"dedicated-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
     }
     return "{}";
+  }
+
+  private static String stage56SiteReplicationPeerBody(String path) {
+    if (path.equals("/minio/admin/v3/site-replication/peer/join")) {
+      return "peer-join-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/peer/bucket-ops")) {
+      return "peer-bucket-ops-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/peer/iam-item")) {
+      return "peer-iam-item-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/peer/bucket-meta")) {
+      return "peer-bucket-meta-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/resync/op")) {
+      return "resync-op-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/state/edit")) {
+      return "state-edit-ok";
+    }
+    return "";
   }
 
   private static String stage55AdminConfigRiskBody(String path) {

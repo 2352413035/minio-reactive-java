@@ -386,6 +386,115 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings::parse);
   }
 
+  /**
+   * 加入站点复制 peer。
+   *
+   * <p>这是站点复制写入操作，只应在独立 lab 或维护窗口执行；专用入口固定 madmin 的 api-version=1。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> joinSiteReplicationPeer(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return srPeerJoin(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-peer-join", text));
+  }
+
+  /** 加入站点复制 peer，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> joinSiteReplicationPeer(
+      byte[] body) {
+    return joinSiteReplicationPeer(body, "application/json");
+  }
+
+  /** 执行站点复制 peer bucket 操作；operation 必须由调用方显式确认。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> applySiteReplicationPeerBucketOperation(
+      String bucket, String operation, byte[] body, String contentType) {
+    requireText("bucket", bucket);
+    requireText("operation", operation);
+    requireBytes("body", body);
+    return srPeerBucketOps(bucket, operation, body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-peer-bucket-ops", text));
+  }
+
+  /** 执行站点复制 peer bucket 操作，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> applySiteReplicationPeerBucketOperation(
+      String bucket, String operation, byte[] body) {
+    return applySiteReplicationPeerBucketOperation(bucket, operation, body, "application/json");
+  }
+
+  /** 同步站点复制 peer IAM 项；请求体可能包含 IAM 变更信息，SDK 不解析或记录。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> applySiteReplicationPeerIamItem(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return srPeerIamItem(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-peer-iam-item", text));
+  }
+
+  /** 同步站点复制 peer IAM 项，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> applySiteReplicationPeerIamItem(
+      byte[] body) {
+    return applySiteReplicationPeerIamItem(body, "application/json");
+  }
+
+  /** 同步站点复制 peer bucket metadata；请求体由调用方控制并自行审计。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> applySiteReplicationPeerBucketMetadata(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return srPeerBucketMeta(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-peer-bucket-meta", text));
+  }
+
+  /** 同步站点复制 peer bucket metadata，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> applySiteReplicationPeerBucketMetadata(
+      byte[] body) {
+    return applySiteReplicationPeerBucketMetadata(body, "application/json");
+  }
+
+  /** 执行站点复制 resync 操作；operation 必须明确传入，避免误触发。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteReplicationResyncOperation(
+      String operation, byte[] body, String contentType) {
+    requireText("operation", operation);
+    requireBytes("body", body);
+    return siteReplicationResyncOp(operation, body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-resync-op", text));
+  }
+
+  /** 执行站点复制 resync 操作，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteReplicationResyncOperation(
+      String operation, byte[] body) {
+    return runSiteReplicationResyncOperation(operation, body, "application/json");
+  }
+
+  /** 编辑站点复制状态；这是 lab-only 高风险写入边界。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editSiteReplicationState(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return srStateEdit(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-state-edit", text));
+  }
+
+  /** 编辑站点复制状态，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editSiteReplicationState(
+      byte[] body) {
+    return editSiteReplicationState(body, "application/json");
+  }
+
   /** 获取锁热点信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTopLocksInfo() {
     return topLocks().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
