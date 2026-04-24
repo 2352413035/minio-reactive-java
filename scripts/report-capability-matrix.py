@@ -49,7 +49,9 @@ TYPED_METHODS = {
         'getBucketQuotaInfo','listTiers','listPolicyEntities','listIdpConfigs','getIdpConfigInfo',
         'listRemoteTargetsInfo','listBatchJobsInfo','getBatchJobStatusInfo','describeBatchJobInfo',
         'getSiteReplicationMetainfo','traceStream','logStream',
-        'listBucketUsersInfo','getTemporaryAccountInfo'
+        'listBucketUsersInfo','getTemporaryAccountInfo',
+        'scrapeAdminMetrics','downloadInspectData','startProfiling',
+        'downloadProfilingData','getProfileResult'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

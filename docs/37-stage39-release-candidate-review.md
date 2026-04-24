@@ -8,7 +8,7 @@
 | --- | --- |
 | 路由对标 | 双分支 233 / 233，catalog 缺失 0、额外 0。 |
 | 可调用覆盖 | 双分支 `raw-fallback = 0`。 |
-| 产品 typed 成熟度 | S3 77 / 77、Admin 55 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。 |
+| 产品 typed 成熟度 | S3 77 / 77、Admin 60 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。 |
 | 加密边界 | Admin `encrypted-blocked = 9`，Crypto Gate 仍保持 Fail。 |
 | 破坏性边界 | Admin `destructive-blocked = 29`，只能在独立可回滚 lab 证明。 |
 | 示例入口 | 正式示例覆盖对象存储、Admin typed、Raw 兜底、Metrics/Health、KMS/STS。 |

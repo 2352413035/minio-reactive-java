@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 55 | 128 | 0 | 9 | 29 |
+| admin | 128 | 60 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -273,11 +273,22 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 阶段 39 重新复审当前发布候选：
 
 - 双分支 route parity 仍为 233 / 233，catalog 缺失 0、额外 0。
-- 能力矩阵仍为 S3 77 / 77、Admin 55 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。
+- 能力矩阵仍为 S3 77 / 77、Admin 60 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。
 - `raw-fallback = 0`，说明所有 catalog 路由至少有专用 typed 或 advanced 兼容入口。
 - 剩余主要是 Admin typed 成熟度、独立 lab 真实执行证据和 Crypto Gate Pass 准备。
 
 详见 `docs/37-stage39-release-candidate-review.md`。
+
+## 5.21 阶段 40 补充
+
+阶段 40 补充 Admin 诊断类 typed/stream 包装：
+
+- `scrapeAdminMetrics()` 返回 `PrometheusMetrics`。
+- `downloadInspectData(...)` 和 `downloadProfilingData()` 返回 `AdminBinaryResult`，避免二进制诊断包被误解码。
+- `startProfiling(...)` 和 `getProfileResult(...)` 返回 `AdminTextResult`。
+- Admin product-typed 从 55 / 128 提升到 60 / 128。
+
+详见 `docs/38-stage40-admin-diagnostics-typed-wrappers.md`。
 
 ## 6. 验证命令
 

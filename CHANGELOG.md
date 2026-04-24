@@ -33,6 +33,13 @@
 - 更新 `docs/17-release-readiness-report.md` 与 `docs/24-stage26-release-closeout.md`，把阶段 36-38 的 lab、示例和能力矩阵变化纳入发布口径。
 - 当前复审结论仍保持：双分支 route parity 233 / 233，`raw-fallback = 0`，Admin 剩余重点是 typed 成熟度、独立 lab 真实证据和 Crypto Gate Pass。
 
+### 阶段 40 补充
+
+- `ReactiveMinioAdminClient` 新增 Admin 诊断类产品入口：`scrapeAdminMetrics()`、`downloadInspectData(...)`、`startProfiling(...)`、`downloadProfilingData()`、`getProfileResult(...)`。
+- 新增 `AdminTextResult` 与 `AdminBinaryResult`，分别固定文本诊断和二进制诊断边界。
+- Admin product-typed 口径从 55 / 128 提升到 60 / 128；加密和破坏性边界不变。
+- 新增 `docs/38-stage40-admin-diagnostics-typed-wrappers.md` 记录使用建议和风险边界。
+
 
 ### 阶段 35 补充
 
