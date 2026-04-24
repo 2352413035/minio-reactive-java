@@ -217,3 +217,14 @@ String body = raw.executeToString(
 ## 阶段 35 IAM 边界
 
 需要查看 bucket 相关用户时使用 `listBucketUsersInfo(bucket)`；需要诊断临时账号时使用 `getTemporaryAccountInfo(accessKey)`。如果接口返回 madmin 加密载荷，请继续使用 `EncryptedAdminResponse` 相关方法，不要在 Crypto Gate Pass 前自行假装成明文模型。
+
+## 9.6 Admin 敏感导出
+
+IAM 与 bucket metadata 导出可能是备份包或压缩包，也可能包含用户、策略、服务账号或 bucket 配置。阶段 47 起，推荐使用二进制产品入口：
+
+```java
+AdminBinaryResult iam = admin.exportIamData().block();
+AdminBinaryResult metadata = admin.exportBucketMetadataData().block();
+```
+
+不要把 `bytes()` 直接写入普通日志。需要排障或 SDK 尚未封装的新参数时，仍可用 `ReactiveMinioRawClient.executeToBytes(...)` 走 catalog 兜底。

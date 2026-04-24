@@ -4,6 +4,7 @@ import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminAccountSummary;
 import io.minio.reactive.messages.admin.AdminBatchJobList;
+import io.minio.reactive.messages.admin.AdminBinaryResult;
 import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminConfigHelp;
 import io.minio.reactive.messages.admin.AdminDataUsageSummary;
@@ -617,6 +618,69 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage47AdminSensitiveExportMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "exportIamData");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "exportBucketMetadataData");
+  }
+
+  @Test
+  void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage47AdminSensitiveExportBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    AdminBinaryResult iam = admin.exportIamData().block();
+    AdminBinaryResult bucketMetadata = admin.exportBucketMetadataData().block();
+    byte[] rawIam =
+        raw.executeToBytes(
+                MinioApiCatalog.byName("ADMIN_EXPORT_IAM"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.<String, String>emptyMap(),
+                null,
+                null)
+            .block();
+
+    Assertions.assertEquals("export-iam", iam.source());
+    Assertions.assertEquals("export-bucket-metadata", bucketMetadata.source());
+    Assertions.assertArrayEquals(
+        "iam-export-bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8), iam.bytes());
+    Assertions.assertEquals(
+        "bucket-metadata-bytes".length(), bucketMetadata.size());
+    Assertions.assertEquals(
+        "iam-export-bytes", new String(rawIam, java.nio.charset.StandardCharsets.UTF_8));
+    byte[] copy = iam.bytes();
+    copy[0] = 'X';
+    Assertions.assertEquals('i', iam.bytes()[0]);
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/export-iam"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/export-bucket-metadata"));
+  }
+
+  @Test
   void shouldBuildStage40AdminDiagnosticRequests() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> queries = new java.util.ArrayList<String>();
@@ -1227,6 +1291,16 @@ class ReactiveMinioSpecializedClientsTest {
       return "log-line\n";
     }
     return "01234567890123456789012345678901234567890";
+  }
+
+  private static String stage47AdminSensitiveExportBody(String path) {
+    if (path.endsWith("/export-iam")) {
+      return "iam-export-bytes";
+    }
+    if (path.endsWith("/export-bucket-metadata")) {
+      return "bucket-metadata-bytes";
+    }
+    return "";
   }
 
   private static String stage40AdminDiagnosticBody(String path) {

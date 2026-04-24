@@ -8,7 +8,7 @@
 | --- | --- |
 | 路由对标 | JDK8 与 JDK17+ 双分支均为 233 / 233，catalog 缺失 0、额外 0。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有 catalog 路由至少有专用或 advanced 入口。 |
-| 产品 typed 成熟度 | S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。 |
+| 产品 typed 成熟度 | 阶段 46 为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 47 后 Admin 提升到 66 / 128。 |
 | Crypto Gate | 继续 Gate Fail；阶段 45 只完成放行准备清单，不引入依赖。 |
 | 破坏性 Admin | 仍为独立 lab 边界；阶段 43 已增强 typed/raw 步骤证据和 `mc` 核验提示。 |
 | 错误体验 | 阶段 44 已将协议异常与 raw 本地校验统一为中文诊断。 |
@@ -60,7 +60,11 @@ git diff --check
 
 JDK17+ 分支还要执行 JDK17 全量测试、真实 MinIO smoke，以及 JDK21/JDK25 `test-compile`。
 
-## 6. 下一阶段建议
+## 6. 阶段 47 后续刷新
+
+阶段 47 已补充 `exportIamData()` 与 `exportBucketMetadataData()` 二进制产品边界，Admin product-typed 提升到 66 / 128。完整说明见 `docs/45-stage47-admin-sensitive-export.md`。
+
+## 7. 下一阶段建议
 
 阶段 46 之后，优先级仍然是：
 

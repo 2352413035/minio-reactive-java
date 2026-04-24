@@ -83,6 +83,14 @@
 - 新增 `docs/44-stage46-release-review-refresh.md`，汇总阶段 40-45 的真实增量、发布边界和验证命令。
 - 发布口径继续禁止用单一百分比宣称完成，必须拆分 route parity、callability、typed maturity、live/destructive/crypto 边界。
 
+### 阶段 47 补充
+
+- `ReactiveMinioAdminClient` 新增 `exportIamData()` 与 `exportBucketMetadataData()`，返回 `AdminBinaryResult`。
+- IAM 与 bucket metadata 导出不再建议走字符串产品路径，避免二进制备份包被错误解码或写入日志。
+- 单元测试同时验证专用客户端和 raw `executeToBytes(...)` 路径。
+- Admin product-typed 从 64 / 128 提升到 66 / 128；加密和破坏性边界不变。
+- 新增 `docs/45-stage47-admin-sensitive-export.md` 记录敏感导出使用边界。
+
 
 ### 阶段 35 补充
 
