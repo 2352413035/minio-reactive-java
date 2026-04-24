@@ -54,7 +54,7 @@
 
 ## 5. 剩余风险
 
-1. Crypto Gate 仍未 Pass，默认 madmin 加密响应不能明文 typed 解析。
+1. Crypto Gate 仍未 Pass；阶段 32 已把 Fail 状态写入 `crypto-gate-status.properties` 并纳入脚本门禁，默认 madmin 加密响应不能明文 typed 解析。
 2. 破坏性 Admin 只能在独立 lab 验证，共享 MinIO 环境不应执行。
 3. Admin product-typed 数量仍低于 route-catalog，因为很多接口需要环境、权限或长期字段稳定性确认。
 4. STS 高级身份源（SSO、自定义 token、证书）仍需要独立身份源环境验证。

@@ -18,12 +18,13 @@
 如果当前里程碑涉及 madmin 加密兼容，必须额外通过：
 
 - `scripts/madmin-fixtures/verify-fixtures.sh`
+- `scripts/madmin-fixtures/crypto-gate-status.properties`
 - `scripts/madmin-fixtures/check-crypto-gate.sh`
 - 固定 `go version`
 - 固定 `madmin-go` 版本
 - 夹具元数据 与文档一致
 
-`check-crypto-gate.sh` 的通过含义是：当前 Gate Fail 边界仍被正确执行。它会确认 夹具可用，并检查 `pom.xml` 与源码 import 没有引入未批准 crypto/native 依赖。它不代表默认 madmin 加密响应已经可以明文 typed 解析。
+`check-crypto-gate.sh` 的通过含义是：当前 Gate Fail 边界仍被正确执行。阶段 32 起，它还会校验 `scripts/madmin-fixtures/crypto-gate-status.properties` 中的三方批准状态。它会确认 夹具可用，并检查 `pom.xml` 与源码 import 没有引入未批准 crypto/native 依赖。它不代表默认 madmin 加密响应已经可以明文 typed 解析。
 
 ## 3. 破坏性 Admin 门禁
 

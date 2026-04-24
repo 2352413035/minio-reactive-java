@@ -7,6 +7,13 @@
 
 
 
+### 阶段 32 补充
+
+- Crypto Gate 独立复审结论继续保持 Fail：没有 owner/security/architect 三方批准，不引入默认响应解密依赖。
+- 新增 `scripts/madmin-fixtures/crypto-gate-status.properties`，把三方批准状态和决策文档纳入脚本门禁。
+- `check-crypto-gate.sh` 会先校验状态文件，再检查 fixture、`pom.xml` 和源码 import。
+- 新增 `docs/30-stage32-crypto-gate-independent-review.md` 记录 Gate Pass 前置条件和当前拒绝理由。
+
 ### 阶段 31 补充
 
 - 破坏性实验环境的 tier、remote target、batch job 夹具改为 typed/raw 双路径校验。
