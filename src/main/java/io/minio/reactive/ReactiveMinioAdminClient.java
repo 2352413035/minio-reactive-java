@@ -200,6 +200,108 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return rebalanceStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /**
+   * 启动 root heal 维护任务。
+   *
+   * <p>heal 可能消耗集群资源，调用方应在维护窗口中执行；产品入口只固定响应文本边界。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startRootHeal(
+      byte[] body, String contentType) {
+    return healRoot(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("heal-root", text));
+  }
+
+  /** 启动不带请求体的 root heal 维护任务。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startRootHeal() {
+    return startRootHeal(null, null);
+  }
+
+  /** 启动指定 bucket 的 heal 维护任务；共享环境不应默认执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startBucketHeal(
+      String bucket, byte[] body, String contentType) {
+    requireText("bucket", bucket);
+    return healBucket(bucket, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("heal-bucket", text));
+  }
+
+  /** 启动不带请求体的 bucket heal 维护任务。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startBucketHeal(String bucket) {
+    return startBucketHeal(bucket, null, null);
+  }
+
+  /** 启动指定前缀的 heal 维护任务；prefix 为空时应改用 bucket heal。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startPrefixHeal(
+      String bucket, String prefix, byte[] body, String contentType) {
+    requireText("bucket", bucket);
+    requireText("prefix", prefix);
+    return healPrefix(bucket, prefix, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("heal-prefix", text));
+  }
+
+  /** 启动不带请求体的 prefix heal 维护任务。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startPrefixHeal(
+      String bucket, String prefix) {
+    return startPrefixHeal(bucket, prefix, null, null);
+  }
+
+  /** 启动 pool decommission；这是维护窗口操作，不在共享 live 测试中真实执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startPoolDecommission(
+      String pool, byte[] body, String contentType) {
+    requireText("pool", pool);
+    return startDecommission(pool, body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "pool-decommission-start", text));
+  }
+
+  /** 启动不带请求体的 pool decommission。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startPoolDecommission(
+      String pool) {
+    return startPoolDecommission(pool, null, null);
+  }
+
+  /** 取消 pool decommission；调用方应确认 MinIO 当前维护状态。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> cancelPoolDecommission(
+      String pool, byte[] body, String contentType) {
+    requireText("pool", pool);
+    return cancelDecommission(pool, body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "pool-decommission-cancel", text));
+  }
+
+  /** 取消不带请求体的 pool decommission。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> cancelPoolDecommission(
+      String pool) {
+    return cancelPoolDecommission(pool, null, null);
+  }
+
+  /** 启动 rebalance 维护任务；状态读取继续使用 getRebalanceStatus()。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startRebalance(
+      byte[] body, String contentType) {
+    return rebalanceStart(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("rebalance-start", text));
+  }
+
+  /** 启动不带请求体的 rebalance 维护任务。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startRebalance() {
+    return startRebalance(null, null);
+  }
+
+  /** 停止 rebalance 维护任务；调用方应先确认当前 rebalance 状态。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> stopRebalance(
+      byte[] body, String contentType) {
+    return rebalanceStop(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("rebalance-stop", text));
+  }
+
+  /** 停止不带请求体的 rebalance 维护任务。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> stopRebalance() {
+    return stopRebalance(null, null);
+  }
+
   /** 获取 tier 统计信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTierStats() {
     return tierStats().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);

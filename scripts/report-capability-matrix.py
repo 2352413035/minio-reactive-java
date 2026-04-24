@@ -60,7 +60,10 @@ TYPED_METHODS = {
         'runSpeedtest','runObjectSpeedtest','runDriveSpeedtest',
         'runNetworkSpeedtest','runSiteSpeedtest',
         'getAdminKmsStatus','createAdminKmsKey','getAdminKmsKeyStatus',
-        'importIamArchive','importIamV2Archive','importBucketMetadataArchive'
+        'importIamArchive','importIamV2Archive','importBucketMetadataArchive',
+        'startRootHeal','startBucketHeal','startPrefixHeal',
+        'startPoolDecommission','cancelPoolDecommission',
+        'startRebalance','stopRebalance'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {
