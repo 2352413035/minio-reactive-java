@@ -86,3 +86,16 @@ scripts/madmin-fixtures/check-crypto-gate.sh
 ```
 
 当前结论：Go fixture 互操作可以稳定验证，`pom.xml` 不新增 crypto 依赖，默认加密响应继续停留在 `EncryptedAdminResponse` 边界。
+
+## 6. 阶段 25 决策复核结果
+
+阶段 25 使用 2026-04-24 的公开资料重新复核候选依赖后，结论仍然是 **Crypto Gate Fail**：
+
+1. Bouncy Castle 仍是后续最可行的纯 Java 候选之一，但它会把通用 crypto provider 带入 SDK 依赖面，必须先完成 owner、security reviewer、architect 三方批准。
+2. `argon2-jvm` 是 native/JNA binding，且许可证与平台覆盖边界更复杂；它只能解决 Argon2，不能单独解决 ChaCha20-Poly1305。
+3. 自研 Argon2id / ChaCha20-Poly1305 被拒绝，因为密码学实现不应由当前 SDK 自行维护。
+4. `scripts/madmin-fixtures/check-crypto-gate.sh` 已加固为同时检查 `pom.xml` 和源码 import，防止未批准依赖绕过门禁。
+
+因此，本 SDK 继续支持 PBKDF2 + AES-GCM 请求载荷和 fixture 解密；madmin-go 默认响应仍返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmName()` 给出中文诊断边界。
+
+详见 `docs/23-stage25-crypto-gate-review.md` 与 `docs/adr/001-madmin-default-encryption-dependency.md`。

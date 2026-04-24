@@ -1,6 +1,6 @@
-# 16 Crypto Boundary Map
+# 16 加密边界图
 
-阶段 18 的结论仍然是 **Crypto Gate Fail（暂不引入新依赖）**。这不是功能遗漏，而是安全边界：在没有 owner、security reviewer、architect 三方批准前，SDK 不能引入 Argon2id / ChaCha20-Poly1305 依赖，也不能把 madmin 默认加密响应伪装成明文 typed 结果。
+阶段 25 的结论仍然是 **Crypto Gate Fail（暂不引入新依赖）**。这不是功能遗漏，而是安全边界：在没有 owner、security reviewer、architect 三方批准前，SDK 不能引入 Argon2id / ChaCha20-Poly1305 依赖，也不能把 madmin 默认加密响应伪装成明文 typed 结果。
 
 ## 当前可支持
 
@@ -25,7 +25,7 @@
 | `ADMIN_INFO_ACCESS_KEY` | `getAccessKeyInfoEncrypted(...)` | 服务端用 madmin 默认加密响应。 |
 | `ADMIN_LIST_ACCESS_KEYS_BULK` | `listAccessKeysEncrypted(...)` | 服务端用 madmin 默认加密响应。 |
 
-## 阶段 18 复核命令
+## 阶段 25 复核命令
 
 ```bash
 scripts/madmin-fixtures/check-crypto-gate.sh
@@ -36,5 +36,8 @@ scripts/madmin-fixtures/check-crypto-gate.sh
 1. 验证仓库 committed fixture。
 2. 用系统 Go 重新生成 madmin fixture 并跑 Java 诊断测试。
 3. 检查 `pom.xml` 未出现未批准 crypto 依赖候选。
+4. 检查源码没有直接 import 未批准的 crypto/native 包。
 
 通过这个命令并不代表 Gate Pass；它代表当前 Gate Fail 边界仍然被正确执行。
+
+阶段 25 的依赖复核和拒绝理由详见 `docs/23-stage25-crypto-gate-review.md`。未来若要 Gate Pass，必须先补齐候选版本、许可证、安全公告、JDK8/JDK17+ 测试矩阵、FIPS/Provider 影响和失败回退策略。

@@ -42,6 +42,14 @@ class MadminEncryptionSupportTest {
   }
 
   @Test
+  void shouldExposeOnlyPbkdf2AesGcmAsDecryptSupportedBeforeCryptoGatePass() {
+    Assertions.assertFalse(MadminEncryptionAlgorithm.ARGON2ID_AES_GCM.decryptSupported());
+    Assertions.assertFalse(
+        MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305.decryptSupported());
+    Assertions.assertTrue(MadminEncryptionAlgorithm.PBKDF2_AES_GCM.decryptSupported());
+  }
+
+  @Test
   void shouldRejectUnknownOrShortMadminEncryptedHeaderIds() {
     byte[] unknown = new byte[41];
     unknown[32] = 0x7F;
