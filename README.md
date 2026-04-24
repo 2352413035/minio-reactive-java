@@ -207,6 +207,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/61-stage63-final-gap-audit.md`
 - `docs/62-stage64-release-engineering-gates.md`
 - `docs/63-stage65-release-handoff.md`
+- `docs/64-stage66-admin-status-models.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

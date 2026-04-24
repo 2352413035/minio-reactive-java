@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -33,7 +34,17 @@ public final class JsonSupport {
       return Collections.emptyMap();
     }
     try {
-      return MAPPER.readValue(json, MAP_TYPE);
+      JsonNode root = MAPPER.readTree(json);
+      if (root == null || root.isNull()) {
+        return Collections.emptyMap();
+      }
+      if (root.isObject()) {
+        return MAPPER.convertValue(root, MAP_TYPE);
+      }
+      Map<String, Object> wrapped = new LinkedHashMap<String, Object>();
+      // 部分 MinIO Admin 接口顶层直接返回数组；统一包进 items，避免通用 JSON 包装误报解析失败。
+      wrapped.put("items", MAPPER.convertValue(root, Object.class));
+      return wrapped;
     } catch (Exception e) {
       throw new IllegalArgumentException("无法解析 MinIO JSON 响应", e);
     }
@@ -97,6 +108,17 @@ public final class JsonSupport {
   public static boolean booleanAny(JsonNode node, String... fields) {
     JsonNode value = child(node, fields);
     return value != null && !value.isNull() && value.asBoolean();
+  }
+
+  /** 统计数组元素数或对象字段数，未知结构按 0 处理。 */
+  public static int nodeSize(JsonNode node) {
+    if (node == null || node.isNull()) {
+      return 0;
+    }
+    if (node.isArray() || node.isObject()) {
+      return node.size();
+    }
+    return 0;
   }
 
   /** 汇总 JSON object 中的数值字段，用于统计 MinIO `BackendDisks` 这类 map 响应。 */

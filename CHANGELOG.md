@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 66 Admin 状态模型补充
+
+- 新增 `AdminBackgroundHealStatus`、`AdminRebalanceStatus`、`AdminTierStatsSummary` 三个只读状态/统计摘要模型。
+- `ReactiveMinioAdminClient` 新增 `getBackgroundHealStatusSummary()`、`getRebalanceStatusSummary()`、`getTierStatsSummary()`，原通用 JSON 方法继续保留。
+- 修正 `AdminJsonResult` 对顶层数组 JSON 的兼容能力，数组响应会放入 `values().get("items")`。
+- 新增 `docs/64-stage66-admin-status-models.md` 说明本阶段设计边界和验证口径。
+
 ## 阶段 65 发布交接补充
 
 - 新增 `docs/63-stage65-release-handoff.md`，把当前发布候选说明、外部门禁和正式发布前交接事项整理为可执行清单。

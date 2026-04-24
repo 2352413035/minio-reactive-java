@@ -108,6 +108,14 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 
 ## 管理端
 
+阶段 66 起，后台 heal、rebalance 和 tier 统计在保留通用 JSON 入口的同时，新增了更适合排障看板的摘要模型：
+
+- `getBackgroundHealStatusSummary()` 返回 `AdminBackgroundHealStatus`。
+- `getRebalanceStatusSummary()` 返回 `AdminRebalanceStatus`。
+- `getTierStatsSummary()` 返回 `AdminTierStatsSummary`。
+
+这些摘要模型只提取稳定字段，完整响应仍可通过 `rawJson()`、`values()` 或原通用方法读取。
+
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
     .endpoint(endpoint)
