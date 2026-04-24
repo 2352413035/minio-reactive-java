@@ -6,6 +6,13 @@
 
 
 
+### 阶段 36 补充
+
+- 破坏性实验环境新增 tier add/edit/remove 与 remote target set/remove 的可回滚写入夹具。
+- `verify-env.sh` 新增 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true` 门禁，检测到写入请求体或 remote target 删除 ARN 时会拒绝未确认的执行。
+- `DestructiveAdminIntegrationTest` 对写入夹具同时覆盖 `ReactiveMinioAdminClient` 专用入口和 `ReactiveMinioRawClient` catalog 兜底入口。
+- 本机 lab 报告新增写入夹具开关、请求体设置状态和失败恢复提示；报告仍不输出凭证、请求体或签名。
+
 
 ### 阶段 35 补充
 

@@ -89,6 +89,40 @@ MINIO_LAB_BATCH_EXPECTED_JOB_ID=
 - `MINIO_LAB_BATCH_EXPECTED_JOB_ID` 不为空时，batch job typed 摘要或 raw JSON 中必须能看到该任务 ID。
 - `verify-env.sh` 仍会拒绝共享端点 和常见本机默认端点。
 
+## tier / remote target 可回滚写入夹具
+
+阶段 36 起，独立 lab 可以额外开启真实写入夹具。它们比只读探测更危险，因此必须先打开总开关：
+
+```properties
+MINIO_LAB_ALLOW_WRITE_FIXTURES=true
+```
+
+### tier add/edit/remove
+
+```properties
+MINIO_LAB_TIER_WRITE_NAME=reactive-lab-tier
+MINIO_LAB_TIER_WRITE_CONTENT_TYPE=application/json
+MINIO_LAB_ADD_TIER_BODY=<仅属于独立 lab 的 add tier 请求体>
+MINIO_LAB_EDIT_TIER_BODY=<可选，仅属于独立 lab 的 edit tier 请求体>
+MINIO_LAB_REMOVE_TIER_AFTER_TEST=true
+```
+
+测试会先使用 `ReactiveMinioAdminClient` 写入，再使用 `ReactiveMinioRawClient` 的 catalog 路由交叉验证，最后删除该 tier。请求体可能包含远端存储信息，报告只记录是否设置，不输出内容。
+
+### remote target set/remove
+
+```properties
+MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET=lab-bucket
+MINIO_LAB_REMOTE_TARGET_WRITE_CONTENT_TYPE=application/json
+MINIO_LAB_SET_REMOTE_TARGET_BODY=<仅属于独立 lab 的 set remote target 请求体>
+MINIO_LAB_REMOVE_REMOTE_TARGET_ARN=<刚写入 target 的 ARN>
+MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true
+```
+
+测试会先通过专用 Admin 客户端设置 target，再通过 raw catalog 验证同一路由的兜底可用性，最后使用 ARN 删除恢复。
+
+只要检测到写入请求体或 remote target 删除 ARN，但没有 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true`，`verify-env.sh` 就会拒绝执行。
+
 ## 执行报告
 
 `run-destructive-tests.sh` 每次退出都会生成一份本机报告，默认路径为：

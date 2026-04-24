@@ -148,6 +148,31 @@ class DestructiveAdminIntegrationTest {
     }
   }
 
+  @Test
+  void shouldWriteAndRestoreTierAndRemoteTargetOnlyInsideVerifiedLab() throws Exception {
+    assumeDestructiveLabEnabled();
+    assertVerifiedLabEnvironment();
+    boolean writeAllowed = "true".equalsIgnoreCase(labValue("MINIO_LAB_ALLOW_WRITE_FIXTURES"));
+    boolean tierFixture = hasTierWriteFixture();
+    boolean remoteFixture = hasRemoteTargetWriteFixture();
+    Assumptions.assumeTrue(
+        writeAllowed && (tierFixture || remoteFixture),
+        "缺少 MINIO_LAB_ALLOW_WRITE_FIXTURES=true 或 tier/remote target 写入夹具，跳过真实写入与恢复。");
+
+    ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
+    boolean exercised = false;
+    if (tierFixture) {
+      exerciseTierWriteFixture(admin, raw);
+      exercised = true;
+    }
+    if (remoteFixture) {
+      exerciseRemoteTargetWriteFixture(admin, raw);
+      exercised = true;
+    }
+    Assertions.assertTrue(exercised, "至少需要执行一个可回滚写入夹具。");
+  }
+
   private static void assumeDestructiveLabEnabled() {
     Assumptions.assumeTrue(
         "true".equalsIgnoreCase(labValue("MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS")),
@@ -192,6 +217,82 @@ class DestructiveAdminIntegrationTest {
         .build();
   }
 
+  private static boolean hasTierWriteFixture() {
+    return notBlank(labValue("MINIO_LAB_TIER_WRITE_NAME"))
+        && notBlank(labValue("MINIO_LAB_ADD_TIER_BODY"))
+        && "true".equalsIgnoreCase(labValue("MINIO_LAB_REMOVE_TIER_AFTER_TEST"));
+  }
+
+  private static boolean hasRemoteTargetWriteFixture() {
+    return notBlank(labValue("MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET"))
+        && notBlank(labValue("MINIO_LAB_SET_REMOTE_TARGET_BODY"))
+        && notBlank(labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_ARN"))
+        && "true".equalsIgnoreCase(labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST"));
+  }
+
+  private static void exerciseTierWriteFixture(
+      ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
+    String tier = labValue("MINIO_LAB_TIER_WRITE_NAME");
+    String addBody = labValue("MINIO_LAB_ADD_TIER_BODY");
+    String editBody = labValue("MINIO_LAB_EDIT_TIER_BODY");
+    String contentType = getenvOrDefault("MINIO_LAB_TIER_WRITE_CONTENT_TYPE", "application/json");
+    try {
+      // 先走专用 Admin 客户端，再走 raw catalog 同一路由，
+      // 证明两条入口都能在独立 lab 中写入并恢复。
+      admin.addTier(bytes(addBody), contentType).block();
+      Assertions.assertNotNull(admin.listTiers().block());
+      rawString(raw, "ADMIN_REMOVE_TIER", map("tier", tier), emptyMap(), null, null);
+      rawString(raw, "ADMIN_ADD_TIER", emptyMap(), emptyMap(), bytes(addBody), contentType);
+      Assertions.assertNotNull(admin.listTiers().block());
+      if (notBlank(editBody)) {
+        admin.editTier(tier, bytes(editBody), contentType).block();
+        rawString(
+            raw, "ADMIN_EDIT_TIER", map("tier", tier), emptyMap(), bytes(editBody), contentType);
+        Assertions.assertNotNull(admin.listTiers().block());
+      }
+    } finally {
+      admin.removeTier(tier)
+          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+          .block();
+    }
+    Assertions.assertNotNull(admin.listTiers().block());
+  }
+
+  private static void exerciseRemoteTargetWriteFixture(
+      ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
+    String bucket = labValue("MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET");
+    String body = labValue("MINIO_LAB_SET_REMOTE_TARGET_BODY");
+    String arn = labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_ARN");
+    String type = getenvOrDefault("MINIO_LAB_REMOTE_TARGET_TYPE", "replication");
+    String contentType =
+        getenvOrDefault("MINIO_LAB_REMOTE_TARGET_WRITE_CONTENT_TYPE", "application/json");
+    try {
+      // remote target 夹具同样执行“专用客户端写入 + raw 兜底写入 + 专用客户端恢复”的闭环。
+      admin.setRemoteTarget(bucket, bytes(body), contentType).block();
+      Assertions.assertNotNull(admin.listRemoteTargetsInfo(bucket, type).block());
+      rawString(
+          raw,
+          "ADMIN_REMOVE_REMOTE_TARGET",
+          emptyMap(),
+          map("bucket", bucket, "arn", arn),
+          null,
+          null);
+      rawString(
+          raw,
+          "ADMIN_SET_REMOTE_TARGET",
+          emptyMap(),
+          map("bucket", bucket),
+          bytes(body),
+          contentType);
+      Assertions.assertNotNull(admin.listRemoteTargetsInfo(bucket, type).block());
+    } finally {
+      admin.removeRemoteTarget(bucket, arn)
+          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+          .block();
+    }
+    Assertions.assertNotNull(admin.listRemoteTargetsInfo(bucket, type).block());
+  }
+
   private static Map<String, String> map(String... values) {
     Map<String, String> result = new LinkedHashMap<String, String>();
     for (int i = 0; i + 1 < values.length; i += 2) {
@@ -200,20 +301,34 @@ class DestructiveAdminIntegrationTest {
     return result;
   }
 
+  private static Map<String, String> emptyMap() {
+    return Collections.<String, String>emptyMap();
+  }
+
   private static String rawString(ReactiveMinioRawClient raw, String endpointName) {
-    return rawString(raw, endpointName, Collections.<String, String>emptyMap());
+    return rawString(raw, endpointName, emptyMap());
   }
 
   private static String rawString(
       ReactiveMinioRawClient raw, String endpointName, Map<String, String> query) {
+    return rawString(raw, endpointName, emptyMap(), query, null, null);
+  }
+
+  private static String rawString(
+      ReactiveMinioRawClient raw,
+      String endpointName,
+      Map<String, String> pathVariables,
+      Map<String, String> query,
+      byte[] body,
+      String contentType) {
     return raw
         .executeToString(
             MinioApiCatalog.byName(endpointName),
-            Collections.<String, String>emptyMap(),
+            pathVariables,
             query,
-            Collections.<String, String>emptyMap(),
-            null,
-            null)
+            emptyMap(),
+            body,
+            contentType)
         .block();
   }
 
