@@ -126,6 +126,50 @@ class S3XmlTest {
   }
 
   @Test
+  void shouldBuildAndParseBucketCorsXml() {
+    BucketCorsConfiguration configuration =
+        BucketCorsConfiguration.of(
+            Arrays.asList(
+                new BucketCorsRule(
+                    Arrays.asList("GET", "PUT"),
+                    Arrays.asList("*"),
+                    Arrays.asList("Authorization"),
+                    Arrays.asList("ETag"),
+                    300)));
+
+    BucketCorsConfiguration parsed = S3Xml.parseBucketCors(S3Xml.bucketCorsXml(configuration));
+
+    Assertions.assertEquals(1, parsed.rules().size());
+    Assertions.assertEquals(Arrays.asList("GET", "PUT"), parsed.rules().get(0).allowedMethods());
+    Assertions.assertEquals(Arrays.asList("*"), parsed.rules().get(0).allowedOrigins());
+    Assertions.assertEquals(Arrays.asList("Authorization"), parsed.rules().get(0).allowedHeaders());
+    Assertions.assertEquals(Arrays.asList("ETag"), parsed.rules().get(0).exposeHeaders());
+    Assertions.assertEquals(300, parsed.rules().get(0).maxAgeSeconds());
+  }
+
+  @Test
+  void shouldParseBucketSubresourceSummaries() {
+    BucketWebsiteConfiguration website =
+        S3Xml.parseBucketWebsite(
+            "<WebsiteConfiguration><IndexDocument><Suffix>index.html</Suffix></IndexDocument><ErrorDocument><Key>error.html</Key></ErrorDocument></WebsiteConfiguration>");
+    Assertions.assertEquals("index.html", website.indexDocumentSuffix());
+    Assertions.assertEquals("error.html", website.errorDocumentKey());
+
+    BucketLoggingConfiguration logging =
+        S3Xml.parseBucketLogging(
+            "<BucketLoggingStatus><LoggingEnabled><TargetBucket>logs</TargetBucket><TargetPrefix>app/</TargetPrefix></LoggingEnabled></BucketLoggingStatus>");
+    Assertions.assertTrue(logging.enabled());
+    Assertions.assertEquals("logs", logging.targetBucket());
+    Assertions.assertEquals("app/", logging.targetPrefix());
+
+    Assertions.assertTrue(S3Xml.parseBucketPolicyStatus("<PolicyStatus><IsPublic>true</IsPublic></PolicyStatus>").publicBucket());
+    Assertions.assertTrue(S3Xml.parseBucketAccelerate("<AccelerateConfiguration><Status>Enabled</Status></AccelerateConfiguration>").enabled());
+    Assertions.assertTrue(
+        S3Xml.parseBucketRequestPayment("<RequestPaymentConfiguration><Payer>Requester</Payer></RequestPaymentConfiguration>")
+            .requesterPays());
+  }
+
+  @Test
   void shouldBuildCompleteMultipartXml() {
     String xml = S3Xml.completeMultipartXml(Arrays.asList(new CompletePart(1, "\"etag\"")));
 

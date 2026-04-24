@@ -11,6 +11,8 @@ import io.minio.reactive.messages.admin.AdminTierList;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
 import io.minio.reactive.messages.admin.AddUserRequest;
+import io.minio.reactive.messages.BucketCorsConfiguration;
+import io.minio.reactive.messages.BucketCorsRule;
 import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.RestoreObjectRequest;
@@ -80,7 +82,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 35, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 47, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 0, 0);
@@ -488,6 +490,82 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
 
+  @Test
+  void shouldExposeS3BucketSubresourceBusinessMethods() {
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketCorsConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setBucketCorsConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "deleteBucketCorsConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketWebsiteConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "deleteBucketWebsiteConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketLoggingConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketPolicyStatus");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketAccelerateConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketRequestPaymentConfiguration");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutBucketCors");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3DeleteBucketCors");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3DeleteBucketWebsite");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketCors");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketWebsite");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketLogging");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketPolicyStatus");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketAccelerate");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketRequestPayment");
+  }
+
+
+  @Test
+  void shouldBuildS3BucketSubresourceRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage21BucketResponseBody(request.url().getQuery()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    BucketCorsConfiguration cors =
+        BucketCorsConfiguration.of(
+            java.util.Arrays.asList(
+                new BucketCorsRule(
+                    java.util.Arrays.asList("GET"),
+                    java.util.Arrays.asList("*"),
+                    java.util.Arrays.asList("Authorization"),
+                    java.util.Arrays.asList("ETag"),
+                    60)));
+    client.setBucketCorsConfiguration("bucket1", cors).block();
+    Assertions.assertEquals("GET", client.getBucketCorsConfiguration("bucket1").block().rules().get(0).allowedMethods().get(0));
+    client.deleteBucketCorsConfiguration("bucket1").block();
+    Assertions.assertEquals("index.html", client.getBucketWebsiteConfiguration("bucket1").block().indexDocumentSuffix());
+    client.deleteBucketWebsiteConfiguration("bucket1").block();
+    Assertions.assertEquals("logs", client.getBucketLoggingConfiguration("bucket1").block().targetBucket());
+    Assertions.assertTrue(client.getBucketPolicyStatus("bucket1").block().publicBucket());
+    Assertions.assertTrue(client.getBucketAccelerateConfiguration("bucket1").block().enabled());
+    Assertions.assertTrue(client.getBucketRequestPaymentConfiguration("bucket1").block().requesterPays());
+
+    Assertions.assertTrue(paths.contains("/bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "cors"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "website"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "logging"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "policyStatus"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "accelerate"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "requestPayment"));
+  }
+
+
   private static void assertAllPublicOverloadsDeprecated(Class<?> type, String name) {
     int matched = 0;
     for (Method method : type.getMethods()) {
@@ -599,6 +677,28 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (query != null && query.contains("legal-hold")) {
       return "<LegalHold><Status>ON</Status></LegalHold>";
+    }
+    return "";
+  }
+
+  private static String stage21BucketResponseBody(String query) {
+    if (query != null && query.contains("cors")) {
+      return "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedHeader>Authorization</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>60</MaxAgeSeconds></CORSRule></CORSConfiguration>";
+    }
+    if (query != null && query.contains("website")) {
+      return "<WebsiteConfiguration><IndexDocument><Suffix>index.html</Suffix></IndexDocument></WebsiteConfiguration>";
+    }
+    if (query != null && query.contains("logging")) {
+      return "<BucketLoggingStatus><LoggingEnabled><TargetBucket>logs</TargetBucket><TargetPrefix>app/</TargetPrefix></LoggingEnabled></BucketLoggingStatus>";
+    }
+    if (query != null && query.contains("policyStatus")) {
+      return "<PolicyStatus><IsPublic>true</IsPublic></PolicyStatus>";
+    }
+    if (query != null && query.contains("accelerate")) {
+      return "<AccelerateConfiguration><Status>Enabled</Status></AccelerateConfiguration>";
+    }
+    if (query != null && query.contains("requestPayment")) {
+      return "<RequestPaymentConfiguration><Payer>Requester</Payer></RequestPaymentConfiguration>";
     }
     return "";
   }

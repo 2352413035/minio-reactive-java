@@ -71,6 +71,31 @@ client.restoreObject("bucket", "archive/a.txt", RestoreObjectRequest.of(7, "Stan
 
 这些方法的 advanced 兼容入口仍保留，但已经标记为 `@Deprecated`，业务代码应优先迁移到 typed 模型。object lock 和 restore 是否能在真实环境成功，取决于 bucket/object 的服务端配置。
 
+### S3 bucket 子资源
+
+阶段 21 起，bucket CORS 和一批 bucket 子资源摘要也有 typed 入口：
+
+```java
+BucketCorsConfiguration cors = BucketCorsConfiguration.of(
+    Collections.singletonList(
+        new BucketCorsRule(
+            Collections.singletonList("GET"),
+            Collections.singletonList("*"),
+            Collections.singletonList("Authorization"),
+            Collections.singletonList("ETag"),
+            60)));
+
+client.setBucketCorsConfiguration("bucket", cors).block();
+BucketCorsConfiguration currentCors = client.getBucketCorsConfiguration("bucket").block();
+client.deleteBucketCorsConfiguration("bucket").block();
+
+BucketWebsiteConfiguration website = client.getBucketWebsiteConfiguration("bucket").block();
+BucketLoggingConfiguration logging = client.getBucketLoggingConfiguration("bucket").block();
+BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block();
+```
+
+本地 MinIO router 当前没有登记 PUT website route，因此 SDK 只提供 website 的 get/delete typed 方法，不伪造服务端没有公开的 set 方法。
+
 ## 管理端
 
 ```java

@@ -27,7 +27,11 @@ TYPED_METHODS = {
         'createMultipartUpload','listMultipartUploads','listMultipartUploadsPage','uploadPart','listParts',
         'completeMultipartUpload','abortMultipartUpload','uploadMultipartObject',
         'getObjectAttributes','getObjectRetention','setObjectRetention',
-        'getObjectLegalHold','setObjectLegalHold','restoreObject'
+        'getObjectLegalHold','setObjectLegalHold','restoreObject',
+        'getBucketCorsConfiguration','setBucketCorsConfiguration','deleteBucketCorsConfiguration',
+        'getBucketWebsiteConfiguration','deleteBucketWebsiteConfiguration',
+        'getBucketLoggingConfiguration','getBucketPolicyStatus',
+        'getBucketAccelerateConfiguration','getBucketRequestPaymentConfiguration'
     },
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',
