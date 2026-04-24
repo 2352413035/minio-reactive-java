@@ -149,6 +149,14 @@
 - Admin product-typed 从 88 / 128 提升到 94 / 128；Crypto Gate 与破坏性 lab 边界不变。
 - 新增 `docs/52-stage54-admin-policy-replication-boundary.md` 记录轻量写入和只读探测边界。
 
+### 阶段 55 补充
+
+- `ReactiveMinioAdminClient` 新增配置 KV 删除、配置历史清理和配置历史恢复的 `AdminTextResult` 产品入口。
+- 配置删除入口要求非空请求体；配置历史入口要求明确 `restoreId`。
+- 这些接口不读取、不保存真实配置值，不在共享 live 中真实执行。
+- Admin product-typed 从 94 / 128 提升到 97 / 128；Crypto Gate 与破坏性 lab 边界不变。
+- 新增 `docs/53-stage55-admin-config-risk-boundary.md` 记录配置高风险边界。
+
 
 ### 阶段 35 补充
 
