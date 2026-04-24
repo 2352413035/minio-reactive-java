@@ -535,6 +535,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/59-stage61-mc-readonly-evidence.md`。
 
+## 5.43 阶段 62 补充
+
+阶段 62 收口用户面发布与快速使用指南：
+
+- 新增 `docs/60-stage62-user-facing-release-guide.md`，说明普通业务优先使用 `ReactiveMinioClient`，其它领域使用平级专用客户端。
+- 明确 `ReactiveMinioRawClient` 只是新增接口和高级排障的兜底，不是普通业务主路径。
+- 再次强调 `EncryptedAdminResponse`、Crypto Gate 和破坏性 lab 的边界，避免把 product-typed 满格误读为风险能力已真实放行。
+- `docs/14-typed-client-usage-guide.md` 增加快速选择段落，降低普通集成方阅读成本。
+
+详见 `docs/60-stage62-user-facing-release-guide.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
