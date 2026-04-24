@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -53,6 +54,62 @@ public final class JsonSupport {
   public static String text(JsonNode node, String field) {
     JsonNode value = node == null ? null : node.get(field);
     return value == null || value.isNull() ? "" : value.asText();
+  }
+
+  /**
+   * 按多个候选字段名读取子节点。
+   *
+   * <p>MinIO Admin 响应里有 Go 结构体默认字段名（如 `Backend`）和 json tag 字段名（如
+   * `objectsCount`）两种风格。强类型模型优先使用这个方法做容错，避免因为大小写漂移导致摘要字段误读为空。
+   */
+  public static JsonNode child(JsonNode node, String... fields) {
+    if (node == null || fields == null) {
+      return null;
+    }
+    for (String field : fields) {
+      JsonNode value = node.get(field);
+      if (value != null && !value.isNull()) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  /** 从多个候选字段中读取文本值。 */
+  public static String textAny(JsonNode node, String... fields) {
+    JsonNode value = child(node, fields);
+    return value == null || value.isNull() ? "" : value.asText();
+  }
+
+  /** 从多个候选字段中读取 long 值。 */
+  public static long longAny(JsonNode node, String... fields) {
+    JsonNode value = child(node, fields);
+    return value == null || value.isNull() ? 0L : value.asLong();
+  }
+
+  /** 从多个候选字段中读取 int 值。 */
+  public static int intAny(JsonNode node, String... fields) {
+    JsonNode value = child(node, fields);
+    return value == null || value.isNull() ? 0 : value.asInt();
+  }
+
+  /** 从多个候选字段中读取 boolean 值。 */
+  public static boolean booleanAny(JsonNode node, String... fields) {
+    JsonNode value = child(node, fields);
+    return value != null && !value.isNull() && value.asBoolean();
+  }
+
+  /** 汇总 JSON object 中的数值字段，用于统计 MinIO `BackendDisks` 这类 map 响应。 */
+  public static int sumNumericObjectValues(JsonNode node) {
+    if (node == null || !node.isObject()) {
+      return 0;
+    }
+    int sum = 0;
+    Iterator<JsonNode> values = node.elements();
+    while (values.hasNext()) {
+      sum += values.next().asInt();
+    }
+    return sum;
   }
 
   public static long longValue(JsonNode node, String field) {

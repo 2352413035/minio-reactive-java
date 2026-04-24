@@ -44,7 +44,37 @@ admin.setUserEnabled("test-user", false).block();
 admin.deleteUser("test-user").block();
 ```
 
-用户、用户组、策略、服务账号、access key 信息逐步提供 typed 方法。服务账号创建响应在默认 Argon2id 解密能力完成前可能返回加密载荷，SDK 不会把它伪装成已解析凭证。
+用户、用户组、策略、服务账号等能力逐步提供 typed 方法。服务账号创建响应在默认 Argon2id 解密能力完成前可能返回加密载荷，SDK 不会把它伪装成已解析凭证。
+
+阶段 15 起，Admin 只读信息优先使用“摘要 + 原始 JSON”的产品模型：
+
+```java
+AdminStorageSummary storage = admin.getStorageSummary().block();
+AdminDataUsageSummary usage = admin.getDataUsageSummary().block();
+AdminAccountSummary account = admin.getAccountSummary().block();
+AdminConfigHelp apiHelp = admin.getConfigHelp("api").block();
+```
+
+这些方法不是 raw 的薄包装：模型会提取常用稳定字段，同时通过 `rawJson()` / `values()` 保留 MinIO 返回的完整内容，方便后续版本继续补字段。
+
+部分 Admin 只读能力依赖特定环境或配置，默认不作为共享 live 门禁：
+
+```java
+AdminBucketQuota quota = admin.getBucketQuotaInfo("bucket").block();
+AdminTierList tiers = admin.listTiers().block();
+```
+
+如果接口返回 madmin 加密载荷，SDK 会显式返回边界对象，而不是假装已经解密：
+
+```java
+EncryptedAdminResponse config = admin.getConfigEncrypted().block();
+EncryptedAdminResponse configKv = admin.getConfigKvEncrypted("api").block();
+EncryptedAdminResponse history = admin.listConfigHistoryKvEncrypted(10).block();
+EncryptedAdminResponse accessKeyInfo = admin.getAccessKeyInfoEncrypted("svc-access-key").block();
+EncryptedAdminResponse accessKeys = admin.listAccessKeysEncrypted("all").block();
+```
+
+这些响应需要等 Crypto Gate Pass 后，才会进入明文 typed 模型。
 
 ## 错误诊断
 

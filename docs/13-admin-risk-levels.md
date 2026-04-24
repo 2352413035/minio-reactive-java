@@ -22,6 +22,35 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 5. 通过 `MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true` 显式开启。
 6. 执行前运行 `scripts/minio-lab/verify-env.sh`。
 
+## 阶段 15 已产品化的明文安全入口
+
+阶段 15 的原则是：只把 MinIO 服务端明文返回、且不会修改共享环境的能力做成用户日常可用的 typed 入口；需要加密解密或会修改状态的能力继续保持边界。
+
+| 方法 | 对应 MinIO 路由 | 风险等级 | 共享 live | 说明 |
+| --- | --- | --- | --- | --- |
+| `getConfigHelp(subSys[, key])` | `ADMIN_HELP_CONFIG_KV` | L1 | 允许 | 只读取配置帮助和字段说明，不返回真实配置值。 |
+| `getStorageSummary()` | `ADMIN_STORAGE_INFO` | L1 | 允许 | 提取磁盘数、在线/离线磁盘数、修复中磁盘数，同时保留完整 JSON。 |
+| `getDataUsageSummary()` | `ADMIN_DATA_USAGE_INFO` | L1 | 允许 | 提取对象数、桶数和容量字段，同时保留完整 JSON。 |
+| `getAccountSummary()` | `ADMIN_ACCOUNT_INFO` | L1 | 允许 | 提取账号名、bucket 数、可读写 bucket 数和策略原文。 |
+| `getBucketQuotaInfo(bucket)` | `ADMIN_GET_BUCKET_QUOTA` | L3 只读候选 | 默认不跑 | 只读查询，但依赖 bucket quota 配置和环境权限；普通 shared live 不把它作为完成门禁。 |
+| `listTiers()` | `ADMIN_LIST_TIER` | L3 只读候选 | 默认不跑 | 只提取 tier 名称/类型/版本，不暴露凭据字段。 |
+
+## 加密响应边界
+
+对照 MinIO 服务端实现后确认，以下接口返回的是 madmin 加密响应，当前不能把它们当成明文 JSON 模型：
+
+- `ADMIN_GET_CONFIG`
+- `ADMIN_GET_CONFIG_KV`
+- `ADMIN_LIST_CONFIG_HISTORY_KV`
+- `ADMIN_LIST_USERS`
+- `ADMIN_ADD_SERVICE_ACCOUNT`
+- `ADMIN_INFO_SERVICE_ACCOUNT`
+- `ADMIN_LIST_SERVICE_ACCOUNTS`
+- `ADMIN_INFO_ACCESS_KEY`
+- `ADMIN_LIST_ACCESS_KEYS_BULK`
+
+因此能力矩阵里的 `encrypted-blocked` 当前为 9。SDK 只提供 `EncryptedAdminResponse` 边界方法（例如 `getConfigEncrypted()`、`getConfigKvEncrypted(...)`、`listConfigHistoryKvEncrypted(...)`、`getAccessKeyInfoEncrypted(...)`、`listAccessKeysEncrypted(...)`），不会在 Crypto Gate Pass 前伪装成已解密 typed 结果。
+
 ## 使用建议
 
 - 业务项目优先使用 L1/L2 typed 方法。

@@ -11,7 +11,11 @@ import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.messages.kms.KmsJsonResult;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
+import io.minio.reactive.messages.admin.AdminAccountSummary;
+import io.minio.reactive.messages.admin.AdminConfigHelp;
+import io.minio.reactive.messages.admin.AdminDataUsageSummary;
 import io.minio.reactive.messages.admin.AdminServerInfo;
+import io.minio.reactive.messages.admin.AdminStorageSummary;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.ServiceAccountCreateResult;
 import io.minio.reactive.messages.admin.AdminUserInfo;
@@ -149,6 +153,15 @@ class LiveMinioIntegrationTest {
     Assertions.assertTrue(rawAdminInfo.contains("deploymentID"));
     Assertions.assertTrue(adminInfo.contains("servers"));
     Assertions.assertTrue(rawAdminInfo.contains("servers"));
+    AdminStorageSummary storageSummary = adminClient.getStorageSummary().block();
+    AdminDataUsageSummary dataUsageSummary = adminClient.getDataUsageSummary().block();
+    AdminAccountSummary accountSummary = adminClient.getAccountSummary().block();
+    AdminConfigHelp configHelp = adminClient.getConfigHelp("api").block();
+    Assertions.assertNotNull(storageSummary.rawJson());
+    Assertions.assertTrue(storageSummary.diskCount() >= 0);
+    Assertions.assertTrue(dataUsageSummary.objectsCount() >= 0);
+    Assertions.assertTrue(accountSummary.bucketCount() >= 0);
+    Assertions.assertEquals("api", configHelp.subSys());
     assertKmsStatusIsTypedOrDiagnostic();
 
     client.putObject(bucket, "folder/a.txt", "alpha", "text/plain").block();

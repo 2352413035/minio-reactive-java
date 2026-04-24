@@ -27,9 +27,11 @@ TYPED_METHODS = {
     },
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',
+        'getStorageSummary','getDataUsageSummary','getAccountSummary','getConfigHelp',
         'getUserInfo','deleteUser','setUserEnabled','listPolicies','getPolicy','getPolicyV2','putPolicy','deletePolicy',
         'setUserPolicy','setGroupPolicy','listUsersEncrypted','listGroupsTyped','getGroupInfo','setGroupEnabled','updateGroupMembers',
-        'createServiceAccount','getServiceAccountInfoEncrypted','listServiceAccountsEncrypted','deleteServiceAccountTyped','addServiceAccount','getAccessKeyInfoTyped','listAccessKeysTyped'
+        'createServiceAccount','getServiceAccountInfoEncrypted','listServiceAccountsEncrypted','deleteServiceAccountTyped','addServiceAccount',
+        'getBucketQuotaInfo','listTiers'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus'},
     'sts': {'assumeRoleWithWebIdentityCredentials','assumeRoleWithClientGrantsCredentials','assumeRoleWithLdapCredentials'},
@@ -39,7 +41,9 @@ TYPED_METHODS = {
 
 ENCRYPTED_BLOCKED = {
     'admin': {
-        'ADMIN_LIST_USERS','ADMIN_ADD_SERVICE_ACCOUNT','ADMIN_INFO_SERVICE_ACCOUNT','ADMIN_LIST_SERVICE_ACCOUNTS','ADMIN_GET_CONFIG'
+        'ADMIN_LIST_USERS','ADMIN_ADD_SERVICE_ACCOUNT','ADMIN_INFO_SERVICE_ACCOUNT','ADMIN_LIST_SERVICE_ACCOUNTS',
+        'ADMIN_GET_CONFIG','ADMIN_GET_CONFIG_KV','ADMIN_LIST_CONFIG_HISTORY_KV',
+        'ADMIN_INFO_ACCESS_KEY','ADMIN_LIST_ACCESS_KEYS_BULK'
     }
 }
 
