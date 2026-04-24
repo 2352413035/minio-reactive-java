@@ -107,7 +107,7 @@
 
 阶段 37 起，batch job 与 site replication 实验矩阵只能引用本机私有请求体或环境变量，发布证据必须包含 start/cancel 或 add/remove 的恢复路径；不能把站点复制拓扑或 batch job 真实参数写入仓库。
 
-阶段 43 起，报告还会渲染 typed/raw 步骤状态文件和 `mc` 只读核验提示。步骤状态只允许记录范围、步骤名、PASS/FAIL 和异常类型，不允许记录请求体、凭证、token、签名或完整异常堆栈。
+阶段 43 起，报告还会渲染 typed/raw 步骤状态文件和 `mc` 只读核验提示。步骤状态只允许记录范围、步骤名、PASS/FAIL 和异常类型，不允许记录请求体、凭证、token、签名或完整异常堆栈。阶段 51 复核确认：没有独立 `lab.properties` 时不能执行真实矩阵；共享端点必须继续被 `verify-env.sh` 拒绝。
 
 `run-destructive-tests.sh` 每次退出都会生成本机报告，默认写入 `target/minio-lab-reports/`，也可以通过 `MINIO_LAB_REPORT_DIR` 覆盖。报告只记录环境指纹、夹具开关、typed/raw 步骤结果和恢复提示，不得包含 access key、secret key、session token 或请求签名。
 

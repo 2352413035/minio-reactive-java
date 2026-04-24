@@ -76,7 +76,11 @@ JDK17+ 分支还要执行 JDK17 全量测试、真实 MinIO smoke，以及 JDK21
 
 阶段 50 已补充 IAM、IAM v2 和 bucket metadata 导入 archive 产品入口，Admin product-typed 提升到 81 / 128，但 destructive-blocked 不减少。完整说明见 `docs/48-stage50-sensitive-import-lab-boundary.md`。
 
-## 10. 下一阶段建议
+## 10. 阶段 51 后续刷新
+
+阶段 51 已确认当前没有独立 lab 配置，并重新验证共享端点拒绝逻辑。`destructive-blocked = 29` 不减少，完整说明见 `docs/49-stage51-independent-lab-window.md`。
+
+## 11. 下一阶段建议
 
 阶段 46 之后，优先级仍然是：
 
