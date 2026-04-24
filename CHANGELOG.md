@@ -20,6 +20,13 @@
 - 报告新增 batch/site replication 矩阵开关、请求体设置状态和恢复提示。
 - 新增 `scripts/minio-lab/templates/` 示例模板和 `docs/35-stage37-batch-site-replication-lab-matrix.md`。
 
+### 阶段 38 补充
+
+- 删除 `TestCreateBucket` 与 `TestGetBucketLocation` 两个临时示例类。
+- 新增 `ReactiveMinioSecurityExample`，覆盖 KMS 状态检查和 STS 临时凭证申请。
+- README 示例入口补齐对象存储、Admin typed、Raw 兜底、Metrics/Health、KMS/STS 五类正式示例。
+- 新增 `docs/36-stage38-examples-ux-closeout.md` 记录示例矩阵和错误解释原则。
+
 
 ### 阶段 35 补充
 

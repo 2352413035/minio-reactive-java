@@ -61,7 +61,7 @@
 
 - README 必须明确 typed 优先、advanced 过渡、raw 兜底。
 - 中文文档必须明确当前 crypto 边界。
-- 示例必须覆盖至少一个对象存储主路径、一个 Admin typed 路径、一个 raw 兜底路径和一个运维入口路径。
+- 示例必须覆盖对象存储主路径、Admin typed 路径、raw 兜底路径、Metrics/Health 运维入口路径以及 KMS/STS 安全入口路径。
 - 发布说明不得使用单一百分比宣称“完成 MinIO”，必须分 route parity、callability、typed maturity、live/destructive/crypto 边界说明。
 
 ## 6. 审查门禁
