@@ -194,6 +194,13 @@
 - 明确当前发布候选状态：公开路由、调用入口、产品边界已闭环；Crypto Gate 与独立 lab 仍是外部门禁。
 - 新增 `docs/58-stage60-release-candidate-final-review.md` 保存阶段 60 复审结论。
 
+### 阶段 61 补充
+
+- 使用系统已安装的 `mc` 执行只读命令，补充共享 MinIO 在线、healthy、根路径可列、Admin info 可读的外部旁证。
+- `mc` 连接信息只通过运行时环境变量注入，仓库文档和报告不记录真实 access key、secret key 或页面登录密码。
+- 新增 `docs/59-stage61-mc-readonly-evidence.md` 记录只读证据摘要和边界说明。
+- `encrypted-blocked = 9`、`destructive-blocked = 29` 保持不变。
+
 
 ### 阶段 35 补充
 
