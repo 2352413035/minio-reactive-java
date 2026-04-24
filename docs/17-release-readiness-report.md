@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 108 | 128 | 0 | 9 | 29 |
+| admin | 128 | 113 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -486,6 +486,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - Admin product-typed 提升到 108 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
 
 详见 `docs/55-stage57-service-update-token-boundary.md`。
+
+## 5.39 阶段 58 补充
+
+阶段 58 复核 Crypto Gate 与独立 lab 阻塞：
+
+- `getConfigKvEncrypted(...)`、`listConfigHistoryKvEncrypted(...)`、`getConfigEncrypted()` 已经是明确的加密响应产品边界。
+- `getAccessKeyInfoEncrypted(...)`、`listAccessKeysEncrypted(...)` 已经是明确的加密响应产品边界。
+- 能力矩阵将这些既有 `EncryptedAdminResponse` 方法纳入 product-typed 统计，Admin product-typed 提升到 113 / 128。
+- 这只是统计口径修正，不代表 Crypto Gate Pass；`encrypted-blocked = 9` 继续保留。
+- 当前仍没有独立破坏性 lab 配置，`destructive-blocked = 29` 继续保留。
+
+详见 `docs/56-stage58-crypto-lab-blocker-review.md`。
 
 ## 6. 验证命令
 

@@ -30,4 +30,4 @@
 
 ## 5. 后续建议
 
-下一轮应重新梳理剩余 20 个 Admin product-typed 缺口：其中一部分受 Crypto Gate 阻塞，一部分需要独立 lab 才能减少 blocked 计数。若没有三方 Crypto Gate 批准或独立 lab 配置，应继续保持 blocked 状态并做发布复审。
+阶段 58 已重新梳理 Crypto Gate 与独立 lab 阻塞，并把既有加密响应产品边界纳入 product-typed 统计；若没有三方 Crypto Gate 批准或独立 lab 配置，仍应继续保持 blocked 状态并做发布复审。
