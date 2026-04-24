@@ -327,6 +327,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return listGroups().map(io.minio.reactive.messages.admin.AdminGroupList::parse);
   }
 
+  /** 列出指定 bucket 相关用户摘要；这是明文只读 IAM 查询，不返回 secret。 */
+  public Mono<io.minio.reactive.messages.admin.AdminUserList> listBucketUsersInfo(
+      String bucket) {
+    requireText("bucket", bucket);
+    return listBucketUsers(bucket).map(io.minio.reactive.messages.admin.AdminUserList::parse);
+  }
+
   /** 获取单个用户组信息。 */
   public Mono<io.minio.reactive.messages.admin.AdminGroupInfo> getGroupInfo(String group) {
     requireText("group", group);
@@ -761,6 +768,14 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return Mono.error(
         new UnsupportedOperationException(
             "ADMIN_LIST_ACCESS_KEYS_BULK 返回 madmin 加密载荷；请使用 listAccessKeysEncrypted(...)，等 Crypto Gate Pass 后再使用明文模型"));
+  }
+
+  /** 获取临时账号信息；该只读接口不等同于 encrypted-blocked 的 access key 批量列表。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeyInfo> getTemporaryAccountInfo(
+      String accessKey) {
+    requireText("accessKey", accessKey);
+    return temporaryAccountInfo(accessKey)
+        .map(io.minio.reactive.messages.admin.AdminAccessKeyInfo::parse);
   }
 
   /** 调用 `ADMIN_ADD_SERVICE_ACCOUNT`。 */

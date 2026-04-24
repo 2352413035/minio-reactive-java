@@ -48,7 +48,8 @@ TYPED_METHODS = {
         'createServiceAccount','getServiceAccountInfoEncrypted','listServiceAccountsEncrypted','deleteServiceAccountTyped','addServiceAccount',
         'getBucketQuotaInfo','listTiers','listPolicyEntities','listIdpConfigs','getIdpConfigInfo',
         'listRemoteTargetsInfo','listBatchJobsInfo','getBatchJobStatusInfo','describeBatchJobInfo',
-        'getSiteReplicationMetainfo','traceStream','logStream'
+        'getSiteReplicationMetainfo','traceStream','logStream',
+        'listBucketUsersInfo','getTemporaryAccountInfo'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

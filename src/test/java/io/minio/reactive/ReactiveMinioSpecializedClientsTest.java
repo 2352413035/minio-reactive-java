@@ -481,6 +481,9 @@ class ReactiveMinioSpecializedClientsTest {
     admin.getAccountSummary().block();
     Assertions.assertTrue(admin.getAccessKeyInfoEncrypted("svc1").block().encryptedData().length > 0);
     Assertions.assertTrue(admin.listAccessKeysEncrypted("all").block().encryptedData().length > 0);
+    Assertions.assertEquals("enabled", admin.getTemporaryAccountInfo("tmp1").block().accountStatus());
+    Assertions.assertEquals(
+        "enabled", admin.listBucketUsersInfo("bucket1").block().users().get("user1").status());
     admin.getBucketQuotaInfo("bucket1").block();
     admin.listTiers().block();
     Assertions.assertEquals(1, admin.listRemoteTargetsInfo("bucket1", "replication").block().targetCount());
@@ -519,6 +522,8 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/accountinfo"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/info-access-key"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/list-access-keys-bulk"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/temporary-account-info"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/list-users"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/get-bucket-quota"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/tier"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/list-remote-targets"));
@@ -543,6 +548,7 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/config"));
     Assertions.assertTrue(containsAllQueryParts(queries, "subSys=api", "key=requests_max"));
     Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=tmp1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "listType=all"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "type=replication"));
@@ -588,6 +594,16 @@ class ReactiveMinioSpecializedClientsTest {
     assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "listBatchJobs");
     assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "batchJobStatus");
     assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "describeBatchJob");
+  }
+
+  @Test
+  void shouldExposeStage35AdminIamBoundaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listBucketUsersInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTemporaryAccountInfo");
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder().endpoint("http://localhost:9000").region("us-east-1").build();
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listBucketUsersInfo(" "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getTemporaryAccountInfo(" "));
   }
 
 
@@ -986,6 +1002,12 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (path.endsWith("/list-access-keys-bulk")) {
       return "{\"serviceAccounts\":[],\"stsKeys\":[]}";
+    }
+    if (path.endsWith("/temporary-account-info")) {
+      return "{\"accessKey\":\"tmp1\",\"accountStatus\":\"enabled\",\"parentUser\":\"root\"}";
+    }
+    if (path.endsWith("/list-users")) {
+      return "{\"users\":{\"user1\":{\"status\":\"enabled\",\"policyName\":\"readonly\",\"memberOf\":[]}}}";
     }
     if (path.endsWith("/get-bucket-quota")) {
       return "{\"quota\":0,\"size\":0,\"rate\":0,\"requests\":0,\"quotatype\":\"hard\"}";

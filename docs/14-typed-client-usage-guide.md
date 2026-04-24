@@ -202,3 +202,8 @@ String body = raw.executeToString(
 ## 能力总表
 
 后续发布或里程碑说明统一引用 `scripts/report-route-parity.py` 和 `scripts/report-capability-matrix.py` 产物，而不是手写统计值。路由对标（route parity）证明 SDK catalog 是否继续对齐 MinIO router；能力总表再说明 `route-catalog`、`product-typed`、`advanced-compatible`、`raw-fallback`、`encrypted-blocked`、`destructive-blocked` 六类口径。
+
+
+## 阶段 35 IAM 边界
+
+需要查看 bucket 相关用户时使用 `listBucketUsersInfo(bucket)`；需要诊断临时账号时使用 `getTemporaryAccountInfo(accessKey)`。如果接口返回 madmin 加密载荷，请继续使用 `EncryptedAdminResponse` 相关方法，不要在 Crypto Gate Pass 前自行假装成明文模型。

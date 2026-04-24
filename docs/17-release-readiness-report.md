@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 53 | 128 | 0 | 9 | 29 |
+| admin | 128 | 55 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -231,6 +231,15 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 新增 `traceStream()` 和 `logStream()`，以响应式字节流暴露 Admin trace/log。
 - Admin product-typed 从 50 / 128 提升到 53 / 128。
 - encrypted-blocked 仍为 9，destructive-blocked 仍为 29。
+
+## 5.16 阶段 35 补充
+
+阶段 35 整理 Admin IAM / Access Key 边界：
+
+- 新增 `listBucketUsersInfo(...)`，返回 bucket 相关用户摘要。
+- 新增 `getTemporaryAccountInfo(...)`，返回临时账号只读摘要。
+- encrypted-blocked 的 access key / service account 接口继续只暴露 `EncryptedAdminResponse`。
+- Admin product-typed 从 53 / 128 提升到 55 / 128。
 
 ## 6. 验证命令
 
