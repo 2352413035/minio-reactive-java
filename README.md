@@ -73,6 +73,8 @@ minio.content=hello from reactive minio sdk
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
 
+阶段 26 已整理为 `0.1.0-SNAPSHOT` 发布候选口径：路由和调用入口闭环，常用 typed 客户端可用，Crypto/destructive 风险边界明确，后续继续按 product-typed 成熟度推进。详见 `CHANGELOG.md` 和 `docs/24-stage26-release-closeout.md`。
+
 ## 运行真实 MinIO 示例
 
 示例入口：
@@ -161,7 +163,9 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/21-stage23-kms-metrics-typed-gap.md`
 - `docs/22-stage24-destructive-lab-expansion.md`
 - `docs/23-stage25-crypto-gate-review.md`
+- `docs/24-stage26-release-closeout.md`
 - `docs/release-gates.md`
+- `CHANGELOG.md`
 - `scripts/madmin-fixtures/`
 - `scripts/minio-lab/`
 - `scripts/report-route-parity.py`

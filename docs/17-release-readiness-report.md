@@ -1,4 +1,4 @@
-# 17 阶段 19 发布就绪报告
+# 17 阶段 26 发布就绪报告
 
 ## 1. 结论
 
@@ -8,6 +8,7 @@
 - 所有 catalog 路由都有 typed 或 advanced 兼容入口，能力矩阵里的 `raw-fallback` 为 0。
 - SDK 的用户友好 typed 成熟度仍在继续推进，不能用 route parity 代替产品成熟度。
 - Admin 加密响应和破坏性操作已经明确建模为风险边界，不会在共享环境中伪装成普通成功能力。
+- 阶段 26 已把该口径整理为 `0.1.0-SNAPSHOT` 发布候选：当前可发布的是“路由/入口/门禁闭环的候选 SDK”，不是“所有接口都已最终产品 typed 化”的 1.0。
 
 ## 2. 当前能力矩阵
 
@@ -144,6 +145,15 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - `EncryptedAdminResponse` 仍是 madmin-go 默认加密响应的发布边界。
 
 这意味着 release readiness 可以声明“加密边界已被验证并固定”，但不能声明“默认 madmin 加密响应已完成明文 typed 解析”。详见 `docs/23-stage25-crypto-gate-review.md`。
+
+## 5.7 阶段 26 补充
+
+阶段 26 完成发布收口：
+
+- 新增 `CHANGELOG.md`，记录 `0.1.0-SNAPSHOT` 阶段 26 发布候选的已完成能力和剩余边界。
+- 新增 `docs/24-stage26-release-closeout.md`，把 route parity、callability、typed maturity、Crypto Gate、destructive lab 和后续迭代方向集中成发布说明。
+- README 增加阶段 26 发布候选口径，避免用户把 route parity 误解为所有接口都已最终强类型化。
+- 后续计划应从“补目录”转为“提升产品 typed 成熟度和高风险真实验证”。
 
 ## 6. 验证命令
 
