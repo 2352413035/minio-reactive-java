@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 73 加密响应安全诊断增强
+
+- `EncryptedAdminResponse` 新增 `encryptedSize()`、`decryptSupported()`、`requiresCryptoGate()` 与 `diagnosticMessage()`。
+- 诊断方法只暴露算法、字节数和 Gate 状态，不暴露 secret、token、配置值或明文响应。
+- 新增 `docs/71-stage73-encrypted-response-diagnostics.md` 记录使用方式、安全边界和验证口径。
+
 ## 阶段 72 IDP 配置加密边界补充
 
 - `ReactiveMinioAdminClient` 新增 `listIdpConfigsEncrypted(type)` 与 `getIdpConfigEncrypted(type, name)`。
