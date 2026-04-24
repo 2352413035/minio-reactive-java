@@ -606,6 +606,59 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getTemporaryAccountInfo(" "));
   }
 
+  @Test
+  void shouldExposeStage40AdminDiagnosticMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "scrapeAdminMetrics");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "downloadInspectData");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startProfiling");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "downloadProfilingData");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getProfileResult");
+  }
+
+  @Test
+  void shouldBuildStage40AdminDiagnosticRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage40AdminDiagnosticBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertEquals("admin", admin.scrapeAdminMetrics().block().scope());
+    Assertions.assertEquals(19, admin.downloadInspectData().block().size());
+    Assertions.assertEquals(
+        "inspect-data-post",
+        admin.downloadInspectData(
+                "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8), "application/json")
+            .block()
+            .source());
+    Assertions.assertEquals("profiling-start", admin.startProfiling("cpu").block().source());
+    Assertions.assertEquals(14, admin.downloadProfilingData().block().size());
+    Assertions.assertEquals("profile", admin.getProfileResult().block().source());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/metrics"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/inspect-data"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/profiling/start"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/profiling/download"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/profile"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "profilerType=cpu"));
+  }
+
 
   @Test
   void shouldExposeS3VersioningBusinessMethods() {
@@ -1047,6 +1100,25 @@ class ReactiveMinioSpecializedClientsTest {
       return "log-line\n";
     }
     return "01234567890123456789012345678901234567890";
+  }
+
+  private static String stage40AdminDiagnosticBody(String path) {
+    if (path.endsWith("/metrics")) {
+      return "# HELP minio_admin_requests_total Admin 请求数\nminio_admin_requests_total 1\n";
+    }
+    if (path.endsWith("/inspect-data")) {
+      return "inspect-archive-bin";
+    }
+    if (path.endsWith("/profiling/start")) {
+      return "profiling started";
+    }
+    if (path.endsWith("/profiling/download")) {
+      return "profile-bin-14";
+    }
+    if (path.endsWith("/profile")) {
+      return "profile text";
+    }
+    return "{}";
   }
 
   private static String stsSuccessXml() {

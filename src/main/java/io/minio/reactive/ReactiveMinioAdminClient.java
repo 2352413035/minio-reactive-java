@@ -159,6 +159,64 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return healthInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 拉取 Admin metrics，并按 Prometheus 文本格式包装；原文仍可通过 text() 读取。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeAdminMetrics() {
+    return metrics()
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("admin", text));
+  }
+
+  /**
+   * 下载 inspect-data 诊断包。
+   *
+   * <p>该接口可能返回压缩包或二进制诊断文件，因此产品入口使用二进制包装，不做字符串解码。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminBinaryResult> downloadInspectData() {
+    return executeToBytes("ADMIN_INSPECT_DATA_GET", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(bytes -> io.minio.reactive.messages.admin.AdminBinaryResult.of("inspect-data-get", bytes));
+  }
+
+  /**
+   * 提交 inspect-data 请求并下载诊断包。
+   *
+   * <p>请求体结构由 MinIO 版本决定；SDK 只负责固定响应式二进制边界和保留原始字节。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminBinaryResult> downloadInspectData(
+      byte[] body, String contentType) {
+    return executeToBytes(
+            "ADMIN_INSPECT_DATA_POST", emptyMap(), emptyMap(), emptyMap(), body, contentType)
+        .map(bytes -> io.minio.reactive.messages.admin.AdminBinaryResult.of("inspect-data-post", bytes));
+  }
+
+  /** 启动指定类型的 profiling，并保留服务端返回的诊断文本。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startProfiling(
+      String profilerType) {
+    requireText("profilerType", profilerType);
+    return profilingStart(profilerType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("profiling-start", text));
+  }
+
+  /** 下载 profiling 结果；通常是压缩包或 pprof 相关二进制内容。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBinaryResult> downloadProfilingData() {
+    return executeToBytes(
+            "ADMIN_PROFILING_DOWNLOAD", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(
+            bytes ->
+                io.minio.reactive.messages.admin.AdminBinaryResult.of(
+                    "profiling-download", bytes));
+  }
+
+  /** 执行 profile 诊断请求，并把响应作为文本诊断结果保留。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> getProfileResult(
+      byte[] body, String contentType) {
+    return profile(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("profile", text));
+  }
+
+  /** 执行不带请求体的 profile 诊断请求。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> getProfileResult() {
+    return getProfileResult(null, null);
+  }
+
   /**
    * 读取 Admin trace 输出流。
    *
