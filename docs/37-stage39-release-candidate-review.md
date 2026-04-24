@@ -66,4 +66,4 @@
 - `.omx/reports/capability-matrix.md`
 - `.omx/reports/capability-matrix.json`
 
-最新口径仍为双分支 233 / 233、catalog 缺失 0、额外 0，Admin product-typed 64 / 128，`raw-fallback = 0`。阶段 40-45 的增量详见 `docs/44-stage46-release-review-refresh.md`。
+阶段 46 口径为双分支 233 / 233、catalog 缺失 0、额外 0，Admin product-typed 64 / 128，`raw-fallback = 0`。阶段 52 已刷新为 Admin product-typed 81 / 128，详见 `docs/50-stage52-release-review-version-management.md`。

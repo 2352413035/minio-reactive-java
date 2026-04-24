@@ -125,6 +125,14 @@
 - `destructive-blocked = 29` 不减少；本阶段只证明门禁安全，不宣称真实破坏性能力通过。
 - 新增 `docs/49-stage51-independent-lab-window.md` 记录本次安全复核。
 
+### 阶段 52 补充
+
+- 重新生成双分支 route parity 与 capability matrix 报告，route parity 仍为 233 / 233，catalog 缺失 0、额外 0。
+- 当前产品 typed 成熟度刷新为 S3 77 / 77、Admin 81 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8，`raw-fallback = 0`。
+- 版本管理口径继续保持 JDK8 `master` 与 JDK17+ `chore/jdk17-springboot3` 双线同步，Maven 版本仍为 `0.1.0-SNAPSHOT`。
+- 不打正式 tag，不减少 `encrypted-blocked = 9` 或 `destructive-blocked = 29`。
+- 新增 `docs/50-stage52-release-review-version-management.md` 记录发布复审、版本管理和验证证据。
+
 
 ### 阶段 35 补充
 

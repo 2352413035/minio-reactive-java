@@ -26,12 +26,16 @@ JDK8 分支：
 - `3bb1b32`：核心 S3 reactive SDK 能力检查点。
 - `5053ca6`：MinIO 公开接口目录和原始响应式执行器检查点。
 - `c9ddb1e`：强业务客户端基础检查点，已完成 catalog/raw 兜底、平级专用客户端、第一批 typed 模型、madmin PBKDF2/AES-GCM 写入方向和双分支验证。
+- `9bbbae4`：阶段 51 独立 lab 门禁复核检查点。
 
 JDK17+ 分支：
 
 - `7303e7e`：JDK17 线同步核心 S3 reactive SDK 能力检查点。
 - `b9073fc`：JDK17 线同步 MinIO 公开接口目录和原始响应式执行器检查点。
 - `7c598a1`：JDK17+ 线同步强业务客户端基础检查点，语义应与 JDK8 线保持一致。
+- `f093021`：阶段 51 独立 lab 门禁复核检查点。
+
+阶段 52 复审口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 81 / 128，`raw-fallback = 0`。
 
 ## 验证命令
 
@@ -74,11 +78,11 @@ JDK17+ 分支的额外编译验证：
 ```bash
 JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 \
 PATH=/usr/lib/jvm/java-21-openjdk-amd64/bin:$PATH \
-mvn -q -DskipTests compile
+mvn -q -DskipTests test-compile
 
 JAVA_HOME=/usr/lib/jvm/java-25-openjdk-amd64 \
 PATH=/usr/lib/jvm/java-25-openjdk-amd64/bin:$PATH \
-mvn -q -DskipTests compile
+mvn -q -DskipTests test-compile
 ```
 
 ## 同步原则

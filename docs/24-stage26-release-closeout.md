@@ -12,7 +12,7 @@
 
 阶段 26 不宣称“所有接口都已变成最终强类型模型”。它宣称的是：对标 MinIO 的路由、调用入口、文档口径、风险门禁和验证证据已经闭环，后续可以继续按产品 typed 成熟度迭代。
 
-阶段 27 到阶段 46 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据、中文异常体验、Crypto Gate 放行准备清单和发布复审刷新，因此当前 S3/KMS/STS/Metrics/Health 已达到产品 typed 满格；其余风险边界仍然按 Crypto 与独立 lab 管理。
+阶段 27 到阶段 52 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据、中文异常体验、Crypto Gate 放行准备清单、发布复审刷新、敏感导出/导入边界、Admin KMS 桥接和独立 lab 门禁复核，因此当前 S3/KMS/STS/Metrics/Health 已达到产品 typed 满格；其余风险边界仍然按 Crypto 与独立 lab 管理。
 
 ## 2. 当前能力快照
 
@@ -21,7 +21,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 64 | 128 | 0 | 9 | 29 |
+| admin | 128 | 81 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |

@@ -69,7 +69,7 @@ minio.content=hello from reactive minio sdk
 | --- | --- |
 | 路由对标 | 233 / 233，JDK8 与 JDK17+ 两个分支均无缺失、无额外 catalog。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有公开 catalog 路由至少有 typed 或 advanced 兼容入口。 |
-| 产品强类型成熟度 | S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
+| 产品强类型成熟度 | S3 77 / 77、Admin 81 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
 | 风险边界 | Admin 仍有 9 个加密响应边界、29 个破坏性操作边界；破坏性写入只允许在独立 lab 通过显式写入夹具证明，不能在共享环境中伪装成“普通已完成”。 |
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
@@ -137,7 +137,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics/KMS 提供 Prometheus 文本包装和样本解析；STS 提供普通 AssumeRole / WebIdentity / ClientGrants / LDAP / SSO / 证书 / 自定义 token 临时凭证解析入口；KMS、Admin IAM、用户组、服务账号、Admin 只读状态摘要、策略绑定实体、IDP 配置、remote target、batch job 摘要以及 S3 版本/分片列表、对象治理、bucket CORS/website/logging/policy status、ACL/Select 等子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
 
-阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。阶段 31 把破坏性实验环境升级为 typed/raw 双路径校验：tier、remote target、batch job 夹具会先验证专用客户端摘要，再用 raw catalog 调用交叉佐证，同时生成本机执行报告。阶段 33 新增 S3 通知监听流式入口，避免把长连接事件流误包装成一次性字符串。阶段 34 继续补 Admin 站点复制元信息和 trace/log 流式诊断入口。阶段 35 补充 bucket 用户和临时账号只读摘要，同时继续保持 access key/service account 加密边界。阶段 36 新增 tier 与 remote target 的可回滚写入夹具，要求 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true` 才能执行，并同时验证专用 Admin 客户端与 raw 兜底调用。阶段 37 新增 batch job 与 site replication 实验矩阵，用本机私有请求体模板证明 start/cancel、add/remove 的恢复路径。阶段 38 删除临时 Test 示例类，补齐 KMS/STS 中文示例，并把 README 示例入口收口为正式用户路径。阶段 40 补充 Admin metrics、inspect-data、profiling/profile 的文本或二进制诊断包装。阶段 41 补充 LDAP/OpenID access key 只读摘要，并明确不保留 secret/token 原始响应。阶段 42 补充站点复制 peer IDP 设置安全摘要，并按 madmin-go 在专用客户端调用中补齐 site replication 的 api-version 查询参数。阶段 43 增强破坏性 lab 报告，记录 typed/raw 步骤 PASS/FAIL，并加入 `mc` 只读恢复核验提示。阶段 44 统一异常体验，将协议错误和 raw 本地校验改为中文诊断。阶段 45 完成 Crypto Gate Pass 前置清单整理，继续保持 Gate Fail，不新增密码学依赖，只明确候选方案、批准材料、测试矩阵和失败回退。阶段 46 重新生成发布复审报告，确认 route parity、capability matrix、Crypto Gate 和破坏性 lab 口径仍然一致。阶段 47 补充 IAM 与 bucket metadata 敏感导出二进制边界，避免导出包被当作普通字符串处理。阶段 48 补充 client devnull、site replication devnull/netperf 和 speedtest 系列诊断文本边界，但仍要求独立维护窗口执行。阶段 49 收口 Admin KMS 与专用 KMS 客户端关系，普通 KMS 继续优先使用 `ReactiveMinioKmsClient`，Admin KMS 只作为 madmin 兼容桥接路径。阶段 50 补充 IAM 与 bucket metadata 导入 archive 产品入口，但仍限定为独立 lab 或维护窗口能力。阶段 51 复核破坏性 lab 门禁，在没有独立 lab 配置时只验证共享端点拒绝，不宣称真实破坏性写入通过。
+阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。阶段 31 把破坏性实验环境升级为 typed/raw 双路径校验：tier、remote target、batch job 夹具会先验证专用客户端摘要，再用 raw catalog 调用交叉佐证，同时生成本机执行报告。阶段 33 新增 S3 通知监听流式入口，避免把长连接事件流误包装成一次性字符串。阶段 34 继续补 Admin 站点复制元信息和 trace/log 流式诊断入口。阶段 35 补充 bucket 用户和临时账号只读摘要，同时继续保持 access key/service account 加密边界。阶段 36 新增 tier 与 remote target 的可回滚写入夹具，要求 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true` 才能执行，并同时验证专用 Admin 客户端与 raw 兜底调用。阶段 37 新增 batch job 与 site replication 实验矩阵，用本机私有请求体模板证明 start/cancel、add/remove 的恢复路径。阶段 38 删除临时 Test 示例类，补齐 KMS/STS 中文示例，并把 README 示例入口收口为正式用户路径。阶段 40 补充 Admin metrics、inspect-data、profiling/profile 的文本或二进制诊断包装。阶段 41 补充 LDAP/OpenID access key 只读摘要，并明确不保留 secret/token 原始响应。阶段 42 补充站点复制 peer IDP 设置安全摘要，并按 madmin-go 在专用客户端调用中补齐 site replication 的 api-version 查询参数。阶段 43 增强破坏性 lab 报告，记录 typed/raw 步骤 PASS/FAIL，并加入 `mc` 只读恢复核验提示。阶段 44 统一异常体验，将协议错误和 raw 本地校验改为中文诊断。阶段 45 完成 Crypto Gate Pass 前置清单整理，继续保持 Gate Fail，不新增密码学依赖，只明确候选方案、批准材料、测试矩阵和失败回退。阶段 46 重新生成发布复审报告，确认 route parity、capability matrix、Crypto Gate 和破坏性 lab 口径仍然一致。阶段 47 补充 IAM 与 bucket metadata 敏感导出二进制边界，避免导出包被当作普通字符串处理。阶段 48 补充 client devnull、site replication devnull/netperf 和 speedtest 系列诊断文本边界，但仍要求独立维护窗口执行。阶段 49 收口 Admin KMS 与专用 KMS 客户端关系，普通 KMS 继续优先使用 `ReactiveMinioKmsClient`，Admin KMS 只作为 madmin 兼容桥接路径。阶段 50 补充 IAM 与 bucket metadata 导入 archive 产品入口，但仍限定为独立 lab 或维护窗口能力。阶段 51 复核破坏性 lab 门禁，在没有独立 lab 配置时只验证共享端点拒绝，不宣称真实破坏性写入通过。阶段 52 重新刷新发布复审和版本管理口径，确认双分支仍为 `0.1.0-SNAPSHOT`，route parity 233 / 233，Admin product-typed 81 / 128。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
@@ -193,6 +193,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/47-stage49-admin-kms-boundary.md`
 - `docs/48-stage50-sensitive-import-lab-boundary.md`
 - `docs/49-stage51-independent-lab-window.md`
+- `docs/50-stage52-release-review-version-management.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

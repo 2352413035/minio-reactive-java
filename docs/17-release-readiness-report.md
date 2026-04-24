@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 64 | 128 | 0 | 9 | 29 |
+| admin | 128 | 81 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -273,7 +273,7 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 阶段 39 重新复审当前发布候选：
 
 - 双分支 route parity 仍为 233 / 233，catalog 缺失 0、额外 0。
-- 能力矩阵仍为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。
+- 阶段 39 当时能力矩阵为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 52 已提升到 Admin 81 / 128。
 - `raw-fallback = 0`，说明所有 catalog 路由至少有专用 typed 或 advanced 兼容入口。
 - 剩余主要是 Admin typed 成熟度、独立 lab 真实执行证据和 Crypto Gate Pass 准备。
 
@@ -350,7 +350,7 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 阶段 46 重新刷新发布复审：
 
 - 双分支 route parity 报告重新生成，仍为 233 / 233，catalog 缺失 0、额外 0。
-- 双分支 capability matrix 重新生成，Admin product-typed 保持 64 / 128，`raw-fallback = 0`。
+- 双分支 capability matrix 重新生成，阶段 46 当时 Admin product-typed 保持 64 / 128，`raw-fallback = 0`。
 - 阶段 40-45 的增量已经整理到 `docs/44-stage46-release-review-refresh.md`。
 - 发布说明继续按 route parity、callability、typed maturity、Crypto Gate、破坏性 lab 分层描述，不能用单一百分比替代。
 
@@ -411,6 +411,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - `destructive-blocked = 29` 不减少。
 
 详见 `docs/49-stage51-independent-lab-window.md`。
+
+## 5.33 阶段 52 补充
+
+阶段 52 刷新发布复审与版本管理：
+
+- 双分支 route parity 重新生成，仍为 233 / 233，catalog 缺失 0、额外 0。
+- 双分支 capability matrix 重新生成，当前 Admin product-typed 为 81 / 128，`raw-fallback = 0`。
+- JDK8 `master` 与 JDK17+ `chore/jdk17-springboot3` 继续保持相同 SDK 语义。
+- Maven 版本仍为 `0.1.0-SNAPSHOT`，阶段 52 不打正式 tag。
+- Crypto Gate 与破坏性 lab 边界不变。
+
+详见 `docs/50-stage52-release-review-version-management.md`。
 
 ## 6. 验证命令
 
