@@ -4,6 +4,8 @@ import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminAccountSummary;
 import io.minio.reactive.messages.admin.AdminBatchJobList;
+import io.minio.reactive.messages.admin.AdminBatchJobDescriptionSummary;
+import io.minio.reactive.messages.admin.AdminBatchJobStatusSummary;
 import io.minio.reactive.messages.admin.AdminBackgroundHealStatus;
 import io.minio.reactive.messages.admin.AdminRebalanceStatus;
 import io.minio.reactive.messages.admin.AdminTierStatsSummary;
@@ -111,7 +113,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 129, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 18, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 203, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -567,6 +569,24 @@ class ReactiveMinioSpecializedClientsTest {
             "{\"Jobs\":[{\"ID\":\"job-1\",\"Type\":\"replicate\",\"Status\":\"running\",\"User\":\"root\"}]}");
     Assertions.assertEquals(1, jobs.jobCount());
     Assertions.assertEquals("running", jobs.jobs().get(0).status());
+
+    AdminBatchJobStatusSummary jobStatus =
+        AdminBatchJobStatusSummary.parse(
+            "{\"LastMetric\":{\"JobID\":\"replicate-job-1\",\"JobType\":\"replicate\",\"RetryAttempts\":2,\"Complete\":false,\"Failed\":false,\"StartTime\":\"2026-04-24T00:00:00Z\",\"LastUpdate\":\"2026-04-24T00:01:00Z\"}}");
+    Assertions.assertEquals("replicate-job-1", jobStatus.jobId());
+    Assertions.assertEquals("replicate", jobStatus.jobType());
+    Assertions.assertEquals("running", jobStatus.status());
+    Assertions.assertEquals(2, jobStatus.retryAttempts());
+    Assertions.assertFalse(jobStatus.complete());
+    Assertions.assertFalse(jobStatus.failed());
+
+    AdminBatchJobDescriptionSummary jobDescription =
+        AdminBatchJobDescriptionSummary.parse(
+            "id: replicate-job-1\nuser: root\nstarted: 2026-04-24T00:00:00Z\nreplicate:\n  source: {}\n");
+    Assertions.assertEquals("replicate-job-1", jobDescription.id());
+    Assertions.assertEquals("root", jobDescription.user());
+    Assertions.assertEquals("replicate", jobDescription.jobType());
+    Assertions.assertTrue(jobDescription.rawText().contains("replicate"));
   }
 
 
@@ -613,7 +633,9 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(1, admin.listRemoteTargetsInfo("bucket1", "replication").block().targetCount());
     Assertions.assertEquals(1, admin.listBatchJobsInfo().block().jobCount());
     Assertions.assertEquals("running", admin.getBatchJobStatusInfo().block().values().get("status"));
+    Assertions.assertEquals("replicate", admin.getBatchJobStatusSummary("job-1").block().jobType());
     Assertions.assertEquals("job-1", admin.describeBatchJobInfo().block().values().get("id"));
+    Assertions.assertEquals("replicate", admin.describeBatchJobSummary("job-1").block().jobType());
     Assertions.assertEquals(12L, admin.getBackgroundHealStatusSummary().block().scannedItemsCount());
     admin.getBackgroundHealStatus().block();
     admin.listPoolsInfo().block();
@@ -686,6 +708,7 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "type=replication"));
     Assertions.assertTrue(containsAllQueryParts(queries, "pool=pool-0"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "jobId=job-1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "key=api"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listConfigHistoryKvEncrypted(-1));
   }
@@ -730,7 +753,9 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listRemoteTargetsInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listBatchJobsInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBatchJobStatusInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBatchJobStatusSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "describeBatchJobInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "describeBatchJobSummary");
     assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "listBuiltinPolicyEntities");
     assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "listIdpConfig");
     assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "getIdpConfig");
@@ -2127,10 +2152,10 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"Jobs\":[{\"ID\":\"job-1\",\"Type\":\"replicate\",\"Status\":\"running\",\"User\":\"root\"}]}";
     }
     if (path.endsWith("/status-job")) {
-      return "{\"status\":\"running\"}";
+      return "{\"status\":\"running\",\"JobID\":\"job-1\",\"JobType\":\"replicate\",\"RetryAttempts\":1}";
     }
     if (path.endsWith("/describe-job")) {
-      return "{\"id\":\"job-1\",\"status\":\"running\"}";
+      return "{\"id\":\"job-1\",\"status\":\"running\",\"type\":\"replicate\"}";
     }
     if (path.endsWith("/background-heal/status")) {
       return "{\"ScannedItemsCount\":12,\"offline_nodes\":[\"node1\"],\"HealDisks\":[\"disk1\"],\"sets\":[{}],\"mrf\":{\"node1\":{}},\"sc_parity\":{\"STANDARD\":2}}";

@@ -132,6 +132,12 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 - `listPoolsSummary()` 返回 `AdminPoolListSummary`，用于查看 pool 数量和 decommission 状态计数。
 - `getPoolStatusSummary(pool)` 返回 `AdminPoolStatusSummary`，用于查看指定 pool 的 decommission 进度和失败计数。
 
+阶段 70 起，batch job 的状态和描述也提供带 `jobId` 的只读摘要入口：
+
+- `getBatchJobStatusSummary(jobId)` 返回 `AdminBatchJobStatusSummary`，用于查看 job 类型、状态、重试次数和完成/失败标记。
+- `describeBatchJobSummary(jobId)` 返回 `AdminBatchJobDescriptionSummary`，用于从 MinIO 常见 YAML 描述中提取 id、user、started 和 jobType。
+- `startBatchJob` / `cancelBatchJob` 仍然属于独立 lab 或维护窗口能力，不在共享 live 中直接执行。
+
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
     .endpoint(endpoint)
