@@ -511,6 +511,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/57-stage59-admin-lab-risk-boundaries.md`。
 
+## 5.41 阶段 60 补充
+
+阶段 60 重新执行发布候选复审：
+
+- route parity 仍为 233 / 233，catalog 缺失 0、额外 0。
+- capability matrix 显示 S3/Admin/KMS/STS/Metrics/Health product-typed 均已满格。
+- `raw-fallback = 0`，raw 继续作为兜底能力，而不是普通业务主路径。
+- Crypto Gate 仍为 Fail 状态，`encrypted-blocked = 9` 不减少。
+- 当前没有独立破坏性 lab，`destructive-blocked = 29` 不减少。
+
+详见 `docs/58-stage60-release-candidate-final-review.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：

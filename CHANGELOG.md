@@ -187,6 +187,13 @@
 - `encrypted-blocked = 9` 与 `destructive-blocked = 29` 不减少，真实破坏性写入仍必须走独立 lab。
 - 新增 `docs/57-stage59-admin-lab-risk-boundaries.md` 记录边界、验证和后续深化方向。
 
+### 阶段 60 补充
+
+- 重新生成双分支 route parity 与 capability matrix，确认 route parity 233 / 233、Admin product-typed 128 / 128、`raw-fallback = 0`。
+- 重新执行双分支单元测试、真实 MinIO smoke、Crypto Gate、破坏性 lab 拒绝、JDK21/JDK25 编译和凭证扫描。
+- 明确当前发布候选状态：公开路由、调用入口、产品边界已闭环；Crypto Gate 与独立 lab 仍是外部门禁。
+- 新增 `docs/58-stage60-release-candidate-final-review.md` 保存阶段 60 复审结论。
+
 
 ### 阶段 35 补充
 
