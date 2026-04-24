@@ -92,7 +92,7 @@ String body = raw.executeToString(
 | 破坏性 lab | 未配置，`destructive-blocked = 29`。 |
 | 版本 | 继续使用 `0.1.0-SNAPSHOT`，暂不打 1.0。 |
 
-`0.1.0-SNAPSHOT` 的含义是：公开路由、调用入口、产品边界和验证证据已经闭环；仍需等待 Crypto Gate 与独立 lab，才能宣称所有风险能力也完成真实执行验证。
+`0.1.0-SNAPSHOT` 的含义是：公开路由、调用入口、产品边界和验证证据已经闭环；阶段 63 已确认当前没有公开路由、产品入口或 raw-only 缺口。仍需等待 Crypto Gate 与独立 lab，才能宣称所有风险能力也完成真实执行验证。
 
 ## 6. 真实 MinIO 与 mc 证据
 

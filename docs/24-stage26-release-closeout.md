@@ -12,7 +12,7 @@
 
 阶段 26 不宣称“所有接口都已变成最终强类型模型”。它宣称的是：对标 MinIO 的路由、调用入口、文档口径、风险门禁和验证证据已经闭环，后续可以继续按产品 typed 成熟度迭代。
 
-阶段 27 到阶段 59 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据、中文异常体验、Crypto Gate 放行准备清单、发布复审刷新、敏感导出/导入边界、Admin KMS 桥接、独立 lab 门禁复核和 Admin 维护操作产品边界和策略/复制轻量边界和配置高风险边界和站点复制 peer lab-only 边界和服务类强破坏性边界和 Crypto/lab 阻塞复核，以及剩余 Admin 高风险/lab-only 产品边界，因此当前 S3/Admin/KMS/STS/Metrics/Health 都已达到 product-typed 满格；阶段 60 已重新复审发布候选证据，阶段 61 又补充了 `mc` 只读运维旁证，阶段 62 已整理用户面发布指南；风险接口仍然按 Crypto Gate 与独立 lab 管理。
+阶段 27 到阶段 59 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据、中文异常体验、Crypto Gate 放行准备清单、发布复审刷新、敏感导出/导入边界、Admin KMS 桥接、独立 lab 门禁复核和 Admin 维护操作产品边界和策略/复制轻量边界和配置高风险边界和站点复制 peer lab-only 边界和服务类强破坏性边界和 Crypto/lab 阻塞复核，以及剩余 Admin 高风险/lab-only 产品边界，因此当前 S3/Admin/KMS/STS/Metrics/Health 都已达到 product-typed 满格；阶段 60 已重新复审发布候选证据，阶段 61 又补充了 `mc` 只读运维旁证，阶段 62 已整理用户面发布指南，阶段 63 已完成最终缺口审计；风险接口仍然按 Crypto Gate 与独立 lab 管理。
 
 ## 2. 当前能力快照
 
@@ -64,10 +64,10 @@
 
 下一轮计划不应再重复 route catalog 工作，而应优先提升产品 typed 成熟度：
 
-1. Admin 模型深化：在 128 / 128 产品边界基础上，把更多稳定响应升级为中文摘要模型，而不是新增重复入口。
-2. 独立 lab：执行 tier、remote target、batch job、site replication、force-unlock 等写入矩阵并保存本机报告作为能力证明。
-3. Crypto Gate：阶段 45 已形成放行准备清单；真正实现前仍要完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
-4. 发布说明：继续使用 route parity、callability、typed maturity、live/destructive/crypto 边界分层口径。
+1. 独立 lab：执行 tier、remote target、batch job、site replication、force-unlock 等写入矩阵并保存本机报告作为能力证明。
+2. Crypto Gate：阶段 45 已形成放行准备清单；真正实现前仍要完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
+3. Admin 模型深化：在 128 / 128 产品边界基础上，把更多稳定响应升级为中文摘要模型，而不是新增重复入口。
+4. 发布工程：继续使用 route parity、callability、typed maturity、live/destructive/crypto 边界分层口径，等外部门禁满足后再讨论正式 tag。
 
 ## 7. 文档入口
 

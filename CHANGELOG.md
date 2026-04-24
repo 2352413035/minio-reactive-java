@@ -207,6 +207,12 @@
 - `docs/14-typed-client-usage-guide.md` 增加快速选择说明，让普通集成方先知道该用哪个客户端。
 - 版本口径仍保持 `0.1.0-SNAPSHOT`，不因为 route/product-typed 满格就移除 Crypto Gate 或破坏性 lab 门禁。
 
+### 阶段 63 补充
+
+- 新增 `docs/61-stage63-final-gap-audit.md`，完成最终缺口审计。
+- 审计结论：当前没有公开路由缺口、产品入口缺口或 raw-only 缺口；剩余工作是 Crypto Gate、独立破坏性 lab、结果模型深化和发布工程。
+- 修正发布复审后续建议，避免继续把工作描述成“补 Admin 入口”。
+
 
 ### 阶段 35 补充
 
