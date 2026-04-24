@@ -17,6 +17,8 @@ import io.minio.reactive.messages.admin.AdminStorageSummary;
 import io.minio.reactive.messages.admin.AdminTextResult;
 import io.minio.reactive.messages.admin.AdminIdpConfigList;
 import io.minio.reactive.messages.admin.AdminPolicyEntities;
+import io.minio.reactive.messages.admin.AdminPoolStatusSummary;
+import io.minio.reactive.messages.admin.AdminPoolListSummary;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
 import io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings;
 import io.minio.reactive.messages.admin.AdminSiteReplicationStatusSummary;
@@ -511,6 +513,28 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(1, siteMeta.replicationConfigCount());
     Assertions.assertEquals(1, siteMeta.ilmExpiryRuleCount());
 
+    AdminPoolStatusSummary poolStatus =
+        AdminPoolStatusSummary.parse(
+            "{\"id\":0,\"cmdline\":\"pool-0\",\"lastUpdate\":\"2026-04-24T00:00:00Z\",\"decommissionInfo\":{\"totalSize\":100,\"currentSize\":60,\"complete\":false,\"failed\":false,\"canceled\":false,\"objectsDecommissioned\":7,\"objectsDecommissionedFailed\":1,\"bytesDecommissioned\":40,\"bytesDecommissionedFailed\":2}}");
+    Assertions.assertEquals(0, poolStatus.id());
+    Assertions.assertEquals("pool-0", poolStatus.commandLine());
+    Assertions.assertTrue(poolStatus.decommissionInfoPresent());
+    Assertions.assertFalse(poolStatus.decommissionComplete());
+    Assertions.assertEquals(100L, poolStatus.totalSize());
+    Assertions.assertEquals(60L, poolStatus.currentSize());
+    Assertions.assertEquals(7L, poolStatus.objectsDecommissioned());
+    Assertions.assertEquals(1L, poolStatus.objectsDecommissionedFailed());
+
+    AdminPoolListSummary poolList =
+        AdminPoolListSummary.parse(
+            "[{\"id\":0,\"cmdline\":\"pool-0\",\"decommissionInfo\":{\"totalSize\":100,\"currentSize\":60,\"complete\":false}},{\"id\":1,\"cmdline\":\"pool-1\",\"decommissionInfo\":{\"totalSize\":50,\"currentSize\":0,\"complete\":true}}]");
+    Assertions.assertEquals(2, poolList.poolCount());
+    Assertions.assertEquals(2, poolList.decommissionInfoCount());
+    Assertions.assertEquals(1, poolList.activeDecommissionCount());
+    Assertions.assertEquals(1, poolList.completedDecommissionCount());
+    Assertions.assertEquals(150L, poolList.totalSize());
+    Assertions.assertEquals(60L, poolList.currentSize());
+
     AdminBucketQuota quota =
         AdminBucketQuota.parse("{\"quota\":1024,\"size\":2048,\"rate\":0,\"requests\":0,\"quotatype\":\"hard\"}");
     Assertions.assertEquals(1024, quota.quota());
@@ -584,6 +608,8 @@ class ReactiveMinioSpecializedClientsTest {
         "enabled", admin.listBucketUsersInfo("bucket1").block().users().get("user1").status());
     admin.getBucketQuotaInfo("bucket1").block();
     admin.listTiers().block();
+    Assertions.assertEquals(2, admin.listPoolsSummary().block().poolCount());
+    Assertions.assertEquals(60L, admin.getPoolStatusSummary("pool-0").block().currentSize());
     Assertions.assertEquals(1, admin.listRemoteTargetsInfo("bucket1", "replication").block().targetCount());
     Assertions.assertEquals(1, admin.listBatchJobsInfo().block().jobCount());
     Assertions.assertEquals("running", admin.getBatchJobStatusInfo().block().values().get("status"));
@@ -670,7 +696,9 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBackgroundHealStatus");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBackgroundHealStatusSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listPoolsInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listPoolsSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getPoolStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getPoolStatusSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getRebalanceStatus");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getRebalanceStatusSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTierStats");
@@ -2128,8 +2156,11 @@ class ReactiveMinioSpecializedClientsTest {
     if (path.endsWith("/site-replication/metainfo")) {
       return "{\"Enabled\":true,\"Name\":\"primary\",\"DeploymentID\":\"dep1\",\"Buckets\":{\"bucket1\":{}},\"Policies\":{\"readonly\":{}},\"UserInfoMap\":{\"user1\":{}},\"GroupDescMap\":{\"dev\":{}},\"ReplicationCfg\":{\"bucket1\":{}},\"ILMExpiryRules\":{\"rule1\":{}},\"apiVersion\":\"1\"}";
     }
-    if (path.endsWith("/pools/list") || path.endsWith("/pools/status")) {
-      return "{\"status\":\"ok\"}";
+    if (path.endsWith("/pools/list")) {
+      return "[{\"id\":0,\"cmdline\":\"pool-0\",\"decommissionInfo\":{\"totalSize\":100,\"currentSize\":60,\"complete\":false}},{\"id\":1,\"cmdline\":\"pool-1\",\"decommissionInfo\":{\"totalSize\":50,\"currentSize\":0,\"complete\":true}}]";
+    }
+    if (path.endsWith("/pools/status")) {
+      return "{\"id\":0,\"cmdline\":\"pool-0\",\"lastUpdate\":\"2026-04-24T00:00:00Z\",\"decommissionInfo\":{\"totalSize\":100,\"currentSize\":60,\"complete\":false,\"failed\":false,\"canceled\":false,\"objectsDecommissioned\":7,\"objectsDecommissionedFailed\":1,\"bytesDecommissioned\":40,\"bytesDecommissionedFailed\":2}}";
     }
     if (path.endsWith("/trace")) {
       return "trace-line\n";
