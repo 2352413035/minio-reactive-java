@@ -389,6 +389,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/47-stage49-admin-kms-boundary.md`。
 
+## 5.31 阶段 50 补充
+
+阶段 50 补充敏感导入与 metadata 恢复边界：
+
+- IAM、IAM v2、bucket metadata 导入入口返回 `AdminTextResult`。
+- 导入包不能为空，默认 content type 为 `application/octet-stream`。
+- 共享 live 不执行真实导入，只用 mock 和 raw 兜底验证路径。
+- Admin product-typed 提升到 81 / 128，破坏性边界不减少。
+
+详见 `docs/48-stage50-sensitive-import-lab-boundary.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：

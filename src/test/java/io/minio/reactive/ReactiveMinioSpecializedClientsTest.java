@@ -101,7 +101,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 129, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 12, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -627,6 +627,16 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage50SensitiveImportArchiveMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "importIamArchive");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "importIamV2Archive");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "importBucketMetadataArchive");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioAdminClient.class, "importIam");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioAdminClient.class, "importIamV2");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioAdminClient.class, "importBucketMetadata");
+  }
+
+  @Test
   void shouldExposeStage49AdminKmsBridgeMethods() {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getAdminKmsStatus");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "createAdminKmsKey");
@@ -704,6 +714,66 @@ class ReactiveMinioSpecializedClientsTest {
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/export-iam"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/export-bucket-metadata"));
+  }
+
+  @Test
+  void shouldBuildStage50SensitiveImportArchiveRequestsWithoutLoggingBody() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage50SensitiveImportBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    byte[] archive = "fake-archive".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    AdminTextResult iam = admin.importIamArchive(archive).block();
+    AdminTextResult iamV2 = admin.importIamV2Archive(archive, "application/zip").block();
+    AdminTextResult metadata = admin.importBucketMetadataArchive(archive).block();
+
+    Assertions.assertEquals("import-iam", iam.source());
+    Assertions.assertEquals("import-iam-ok", iam.rawText());
+    Assertions.assertEquals("import-iam-v2", iamV2.source());
+    Assertions.assertEquals("import-bucket-metadata", metadata.source());
+    Assertions.assertEquals(
+        "import-iam-ok",
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_IMPORT_IAM"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.<String, String>emptyMap(),
+                archive,
+                "application/octet-stream")
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/import-iam"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/import-iam-v2"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/import-bucket-metadata"));
+    Assertions.assertTrue(contentTypes.contains("application/octet-stream"));
+    Assertions.assertTrue(contentTypes.contains("application/zip"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.importIamArchive(new byte[0]));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.importBucketMetadataArchive(null));
   }
 
   @Test
@@ -1448,6 +1518,19 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (path.endsWith("/export-bucket-metadata")) {
       return "bucket-metadata-bytes";
+    }
+    return "";
+  }
+
+  private static String stage50SensitiveImportBody(String path) {
+    if (path.equals("/minio/admin/v3/import-iam")) {
+      return "import-iam-ok";
+    }
+    if (path.equals("/minio/admin/v3/import-iam-v2")) {
+      return "import-iam-v2-ok";
+    }
+    if (path.equals("/minio/admin/v3/import-bucket-metadata")) {
+      return "import-bucket-metadata-ok";
     }
     return "";
   }

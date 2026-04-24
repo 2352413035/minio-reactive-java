@@ -28,7 +28,7 @@
 | 客户端 | public `Mono<String>` | `@Deprecated` | raw-ish `executeTo*` | 说明 |
 | --- | ---: | ---: | ---: | --- |
 | `ReactiveMinioClient` | 129 | 26 | 5 | 对象存储主客户端，仍含 S3 catalog 风格高级入口和少量底层执行入口。 |
-| `ReactiveMinioAdminClient` | 201 | 12 | 0 | 管理端 advanced 入口最多，是后续 typed 化重点；Admin KMS 字符串入口已迁移到 typed 桥接方法。 |
+| `ReactiveMinioAdminClient` | 201 | 18 | 0 | 管理端 advanced 入口最多，是后续 typed 化重点；Admin KMS 与敏感导入字符串入口已迁移到 typed 边界方法。 |
 | `ReactiveMinioKmsClient` | 8 | 0 | 0 | KMS 已有第一批 typed 方法，兼容入口短期保留。 |
 | `ReactiveMinioStsClient` | 14 | 0 | 0 | STS 已有请求对象和凭证结果模型，兼容入口短期保留。 |
 | `ReactiveMinioMetricsClient` | 6 | 0 | 0 | Metrics 已有 Prometheus 文本模型，兼容入口短期保留。 |
@@ -128,3 +128,13 @@ MinIO 管理端的一些写接口并不是普通 JSON body。服务端会调用 
 阶段 49 起，普通 KMS 场景继续优先使用 `ReactiveMinioKmsClient`。`ReactiveMinioAdminClient` 中的 `getAdminKmsStatus()`、`createAdminKmsKey(...)`、`getAdminKmsKeyStatus(...)` 只用于必须走 `/minio/admin/v3/kms/...` 的 madmin 兼容场景。
 
 旧的 `kmsStatus()`、`kmsKeyCreate(...)`、`kmsKeyStatus()` 字符串入口已标记为 `@Deprecated`，迁移时优先选择专用 KMS 客户端；只有需要 Admin 路由审计/兼容时才选择 Admin KMS 桥接方法。
+
+## 敏感导入与 metadata 恢复迁移
+
+阶段 50 起，`importIam(...)`、`importIamV2(...)`、`importBucketMetadata(...)` 字符串入口已标记为 `@Deprecated`。迁移目标是：
+
+- `importIamArchive(...)`
+- `importIamV2Archive(...)`
+- `importBucketMetadataArchive(...)`
+
+这些新方法仍然是高风险恢复能力，不能在共享 live 测试中执行真实导入。只有独立可回滚 lab 或维护窗口可以使用，并且不得记录 archive 内容。
