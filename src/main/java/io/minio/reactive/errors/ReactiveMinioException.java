@@ -104,33 +104,34 @@ public class ReactiveMinioException extends RuntimeException {
       String path,
       String diagnosticHint) {
     StringBuilder builder = new StringBuilder();
-    builder.append(protocol == null || protocol.isEmpty() ? "MinIO" : protocol);
-    builder.append(" request failed with HTTP status ").append(statusCode);
+    builder.append("MinIO ");
+    builder.append(protocol == null || protocol.isEmpty() ? "请求" : protocol + " 请求");
+    builder.append("失败，HTTP 状态=").append(statusCode);
     if (code != null && !code.isEmpty()) {
-      builder.append(", code=").append(code);
+      builder.append("，错误码=").append(code);
     }
     if (errorMessage != null && !errorMessage.isEmpty()) {
-      builder.append(", message=").append(errorMessage);
+      builder.append("，错误信息=").append(errorMessage);
     }
     if (requestId != null && !requestId.isEmpty()) {
-      builder.append(", requestId=").append(requestId);
+      builder.append("，请求ID=").append(requestId);
     }
     if (endpointName != null && !endpointName.isEmpty()) {
-      builder.append(", endpoint=").append(endpointName);
+      builder.append("，接口=").append(endpointName);
     }
     if (method != null && !method.isEmpty()) {
-      builder.append(", method=").append(method);
+      builder.append("，方法=").append(method);
     }
     if (path != null && !path.isEmpty()) {
-      builder.append(", path=").append(path);
+      builder.append("，路径=").append(path);
     }
     if (diagnosticHint != null && !diagnosticHint.isEmpty()) {
-      builder.append(", hint=").append(diagnosticHint);
+      builder.append("，诊断建议=").append(diagnosticHint);
     }
     if ((code == null || code.isEmpty()) && (errorMessage == null || errorMessage.isEmpty())) {
       String body = rawBody == null ? "" : rawBody.trim().replaceAll("\\s+", " ");
       if (!body.isEmpty()) {
-        builder.append(", body=").append(body.length() > 600 ? body.substring(0, 600) + "..." : body);
+        builder.append("，响应体片段=").append(body.length() > 600 ? body.substring(0, 600) + "..." : body);
       }
     }
     return builder.toString();

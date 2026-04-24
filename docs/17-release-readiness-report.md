@@ -323,6 +323,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/41-stage43-destructive-lab-evidence.md`。
 
+## 5.25 阶段 44 补充
+
+阶段 44 统一错误解释与异常体验：
+
+- `ReactiveMinioException` 的默认消息改为中文诊断。
+- Admin/KMS/STS/Metrics/Health 的结构化异常字段继续保留，业务代码不需要解析中文文本。
+- raw 请求构造阶段的本地失败改为中文说明，覆盖缺少 query、危险 header、路径变量非法等场景。
+- 纯文本服务端错误会在消息中显示 `响应体片段=`，避免空 code/message 时没有排障线索。
+
+详见 `docs/42-stage44-error-experience.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：

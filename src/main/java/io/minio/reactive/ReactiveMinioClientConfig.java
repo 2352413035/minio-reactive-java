@@ -50,13 +50,13 @@ public final class ReactiveMinioClientConfig {
   }
 
   private static String normalizeEndpoint(String endpoint) {
-    Objects.requireNonNull(endpoint, "endpoint must not be null");
+    Objects.requireNonNull(endpoint, "endpoint 不能为空");
     String value = endpoint.trim();
     if (value.isEmpty()) {
-      throw new IllegalArgumentException("endpoint must not be empty");
+      throw new IllegalArgumentException("endpoint 不能为空");
     }
     if (!value.startsWith("http://") && !value.startsWith("https://")) {
-      throw new IllegalArgumentException("endpoint must start with http:// or https://");
+      throw new IllegalArgumentException("endpoint 必须以 http:// 或 https:// 开头");
     }
     if (value.endsWith("/")) {
       return value.substring(0, value.length() - 1);

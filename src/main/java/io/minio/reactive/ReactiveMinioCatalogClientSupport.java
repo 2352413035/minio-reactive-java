@@ -20,7 +20,7 @@ abstract class ReactiveMinioCatalogClientSupport {
 
   ReactiveMinioCatalogClientSupport(ReactiveMinioEndpointExecutor executor) {
     if (executor == null) {
-      throw new IllegalArgumentException("executor must not be null");
+      throw new IllegalArgumentException("executor 不能为空");
     }
     this.executor = executor;
   }

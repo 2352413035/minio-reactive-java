@@ -301,7 +301,7 @@ final class ReactiveMinioEndpointExecutor {
     for (String required : endpoint.requiredQueryParameters()) {
       if (!queryParameters.containsKey(required)) {
         throw new IllegalArgumentException(
-            "Endpoint " + endpoint.name() + " requires query parameter: " + required);
+            "接口 " + endpoint.name() + " 缺少必填 query 参数: " + required);
       }
     }
   }
@@ -315,7 +315,7 @@ final class ReactiveMinioEndpointExecutor {
       String value = pathVariables.get(name);
       if (value == null) {
         throw new IllegalArgumentException(
-            "Path template " + template + " requires path variable: " + name);
+            "路径模板 " + template + " 缺少路径变量: " + name);
       }
       validatePathVariable(name, value);
       matcher.appendReplacement(result, Matcher.quoteReplacement(value));
@@ -327,7 +327,7 @@ final class ReactiveMinioEndpointExecutor {
   /** 防止调用方覆盖签名器管理的关键头，bearer 接口只例外放行 Authorization。 */
   private static void validateCallerHeader(MinioApiEndpoint endpoint, String name) {
     if (name == null) {
-      throw new IllegalArgumentException("header name must not be null");
+      throw new IllegalArgumentException("header 名称不能为空");
     }
     String lower = name.trim().toLowerCase(java.util.Locale.US);
     if ("host".equals(lower)
@@ -336,7 +336,7 @@ final class ReactiveMinioEndpointExecutor {
         || "x-amz-content-sha256".equals(lower)
         || "x-amz-security-token".equals(lower)) {
       throw new IllegalArgumentException(
-          "header is managed by the signer and cannot be caller supplied: " + name);
+          "header 由签名器管理，调用方不能手动传入: " + name);
     }
   }
 
@@ -344,10 +344,10 @@ final class ReactiveMinioEndpointExecutor {
   private static void validatePathVariable(String name, String value) {
     if (value.indexOf('/') >= 0 && !allowsSlash(name)) {
       throw new IllegalArgumentException(
-          "path variable " + name + " must not contain '/' because it maps to one path segment");
+          "路径变量 " + name + " 只能对应单段路径，不能包含 '/'");
     }
     if (!allowsSlash(name) && (".".equals(value) || "..".equals(value))) {
-      throw new IllegalArgumentException("path variable " + name + " must not be a dot segment");
+      throw new IllegalArgumentException("路径变量 " + name + " 不能是 '.' 或 '..'");
     }
   }
 
@@ -364,7 +364,7 @@ final class ReactiveMinioEndpointExecutor {
     try {
       return HttpMethod.valueOf(method);
     } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("Unsupported HTTP method: " + method, e);
+      throw new IllegalArgumentException("不支持的 HTTP 方法: " + method, e);
     }
   }
 
