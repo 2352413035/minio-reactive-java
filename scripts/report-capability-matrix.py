@@ -51,7 +51,9 @@ TYPED_METHODS = {
         'getSiteReplicationMetainfo','traceStream','logStream',
         'listBucketUsersInfo','getTemporaryAccountInfo',
         'scrapeAdminMetrics','downloadInspectData','startProfiling',
-        'downloadProfilingData','getProfileResult'
+        'downloadProfilingData','getProfileResult',
+        'listLdapPolicyEntities','listLdapAccessKeySummaries',
+        'listOpenidAccessKeySummaries'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {
