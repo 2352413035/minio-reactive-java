@@ -7,6 +7,12 @@
 
 
 
+### 阶段 35 补充
+
+- `ReactiveMinioAdminClient` 新增 `listBucketUsersInfo(...)` 和 `getTemporaryAccountInfo(...)`。
+- 继续明确 access key / service account 加密响应只能走 `EncryptedAdminResponse` 边界。
+- Admin product-typed 口径从 53 / 128 提升到 55 / 128。
+
 ### 阶段 34 补充
 
 - `ReactiveMinioAdminClient` 新增 `getSiteReplicationMetainfo()`。
