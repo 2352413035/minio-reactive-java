@@ -8,7 +8,7 @@
 | --- | --- |
 | 路由对标 | JDK8 与 JDK17+ 双分支均为 233 / 233，catalog 缺失 0、额外 0。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有 catalog 路由至少有专用或 advanced 入口。 |
-| 产品 typed 成熟度 | 阶段 46 为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 47 后 Admin 提升到 66 / 128，阶段 48 后提升到 75 / 128，阶段 49 后提升到 78 / 128，阶段 50 后提升到 81 / 128；阶段 52 复审后确认当前仍为 81 / 128，阶段 53 后提升到 88 / 128。 |
+| 产品 typed 成熟度 | 阶段 46 为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 47 后 Admin 提升到 66 / 128，阶段 48 后提升到 75 / 128，阶段 49 后提升到 78 / 128，阶段 50 后提升到 81 / 128；阶段 52 复审后确认当前仍为 81 / 128，阶段 53 后提升到 88 / 128，阶段 54 后提升到 94 / 128。 |
 | Crypto Gate | 继续 Gate Fail；阶段 45 只完成放行准备清单，不引入依赖。 |
 | 破坏性 Admin | 仍为独立 lab 边界；阶段 43 已增强 typed/raw 步骤证据和 `mc` 核验提示。 |
 | 错误体验 | 阶段 44 已将协议异常与 raw 本地校验统一为中文诊断。 |
@@ -82,7 +82,7 @@ JDK17+ 分支还要执行 JDK17 全量测试、真实 MinIO smoke，以及 JDK21
 
 ## 11. 阶段 52 后续刷新
 
-阶段 52 已重新生成 route parity 和 capability matrix，确认双分支 route parity 233 / 233、Admin product-typed 81 / 128、`raw-fallback = 0`，并刷新版本管理口径。阶段 53 继续把 heal、decommission、rebalance 维护操作纳入产品边界，Admin product-typed 提升到 88 / 128。完整说明见 `docs/50-stage52-release-review-version-management.md` 与 `docs/51-stage53-admin-maintenance-boundary.md`。
+阶段 52 已重新生成 route parity 和 capability matrix，确认双分支 route parity 233 / 233、Admin product-typed 81 / 128、`raw-fallback = 0`，并刷新版本管理口径。阶段 53 继续把 heal、decommission、rebalance 维护操作纳入产品边界，Admin product-typed 提升到 88 / 128；阶段 54 补充 replication MRF、tier verify 和 policy attach/detach 语义化入口，Admin product-typed 提升到 94 / 128。完整说明见 `docs/50-stage52-release-review-version-management.md`、`docs/51-stage53-admin-maintenance-boundary.md` 与 `docs/52-stage54-admin-policy-replication-boundary.md`。
 
 ## 12. 下一阶段建议
 

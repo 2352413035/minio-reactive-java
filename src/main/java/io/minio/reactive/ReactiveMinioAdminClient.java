@@ -692,9 +692,68 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.AdminPolicyEntities::parse);
   }
 
+  /**
+   * 绑定内置策略实体。
+   *
+   * <p>请求体结构与 MinIO madmin 保持一致；这是权限变更操作，调用方应在受控窗口中执行。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> attachBuiltinPolicy(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return attachDetachBuiltinPolicy("attach", body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("builtin-policy-attach", text));
+  }
+
+  /** 绑定内置策略实体，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> attachBuiltinPolicy(
+      byte[] body) {
+    return attachBuiltinPolicy(body, "application/json");
+  }
+
+  /** 解绑内置策略实体；调用方应确认请求体只包含目标实体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachBuiltinPolicy(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return attachDetachBuiltinPolicy("detach", body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("builtin-policy-detach", text));
+  }
+
+  /** 解绑内置策略实体，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachBuiltinPolicy(
+      byte[] body) {
+    return detachBuiltinPolicy(body, "application/json");
+  }
+
   /** 列出 LDAP 策略绑定实体摘要；只统计映射数量并保留原始策略实体 JSON。 */
   public Mono<io.minio.reactive.messages.admin.AdminPolicyEntities> listLdapPolicyEntities() {
     return ldapPolicyEntities().map(io.minio.reactive.messages.admin.AdminPolicyEntities::parse);
+  }
+
+
+  /** 绑定 LDAP 策略实体；该操作会改变身份源策略映射，必须使用受控请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> attachLdapPolicy(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return ldapAttachDetachPolicy("attach", body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("ldap-policy-attach", text));
+  }
+
+  /** 绑定 LDAP 策略实体，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> attachLdapPolicy(byte[] body) {
+    return attachLdapPolicy(body, "application/json");
+  }
+
+  /** 解绑 LDAP 策略实体；不会保存请求体中的用户、组或策略名称。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachLdapPolicy(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return ldapAttachDetachPolicy("detach", body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("ldap-policy-detach", text));
+  }
+
+  /** 解绑 LDAP 策略实体，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachLdapPolicy(byte[] body) {
+    return detachLdapPolicy(body, "application/json");
   }
 
 
@@ -1537,6 +1596,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.AdminRemoteTargetList::parse);
   }
 
+  /** 获取指定 bucket 的 replication MRF 信息，使用通用 JSON 结果保留版本差异字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getReplicationMrfInfo(
+      String bucket) {
+    requireText("bucket", bucket);
+    return replicationMrf(bucket).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
   /** 调用 `ADMIN_SET_REMOTE_TARGET`。 */
   public Mono<String> setRemoteTarget(String bucket, byte[] body, String contentType) {
     return executeToString("ADMIN_SET_REMOTE_TARGET", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
@@ -1670,6 +1736,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /** 列出远端 tier 配置摘要；凭据字段仍只保留在 MinIO 已脱敏的原始 JSON 中。 */
   public Mono<io.minio.reactive.messages.admin.AdminTierList> listTiers() {
     return listTier().map(io.minio.reactive.messages.admin.AdminTierList::parse);
+  }
+
+  /** 校验指定 tier 连接状态；该接口可能访问外部存储，只包装响应文本。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> verifyTierInfo(String tier) {
+    requireText("tier", tier);
+    return verifyTier(tier)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("tier-verify", text));
   }
 
   /** 调用 `ADMIN_REMOVE_TIER`。 */

@@ -63,7 +63,10 @@ TYPED_METHODS = {
         'importIamArchive','importIamV2Archive','importBucketMetadataArchive',
         'startRootHeal','startBucketHeal','startPrefixHeal',
         'startPoolDecommission','cancelPoolDecommission',
-        'startRebalance','stopRebalance'
+        'startRebalance','stopRebalance',
+        'getReplicationMrfInfo','verifyTierInfo',
+        'attachBuiltinPolicy','detachBuiltinPolicy',
+        'attachLdapPolicy','detachLdapPolicy'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

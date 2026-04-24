@@ -141,6 +141,14 @@
 - Admin product-typed 从 81 / 128 提升到 88 / 128；Crypto Gate 与破坏性 lab 边界不变。
 - 新增 `docs/51-stage53-admin-maintenance-boundary.md` 记录维护窗口和验证边界。
 
+### 阶段 54 补充
+
+- `ReactiveMinioAdminClient` 新增 `getReplicationMrfInfo(...)` 与 `verifyTierInfo(...)` 产品入口。
+- 新增内置策略和 LDAP 策略 attach/detach 语义化入口，避免用户直接传底层 `operation` 字符串。
+- 策略变更入口要求非空请求体，SDK 不保存请求体中的用户、组、策略或身份源内容。
+- Admin product-typed 从 88 / 128 提升到 94 / 128；Crypto Gate 与破坏性 lab 边界不变。
+- 新增 `docs/52-stage54-admin-policy-replication-boundary.md` 记录轻量写入和只读探测边界。
+
 
 ### 阶段 35 补充
 
