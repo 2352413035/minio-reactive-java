@@ -132,3 +132,22 @@
 5. Crypto Gate Fail 仍被正确执行的证据。
 6. 破坏性实验环境仍拒绝共享 MinIO 的证据。
 7. 阶段 31 后还要附上 破坏性实验环境报告模板或本机报告生成证据，证明失败恢复提示可追溯。
+
+
+## 阶段 64 发布工程与外部门禁清单
+
+阶段 64 后，发布候选与正式发布必须分开说明：
+
+- 发布候选：route parity 233 / 233、product-typed 满格、`raw-fallback = 0`，并且 Crypto/lab 风险边界清楚。
+- 正式发布：除发布候选证据外，还需要 Crypto Gate Pass、独立破坏性 lab 报告、Maven/tag 发布工程材料和回滚策略。
+
+正式发布前至少补齐：
+
+1. Crypto Gate 三方批准与依赖审查。
+2. 独立 lab typed/raw 破坏性矩阵报告。
+3. JDK8/JDK17/JDK21/JDK25 构建与测试矩阵。
+4. 源码包、javadoc 包、pom 元数据、签名、校验和、许可证/SBOM 或依赖清单。
+5. 发布说明、升级指南、已知限制和撤回/修复策略。
+6. 双分支工作区干净，提交信息符合 Lore Commit Protocol。
+
+在这些材料齐全前，版本继续保持 `0.1.0-SNAPSHOT`，不得用 route/product-typed 满格替代外部门禁。

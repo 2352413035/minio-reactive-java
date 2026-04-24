@@ -558,6 +558,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/61-stage63-final-gap-audit.md`。
 
+## 5.45 阶段 64 补充
+
+阶段 64 收口发布工程与外部门禁清单：
+
+- 当前继续保持 `0.1.0-SNAPSHOT`，不打 tag、不发布 Maven。
+- `docs/62-stage64-release-engineering-gates.md` 明确正式发布前需要的 Crypto Gate Pass、独立破坏性 lab、Maven/tag 发布工程材料。
+- `encrypted-blocked = 9` 与 `destructive-blocked = 29` 仍保留；它们不是 API 缺口，而是正式发布前必须显式说明的外部门禁。
+- 后续如果要正式发布，需要补齐产物签名、校验和、源码包、javadoc 包、许可证/SBOM、发布说明和回滚策略。
+
+详见 `docs/62-stage64-release-engineering-gates.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：

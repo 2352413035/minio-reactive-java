@@ -38,6 +38,7 @@ JDK8 分支：
 - `853f65f`：阶段 60 发布候选外部门禁复审检查点。
 - `4d6604a`：阶段 61 mc 只读发布候选证据检查点。
 - `d45e9bc`：阶段 62 用户面发布指南检查点。
+- `6f4ec7b`：阶段 63 最终缺口审计检查点。
 
 JDK17+ 分支：
 
@@ -56,8 +57,9 @@ JDK17+ 分支：
 - `62ab598`：阶段 60 发布候选外部门禁复审检查点。
 - `2a2fc8e`：阶段 61 mc 只读发布候选证据检查点。
 - `ba52239`：阶段 62 用户面发布指南检查点。
+- `e87138a`：阶段 63 最终缺口审计检查点。
 
-阶段 63 最终缺口审计口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 128 / 128，`raw-fallback = 0`。当前没有公开路由、产品入口或 raw-only 缺口；`encrypted-blocked = 9` 与 `destructive-blocked = 29` 属于必须保留的外部门禁。
+阶段 64 发布工程门禁口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 128 / 128，`raw-fallback = 0`。当前没有公开路由、产品入口或 raw-only 缺口；正式发布前必须先满足 Crypto Gate、独立 lab 和 Maven/tag 发布工程清单。
 
 ## 验证命令
 
