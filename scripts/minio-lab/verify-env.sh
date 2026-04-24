@@ -16,11 +16,22 @@ normalize_endpoint() {
   printf '%s' "$value"
 }
 
+has_write_fixture_config() {
+  [[ -n "${MINIO_LAB_ADD_TIER_BODY:-}" \
+    || -n "${MINIO_LAB_EDIT_TIER_BODY:-}" \
+    || -n "${MINIO_LAB_SET_REMOTE_TARGET_BODY:-}" \
+    || -n "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}" ]]
+}
+
 [[ "${MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS:-}" == "true" ]] || fail "必须显式设置 MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true 才能执行 破坏性 Admin 测试。"
 [[ -n "${MINIO_LAB_ENDPOINT:-}" ]] || fail "缺少 MINIO_LAB_ENDPOINT。"
 [[ -n "${MINIO_LAB_ACCESS_KEY:-}" ]] || fail "缺少 MINIO_LAB_ACCESS_KEY。"
 [[ -n "${MINIO_LAB_SECRET_KEY:-}" ]] || fail "缺少 MINIO_LAB_SECRET_KEY。"
 [[ "${MINIO_LAB_CAN_RESTORE:-}" == "true" ]] || fail "缺少 MINIO_LAB_CAN_RESTORE=true，无法证明实验环境具备回滚能力。"
+
+if has_write_fixture_config && [[ "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-}" != "true" ]]; then
+  fail "检测到 tier/remote target 写入夹具，但缺少 MINIO_LAB_ALLOW_WRITE_FIXTURES=true。"
+fi
 
 endpoint="$(normalize_endpoint "$MINIO_LAB_ENDPOINT")"
 [[ "$endpoint" =~ ^https?:// ]] || fail "MINIO_LAB_ENDPOINT 必须是 http:// 或 https:// 开头。"

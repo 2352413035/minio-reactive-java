@@ -36,6 +36,7 @@
 - `scripts/minio-lab/verify-env.sh` 返回 0
 - 使用独立、可回滚的实验环境
 - 至少一条 config write + restore 流程成功
+- 如果执行 tier 或 remote target 真实写入夹具，必须额外设置 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true`，并在报告中留下恢复证据。
 
 ## 4. 路由对标（route parity）与能力总表门禁
 
@@ -87,8 +88,17 @@
 - `MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN`
 - `MINIO_LAB_ENABLE_BATCH_JOB_PROBES`
 - `MINIO_LAB_BATCH_EXPECTED_JOB_ID`
+- `MINIO_LAB_ALLOW_WRITE_FIXTURES`
+- `MINIO_LAB_TIER_WRITE_NAME`
+- `MINIO_LAB_ADD_TIER_BODY`
+- `MINIO_LAB_EDIT_TIER_BODY`
+- `MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET`
+- `MINIO_LAB_SET_REMOTE_TARGET_BODY`
+- `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN`
 
 阶段 31 起，tier、remote target、batch job 夹具必须同时覆盖专用 typed 客户端和 `ReactiveMinioRawClient` catalog 兜底调用，证明“方便使用”和“灵活兜底”两条路径都可运行。这些夹具只能在独立 lab 中证明能力，不允许替代共享 live 门禁。
+
+阶段 36 起，tier 与 remote target 写入夹具必须先通过写入总开关，并在 finally 或报告恢复提示中保留删除路径。报告只允许记录请求体是否设置，不允许记录请求体内容。
 
 `run-destructive-tests.sh` 每次退出都会生成本机报告，默认写入 `target/minio-lab-reports/`，也可以通过 `MINIO_LAB_REPORT_DIR` 覆盖。报告只记录环境指纹、夹具开关和恢复提示，不得包含 access key、secret key、session token 或请求签名。
 
