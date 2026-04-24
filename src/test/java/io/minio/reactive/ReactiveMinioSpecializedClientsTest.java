@@ -671,6 +671,16 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage54AdminPolicyAndReplicationBoundaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getReplicationMrfInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "verifyTierInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "attachBuiltinPolicy");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "detachBuiltinPolicy");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "attachLdapPolicy");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "detachLdapPolicy");
+  }
+
+  @Test
   void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -908,6 +918,71 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
+  }
+
+  @Test
+  void shouldBuildStage54AdminPolicyAndReplicationBoundaryRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage54AdminPolicyAndReplicationBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    byte[] body = "{\"policy\":\"readonly\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    Assertions.assertEquals("ok", admin.getReplicationMrfInfo("bucket1").block().values().get("status"));
+    Assertions.assertEquals("tier-verify-ok", admin.verifyTierInfo("warm-tier").block().rawText());
+    Assertions.assertEquals("builtin-policy-attach", admin.attachBuiltinPolicy(body).block().source());
+    Assertions.assertEquals("builtin-policy-detach-ok", admin.detachBuiltinPolicy(body).block().rawText());
+    Assertions.assertEquals("ldap-policy-attach", admin.attachLdapPolicy(body).block().source());
+    Assertions.assertEquals("ldap-policy-detach-ok", admin.detachLdapPolicy(body).block().rawText());
+    Assertions.assertEquals(
+        "tier-verify-ok",
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_VERIFY_TIER"),
+                java.util.Collections.singletonMap("tier", "warm-tier"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.<String, String>emptyMap(),
+                null,
+                null)
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/replication/mrf"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/tier/warm-tier"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/builtin/policy/attach"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/builtin/policy/detach"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/ldap/policy/attach"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/ldap/policy/detach"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
+    Assertions.assertTrue(contentTypes.contains("application/json"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getReplicationMrfInfo(""));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.verifyTierInfo(" "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.attachBuiltinPolicy(new byte[0]));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.detachLdapPolicy(null));
   }
 
   @Test
@@ -1622,6 +1697,28 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"key-id\":\"dedicated-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
     }
     return "{}";
+  }
+
+  private static String stage54AdminPolicyAndReplicationBody(String path) {
+    if (path.equals("/minio/admin/v3/replication/mrf")) {
+      return "{\"status\":\"ok\"}";
+    }
+    if (path.equals("/minio/admin/v3/tier/warm-tier")) {
+      return "tier-verify-ok";
+    }
+    if (path.equals("/minio/admin/v3/idp/builtin/policy/attach")) {
+      return "builtin-policy-attach-ok";
+    }
+    if (path.equals("/minio/admin/v3/idp/builtin/policy/detach")) {
+      return "builtin-policy-detach-ok";
+    }
+    if (path.equals("/minio/admin/v3/idp/ldap/policy/attach")) {
+      return "ldap-policy-attach-ok";
+    }
+    if (path.equals("/minio/admin/v3/idp/ldap/policy/detach")) {
+      return "ldap-policy-detach-ok";
+    }
+    return "";
   }
 
   private static String stage53AdminMaintenanceBody(String path) {

@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 88 | 128 | 0 | 9 | 29 |
+| admin | 128 | 94 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -436,6 +436,19 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - Admin product-typed 提升到 88 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
 
 详见 `docs/51-stage53-admin-maintenance-boundary.md`。
+
+## 5.35 阶段 54 补充
+
+阶段 54 继续补充非 Crypto Gate 的 Admin 缺口和轻量写入边界：
+
+- `getReplicationMrfInfo(...)` 以 `AdminJsonResult` 包装 replication MRF 只读响应。
+- `verifyTierInfo(...)` 以 `AdminTextResult` 包装 tier verify 探测响应。
+- `attachBuiltinPolicy(...)` / `detachBuiltinPolicy(...)` 固定内置策略绑定和解绑 operation。
+- `attachLdapPolicy(...)` / `detachLdapPolicy(...)` 固定 LDAP 策略绑定和解绑 operation。
+- 这些策略变更方法要求非空请求体，不保存请求体中的用户、组、策略或身份源信息。
+- Admin product-typed 提升到 94 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
+
+详见 `docs/52-stage54-admin-policy-replication-boundary.md`。
 
 ## 6. 验证命令
 

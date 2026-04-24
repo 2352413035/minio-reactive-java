@@ -36,4 +36,4 @@
 
 ## 5. 后续建议
 
-下一阶段优先继续处理非 Crypto Gate 的 Admin 缺口，例如 replication MRF、tier verify、policy attach/detach 的语义化入口；如果触及配置删除、服务控制或 token 吊销，仍必须保留高风险文档和独立 lab 门禁。
+阶段 54 已继续处理 replication MRF、tier verify、policy attach/detach 的语义化入口；如果后续触及配置删除、服务控制或 token 吊销，仍必须保留高风险文档和独立 lab 门禁。
