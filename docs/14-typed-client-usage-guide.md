@@ -2,6 +2,16 @@
 
 ## 总原则
 
+## 快速选择
+
+- 只做对象上传、下载、列表、分片上传：用 `ReactiveMinioClient`。
+- 做管理端用户、策略、配置、诊断、维护：用 `ReactiveMinioAdminClient`，并先确认风险等级。
+- 做 KMS、STS、Metrics、Health：分别使用对应平级客户端，不要挂在对象存储客户端下面。
+- SDK 尚未及时封装的新接口：才使用 `ReactiveMinioRawClient` + `MinioApiCatalog` 兜底。
+- 遇到 `EncryptedAdminResponse`：说明是 Crypto Gate 未放行的 madmin 加密响应边界，不要当作明文 JSON。
+
+更完整的用户面发布说明见 `docs/60-stage62-user-facing-release-guide.md`。
+
 本 SDK 的推荐使用顺序是：
 
 1. 先用领域 typed 客户端。

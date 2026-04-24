@@ -201,6 +201,12 @@
 - 新增 `docs/59-stage61-mc-readonly-evidence.md` 记录只读证据摘要和边界说明。
 - `encrypted-blocked = 9`、`destructive-blocked = 29` 保持不变。
 
+### 阶段 62 补充
+
+- 新增 `docs/60-stage62-user-facing-release-guide.md`，把用户面使用路径收口为平级专用客户端优先、raw 兜底、风险边界不夸大。
+- `docs/14-typed-client-usage-guide.md` 增加快速选择说明，让普通集成方先知道该用哪个客户端。
+- 版本口径仍保持 `0.1.0-SNAPSHOT`，不因为 route/product-typed 满格就移除 Crypto Gate 或破坏性 lab 门禁。
+
 
 ### 阶段 35 补充
 

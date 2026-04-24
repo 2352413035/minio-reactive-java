@@ -51,7 +51,7 @@
 
 ## 6. 下一阶段建议
 
-下一阶段可以继续整理发布说明和用户指南：
+阶段 62 已继续整理用户面发布说明。后续仍可继续优化：
 
 1. 把“普通用户如何选 `ReactiveMinioClient` / Admin / KMS / STS / Metrics / Health / Raw”的路径写得更短。
 2. 把 Crypto Gate 和破坏性 lab 的未放行原因放到 release notes 显眼位置。

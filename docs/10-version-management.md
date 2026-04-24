@@ -35,6 +35,8 @@ JDK8 分支：
 - `a90ffe3`：阶段 57 服务类强破坏性边界检查点。
 - `e789009`：阶段 58 Crypto/lab 阻塞复核检查点。
 - `1fc6e39`：阶段 59 剩余 Admin 高风险产品边界检查点。
+- `853f65f`：阶段 60 发布候选外部门禁复审检查点。
+- `4d6604a`：阶段 61 mc 只读发布候选证据检查点。
 
 JDK17+ 分支：
 
@@ -50,8 +52,10 @@ JDK17+ 分支：
 - `d60703b`：阶段 57 服务类强破坏性边界检查点。
 - `2e67c6d`：阶段 58 Crypto/lab 阻塞复核检查点。
 - `abd69ad`：阶段 59 剩余 Admin 高风险产品边界检查点。
+- `62ab598`：阶段 60 发布候选外部门禁复审检查点。
+- `2a2fc8e`：阶段 61 mc 只读发布候选证据检查点。
 
-阶段 60 发布候选复审口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 128 / 128，`raw-fallback = 0`。`encrypted-blocked = 9` 与 `destructive-blocked = 29` 仍然是发布说明必须保留的风险边界。
+阶段 62 用户面发布指南口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 128 / 128，`raw-fallback = 0`。用户集成应优先选择平级专用客户端，raw 只做兜底；`encrypted-blocked = 9` 与 `destructive-blocked = 29` 仍然是发布说明必须保留的风险边界。
 
 ## 验证命令
 
