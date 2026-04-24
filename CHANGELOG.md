@@ -133,6 +133,14 @@
 - 不打正式 tag，不减少 `encrypted-blocked = 9` 或 `destructive-blocked = 29`。
 - 新增 `docs/50-stage52-release-review-version-management.md` 记录发布复审、版本管理和验证证据。
 
+### 阶段 53 补充
+
+- `ReactiveMinioAdminClient` 新增 root/bucket/prefix heal 的 `AdminTextResult` 产品入口。
+- 新增 pool decommission start/cancel 与 rebalance start/stop 的维护操作产品入口。
+- 这些接口可能消耗资源或改变维护状态，因此共享 live 测试只保留普通集成验证，维护操作使用 mock/raw 交叉验证。
+- Admin product-typed 从 81 / 128 提升到 88 / 128；Crypto Gate 与破坏性 lab 边界不变。
+- 新增 `docs/51-stage53-admin-maintenance-boundary.md` 记录维护窗口和验证边界。
+
 
 ### 阶段 35 补充
 

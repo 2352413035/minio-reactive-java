@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 81 | 128 | 0 | 9 | 29 |
+| admin | 128 | 88 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -417,12 +417,25 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 阶段 52 刷新发布复审与版本管理：
 
 - 双分支 route parity 重新生成，仍为 233 / 233，catalog 缺失 0、额外 0。
-- 双分支 capability matrix 重新生成，当前 Admin product-typed 为 81 / 128，`raw-fallback = 0`。
+- 双分支 capability matrix 重新生成，阶段 52 当时 Admin product-typed 为 81 / 128，`raw-fallback = 0`。
 - JDK8 `master` 与 JDK17+ `chore/jdk17-springboot3` 继续保持相同 SDK 语义。
 - Maven 版本仍为 `0.1.0-SNAPSHOT`，阶段 52 不打正式 tag。
 - Crypto Gate 与破坏性 lab 边界不变。
 
 详见 `docs/50-stage52-release-review-version-management.md`。
+
+
+## 5.34 阶段 53 补充
+
+阶段 53 补充 Admin 维护操作产品边界：
+
+- root/bucket/prefix heal 新增 `AdminTextResult` 产品入口。
+- pool decommission start/cancel 新增 `AdminTextResult` 产品入口。
+- rebalance start/stop 新增 `AdminTextResult` 产品入口，状态读取继续使用 `getRebalanceStatus()`。
+- 这些接口可能消耗集群资源或改变维护状态，因此只做 mock/raw 交叉验证，不在共享 live 中真实执行。
+- Admin product-typed 提升到 88 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
+
+详见 `docs/51-stage53-admin-maintenance-boundary.md`。
 
 ## 6. 验证命令
 

@@ -660,6 +660,17 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage53AdminMaintenanceOperationMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startRootHeal");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startBucketHeal");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startPrefixHeal");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startPoolDecommission");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "cancelPoolDecommission");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startRebalance");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "stopRebalance");
+  }
+
+  @Test
   void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -897,6 +908,68 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
+  }
+
+  @Test
+  void shouldBuildStage53AdminMaintenanceOperationRequestsAsText() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage53AdminMaintenanceBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    AdminTextResult rootHeal = admin.startRootHeal().block();
+    Assertions.assertEquals("heal-root", rootHeal.source());
+    Assertions.assertEquals("heal-root-ok", rootHeal.rawText());
+    Assertions.assertEquals("heal-bucket-ok", admin.startBucketHeal("bucket1").block().rawText());
+    Assertions.assertEquals(
+        "heal-prefix-ok", admin.startPrefixHeal("bucket1", "prefix1").block().rawText());
+    Assertions.assertEquals(
+        "pool-decommission-start", admin.startPoolDecommission("pool-0").block().source());
+    Assertions.assertEquals(
+        "pool-decommission-cancel-ok",
+        admin.cancelPoolDecommission("pool-0").block().rawText());
+    Assertions.assertEquals("rebalance-start-ok", admin.startRebalance().block().rawText());
+    Assertions.assertEquals("rebalance-stop-ok", admin.stopRebalance().block().rawText());
+    Assertions.assertEquals(
+        "rebalance-start-ok",
+        raw.executeToString(MinioApiCatalog.byName("ADMIN_REBALANCE_START"))
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/heal/"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/heal/bucket1"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/heal/bucket1/prefix1"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/pools/decommission"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/pools/cancel"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/rebalance/start"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/rebalance/stop"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "pool=pool-0"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.startBucketHeal(" "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.startPrefixHeal("bucket1", " "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.startPoolDecommission(""));
   }
 
   @Test
@@ -1549,6 +1622,31 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"key-id\":\"dedicated-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
     }
     return "{}";
+  }
+
+  private static String stage53AdminMaintenanceBody(String path) {
+    if (path.equals("/minio/admin/v3/heal/")) {
+      return "heal-root-ok";
+    }
+    if (path.equals("/minio/admin/v3/heal/bucket1")) {
+      return "heal-bucket-ok";
+    }
+    if (path.equals("/minio/admin/v3/heal/bucket1/prefix1")) {
+      return "heal-prefix-ok";
+    }
+    if (path.equals("/minio/admin/v3/pools/decommission")) {
+      return "pool-decommission-start-ok";
+    }
+    if (path.equals("/minio/admin/v3/pools/cancel")) {
+      return "pool-decommission-cancel-ok";
+    }
+    if (path.equals("/minio/admin/v3/rebalance/start")) {
+      return "rebalance-start-ok";
+    }
+    if (path.equals("/minio/admin/v3/rebalance/stop")) {
+      return "rebalance-stop-ok";
+    }
+    return "";
   }
 
   private static String stage48AdminDiagnosticProbeBody(String path) {
