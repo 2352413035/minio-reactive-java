@@ -34,6 +34,7 @@ JDK8 分支：
 - `1ce711f`：阶段 56 站点复制 peer lab-only 边界检查点。
 - `a90ffe3`：阶段 57 服务类强破坏性边界检查点。
 - `e789009`：阶段 58 Crypto/lab 阻塞复核检查点。
+- `1fc6e39`：阶段 59 剩余 Admin 高风险产品边界检查点。
 
 JDK17+ 分支：
 
@@ -48,8 +49,9 @@ JDK17+ 分支：
 - `fd5568b`：阶段 56 站点复制 peer lab-only 边界检查点。
 - `d60703b`：阶段 57 服务类强破坏性边界检查点。
 - `2e67c6d`：阶段 58 Crypto/lab 阻塞复核检查点。
+- `abd69ad`：阶段 59 剩余 Admin 高风险产品边界检查点。
 
-阶段 59 工作区口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 128 / 128，`raw-fallback = 0`。`encrypted-blocked = 9` 与 `destructive-blocked = 29` 仍然是发布说明必须保留的风险边界。
+阶段 60 发布候选复审口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 128 / 128，`raw-fallback = 0`。`encrypted-blocked = 9` 与 `destructive-blocked = 29` 仍然是发布说明必须保留的风险边界。
 
 ## 验证命令
 
