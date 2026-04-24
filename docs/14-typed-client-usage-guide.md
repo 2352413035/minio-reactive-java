@@ -134,6 +134,16 @@ AdminJsonResult health = admin.getHealthInfo().block();
 
 这些接口不是 destructive 操作，只读取状态；启动/停止 rebalance、decommission、service restart/update 等仍必须走风险分级和 lab 门禁。
 
+阶段 42 起，站点复制 peer 的 IDP 设置也有安全摘要模型：
+
+```java
+AdminSiteReplicationPeerIdpSettings idp = admin.getSiteReplicationPeerIdpSettings().block();
+boolean hasIdp = idp.identityProviderConfigured();
+int openidRoles = idp.openidRoleCount();
+```
+
+该模型不会保留 `rawJson()`。原因是 MinIO 返回里可能包含 OIDC provider 的客户端标识或哈希密钥字段，SDK 只给业务代码暴露可用于判断配置是否存在和数量是否一致的安全摘要。
+
 部分 Admin 只读能力依赖特定环境或配置，默认不作为共享 live 门禁：
 
 ```java

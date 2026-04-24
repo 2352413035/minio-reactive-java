@@ -47,6 +47,14 @@
 - Admin product-typed 口径从 60 / 128 提升到 63 / 128；加密和破坏性边界不变。
 - 新增 `docs/39-stage41-admin-iam-idp-readonly.md` 记录敏感字段处理原则。
 
+### 阶段 42 补充
+
+- `ReactiveMinioAdminClient` 新增 `getSiteReplicationPeerIdpSettings()`，用于读取站点复制 peer 的 IDP 设置安全摘要。
+- 新增 `AdminSiteReplicationPeerIdpSettings`，只暴露 LDAP/OpenID 是否启用、LDAP 搜索条件、OpenID 区域和角色数量，不保存 raw JSON，避免 OIDC 哈希密钥等字段进入普通模型。
+- 对照 madmin-go，为 site replication 相关专用客户端入口补齐 `api-version=1` 查询参数。
+- Admin product-typed 口径从 63 / 128 提升到 64 / 128；加密和破坏性边界不变。
+- 新增 `docs/40-stage42-site-replication-peer-idp.md` 记录站点复制 peer 只读摘要边界。
+
 
 ### 阶段 35 补充
 

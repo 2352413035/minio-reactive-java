@@ -54,7 +54,7 @@ minio.content=hello from reactive minio sdk
 - ACL、notification 与 S3 Select：对象/bucket ACL 已提供 Owner/Grant 模型和 canned ACL 便捷写入；notification 配置已提供目标模型；SelectObjectContent 已提供请求模型和原始事件流边界。
 - 分片上传：create/uploadPart/listParts/complete/abort 基础流程，以及 `listMultipartUploads` / `listMultipartUploadsPage` typed 分页模型。
 - 版本能力：`listObjectVersions` / `listObjectVersionsPage` typed 分页模型。
-- Admin：server/storage/data-usage/account/config-help、pool/rebalance/tier/site-replication/top-locks/obd/health 等 L1 只读摘要模型，用户、用户组、策略、服务账号等 typed 或风险分层入口。
+- Admin：server/storage/data-usage/account/config-help、pool/rebalance/tier/site-replication/peer-idp/top-locks/obd/health 等 L1 只读摘要模型，用户、用户组、策略、服务账号等 typed 或风险分层入口。
 - KMS、STS、Metrics、Health：均有独立专用客户端；KMS/Metrics 指标入口保留 Prometheus 文本和样本解析，STS 普通 AssumeRole 已有 typed 请求对象，Health 已有布尔检查。
 - madmin 加密边界：配置、服务账号、access key 等默认加密响应显式返回 `EncryptedAdminResponse`，并暴露算法诊断信息，不伪装成明文模型。
 - 破坏性 Admin 实验环境：破坏性 Admin 测试只允许在独立可回滚环境中运行，支持独立 lab 配置文件；默认共享 MinIO 集成测试不会修改危险配置。
@@ -69,7 +69,7 @@ minio.content=hello from reactive minio sdk
 | --- | --- |
 | 路由对标 | 233 / 233，JDK8 与 JDK17+ 两个分支均无缺失、无额外 catalog。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有公开 catalog 路由至少有 typed 或 advanced 兼容入口。 |
-| 产品强类型成熟度 | S3 77 / 77、Admin 63 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
+| 产品强类型成熟度 | S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
 | 风险边界 | Admin 仍有 9 个加密响应边界、29 个破坏性操作边界；破坏性写入只允许在独立 lab 通过显式写入夹具证明，不能在共享环境中伪装成“普通已完成”。 |
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
@@ -137,7 +137,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics/KMS 提供 Prometheus 文本包装和样本解析；STS 提供普通 AssumeRole / WebIdentity / ClientGrants / LDAP / SSO / 证书 / 自定义 token 临时凭证解析入口；KMS、Admin IAM、用户组、服务账号、Admin 只读状态摘要、策略绑定实体、IDP 配置、remote target、batch job 摘要以及 S3 版本/分片列表、对象治理、bucket CORS/website/logging/policy status、ACL/Select 等子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
 
-阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。阶段 31 把破坏性实验环境升级为 typed/raw 双路径校验：tier、remote target、batch job 夹具会先验证专用客户端摘要，再用 raw catalog 调用交叉佐证，同时生成本机执行报告。阶段 33 新增 S3 通知监听流式入口，避免把长连接事件流误包装成一次性字符串。阶段 34 继续补 Admin 站点复制元信息和 trace/log 流式诊断入口。阶段 35 补充 bucket 用户和临时账号只读摘要，同时继续保持 access key/service account 加密边界。阶段 36 新增 tier 与 remote target 的可回滚写入夹具，要求 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true` 才能执行，并同时验证专用 Admin 客户端与 raw 兜底调用。阶段 37 新增 batch job 与 site replication 实验矩阵，用本机私有请求体模板证明 start/cancel、add/remove 的恢复路径。阶段 38 删除临时 Test 示例类，补齐 KMS/STS 中文示例，并把 README 示例入口收口为正式用户路径。阶段 40 补充 Admin metrics、inspect-data、profiling/profile 的文本或二进制诊断包装。阶段 41 补充 LDAP/OpenID access key 只读摘要，并明确不保留 secret/token 原始响应。
+阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。阶段 31 把破坏性实验环境升级为 typed/raw 双路径校验：tier、remote target、batch job 夹具会先验证专用客户端摘要，再用 raw catalog 调用交叉佐证，同时生成本机执行报告。阶段 33 新增 S3 通知监听流式入口，避免把长连接事件流误包装成一次性字符串。阶段 34 继续补 Admin 站点复制元信息和 trace/log 流式诊断入口。阶段 35 补充 bucket 用户和临时账号只读摘要，同时继续保持 access key/service account 加密边界。阶段 36 新增 tier 与 remote target 的可回滚写入夹具，要求 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true` 才能执行，并同时验证专用 Admin 客户端与 raw 兜底调用。阶段 37 新增 batch job 与 site replication 实验矩阵，用本机私有请求体模板证明 start/cancel、add/remove 的恢复路径。阶段 38 删除临时 Test 示例类，补齐 KMS/STS 中文示例，并把 README 示例入口收口为正式用户路径。阶段 40 补充 Admin metrics、inspect-data、profiling/profile 的文本或二进制诊断包装。阶段 41 补充 LDAP/OpenID access key 只读摘要，并明确不保留 secret/token 原始响应。阶段 42 补充站点复制 peer IDP 设置安全摘要，并按 madmin-go 在专用客户端调用中补齐 site replication 的 api-version 查询参数。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
@@ -177,6 +177,13 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/31-stage33-s3-notification-listen.md`
 - `docs/32-stage34-admin-readonly-summaries.md`
 - `docs/33-stage35-admin-iam-boundary.md`
+- `docs/34-stage36-destructive-lab-write-fixtures.md`
+- `docs/35-stage37-batch-site-replication-lab-matrix.md`
+- `docs/36-stage38-examples-ux-closeout.md`
+- `docs/37-stage39-release-candidate-review.md`
+- `docs/38-stage40-admin-diagnostics-typed-wrappers.md`
+- `docs/39-stage41-admin-iam-idp-readonly.md`
+- `docs/40-stage42-site-replication-peer-idp.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

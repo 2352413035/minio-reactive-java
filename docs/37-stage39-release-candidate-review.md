@@ -8,7 +8,7 @@
 | --- | --- |
 | 路由对标 | 双分支 233 / 233，catalog 缺失 0、额外 0。 |
 | 可调用覆盖 | 双分支 `raw-fallback = 0`。 |
-| 产品 typed 成熟度 | S3 77 / 77、Admin 63 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。 |
+| 产品 typed 成熟度 | S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。 |
 | 加密边界 | Admin `encrypted-blocked = 9`，Crypto Gate 仍保持 Fail。 |
 | 破坏性边界 | Admin `destructive-blocked = 29`，只能在独立可回滚 lab 证明。 |
 | 示例入口 | 正式示例覆盖对象存储、Admin typed、Raw 兜底、Metrics/Health、KMS/STS。 |
@@ -46,7 +46,7 @@
 - 不能用 233 / 233 路由对标宣称“所有接口都已经最终强类型产品化”。
 - 不能在共享 MinIO 上宣称 tier、remote target、batch job、site replication 写入完成；这些必须引用独立 lab 报告。
 - 不能把 madmin 默认加密响应解析成明文模型；Crypto Gate Pass 前只能返回 `EncryptedAdminResponse`。
-- Admin product-typed 仍然只有 63 / 128，后续重点应是安全只读摘要和可恢复 lab 证据，而不是重复补 catalog。
+- Admin product-typed 仍然只有 64 / 128，后续重点应是安全只读摘要和可恢复 lab 证据，而不是重复补 catalog。
 
 ## 5. 下一轮计划入口
 
