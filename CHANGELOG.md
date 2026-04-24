@@ -5,6 +5,13 @@
 ## 0.1.0-SNAPSHOT 阶段 26 发布候选
 
 
+
+### 阶段 29 补充
+
+- `ReactiveMinioStsClient` 新增 SSO、客户端证书、自定义 token 三类 typed 凭证入口。
+- 新增 `AssumeRoleSsoRequest`、`AssumeRoleWithCertificateRequest`、`AssumeRoleWithCustomTokenRequest`。
+- STS product-typed 口径从 4 / 7 提升到 7 / 7。
+
 ### 阶段 28 补充
 
 - `ReactiveMinioClient` 新增 bucket notification typed 配置模型和 get/set 方法。

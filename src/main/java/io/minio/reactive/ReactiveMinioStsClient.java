@@ -88,6 +88,48 @@ public final class ReactiveMinioStsClient extends ReactiveMinioCatalogClientSupp
         io.minio.reactive.messages.sts.AssumeRoleWithLdapIdentityRequest.of(username, password));
   }
 
+  /** 使用 SSO 表单请求对象换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleSsoCredentials(
+      io.minio.reactive.messages.sts.AssumeRoleSsoRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return assumeRoleSsoForm(request.toFormBytes(), "application/x-www-form-urlencoded")
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
+  /** 使用客户端证书身份源换取临时凭证；实际 TLS 客户端证书需要由调用方配置到 WebClient。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithCertificateCredentials(
+      io.minio.reactive.messages.sts.AssumeRoleWithCertificateRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return executeToString(
+            "STS_ASSUME_ROLE_WITH_CERTIFICATE",
+            emptyMap(),
+            request.toQueryParameters(),
+            emptyMap(),
+            null,
+            null)
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
+  /** 使用自定义身份插件 token 换取临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithCustomTokenCredentials(
+      io.minio.reactive.messages.sts.AssumeRoleWithCustomTokenRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return executeToString(
+            "STS_ASSUME_ROLE_WITH_CUSTOM_TOKEN",
+            emptyMap(),
+            request.toQueryParameters(),
+            emptyMap(),
+            null,
+            null)
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
   /** 调用 `STS_ASSUME_ROLE_FORM`。 */
   public Mono<String> assumeRoleForm(byte[] body, String contentType) {
     return executeToString("STS_ASSUME_ROLE_FORM", emptyMap(), emptyMap(), emptyMap(), body, contentType);
@@ -99,11 +141,13 @@ public final class ReactiveMinioStsClient extends ReactiveMinioCatalogClientSupp
   }
 
   /** 调用 `STS_ASSUME_ROLE_SSO_FORM`。 */
+  @Deprecated
   public Mono<String> assumeRoleSsoForm(byte[] body, String contentType) {
     return executeToString("STS_ASSUME_ROLE_SSO_FORM", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `STS_ASSUME_ROLE_SSO_FORM`，不携带请求体。 */
+  @Deprecated
   public Mono<String> assumeRoleSsoForm() {
     return assumeRoleSsoForm(null, null);
   }
@@ -139,21 +183,25 @@ public final class ReactiveMinioStsClient extends ReactiveMinioCatalogClientSupp
   }
 
   /** 调用 `STS_ASSUME_ROLE_WITH_CERTIFICATE`。 */
+  @Deprecated
   public Mono<String> assumeRoleWithCertificate(byte[] body, String contentType) {
     return executeToString("STS_ASSUME_ROLE_WITH_CERTIFICATE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `STS_ASSUME_ROLE_WITH_CERTIFICATE`，不携带请求体。 */
+  @Deprecated
   public Mono<String> assumeRoleWithCertificate() {
     return assumeRoleWithCertificate(null, null);
   }
 
   /** 调用 `STS_ASSUME_ROLE_WITH_CUSTOM_TOKEN`。 */
+  @Deprecated
   public Mono<String> assumeRoleWithCustomToken(byte[] body, String contentType) {
     return executeToString("STS_ASSUME_ROLE_WITH_CUSTOM_TOKEN", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `STS_ASSUME_ROLE_WITH_CUSTOM_TOKEN`，不携带请求体。 */
+  @Deprecated
   public Mono<String> assumeRoleWithCustomToken() {
     return assumeRoleWithCustomToken(null, null);
   }

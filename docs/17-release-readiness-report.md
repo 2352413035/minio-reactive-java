@@ -19,7 +19,7 @@
 | s3 | 77 | 76 | 77 | 0 | 0 | 0 |
 | admin | 128 | 43 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
-| sts | 7 | 4 | 7 | 0 | 0 | 0 |
+| sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
 | health | 8 | 8 | 0 | 0 | 0 | 0 |
 
@@ -173,6 +173,16 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 新增 replication metrics v1/v2 JSON 包装，保留 raw JSON 和 Map 以兼容字段漂移。
 - notification listen 仍保持事件流边界，不伪装成普通一次性响应。
 - S3 product-typed 从 72 / 77 提升到 76 / 77。
+
+
+## 5.10 阶段 29 补充
+
+阶段 29 补齐 STS 高级身份源 typed 请求模型：
+
+- SSO 表单入口支持 WebIdentity / ClientGrants action、token、RoleArn 和 DurationSeconds。
+- 客户端证书入口支持 DurationSeconds，真实证书由调用方配置到 WebClient TLS 层。
+- 自定义 token 入口支持 Token、RoleArn 和 DurationSeconds。
+- STS product-typed 从 4 / 7 提升到 7 / 7。
 
 ## 6. 验证命令
 

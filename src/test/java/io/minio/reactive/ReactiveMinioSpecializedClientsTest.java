@@ -21,6 +21,10 @@ import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.SelectObjectContentRequest;
+import io.minio.reactive.messages.sts.AssumeRoleResult;
+import io.minio.reactive.messages.sts.AssumeRoleSsoRequest;
+import io.minio.reactive.messages.sts.AssumeRoleWithCertificateRequest;
+import io.minio.reactive.messages.sts.AssumeRoleWithCustomTokenRequest;
 import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -90,7 +94,7 @@ class ReactiveMinioSpecializedClientsTest {
     assertAdvancedBaseline(ReactiveMinioClient.class, 129, 60, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
-    assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 0, 0);
+    assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
     assertAdvancedBaseline(ReactiveMinioHealthClient.class, 0, 0, 0);
     assertAdvancedBaseline(ReactiveMinioRawClient.class, 3, 0, 8);
@@ -229,6 +233,56 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeStage23KmsAndMetricsTypedMethods() {
     assertMonoMethodExists(ReactiveMinioKmsClient.class, "scrapeMetrics");
     assertMonoMethodExists(ReactiveMinioMetricsClient.class, "scrapeLegacyMetrics");
+  }
+
+  @Test
+  void shouldExposeStage29StsAdvancedIdentityMethods() {
+    assertMonoMethodExists(ReactiveMinioStsClient.class, "assumeRoleSsoCredentials");
+    assertMonoMethodExists(ReactiveMinioStsClient.class, "assumeRoleWithCertificateCredentials");
+    assertMonoMethodExists(ReactiveMinioStsClient.class, "assumeRoleWithCustomTokenCredentials");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioStsClient.class, "assumeRoleSsoForm");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioStsClient.class, "assumeRoleWithCertificate");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioStsClient.class, "assumeRoleWithCustomToken");
+  }
+
+  @Test
+  void shouldBuildStage29StsAdvancedIdentityRequests() {
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  queries.add(request.url().getQuery());
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).body(stsSuccessXml()).build());
+                })
+            .build();
+    ReactiveMinioStsClient sts =
+        ReactiveMinioStsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .build();
+
+    AssumeRoleResult sso =
+        sts.assumeRoleSsoCredentials(
+                AssumeRoleSsoRequest.webIdentity("jwt").withRoleArn("arn:minio:iam:::role/demo"))
+            .block();
+    AssumeRoleResult certificate =
+        sts.assumeRoleWithCertificateCredentials(
+                AssumeRoleWithCertificateRequest.create().withDurationSeconds(900))
+            .block();
+    AssumeRoleResult custom =
+        sts.assumeRoleWithCustomTokenCredentials(
+                AssumeRoleWithCustomTokenRequest.of("opaque").withRoleArn("arn:minio:iam:::role/demo"))
+            .block();
+
+    Assertions.assertEquals("sts-access", sso.credentials().accessKey());
+    Assertions.assertEquals("sts-access", certificate.credentials().accessKey());
+    Assertions.assertEquals("sts-access", custom.credentials().accessKey());
+    Assertions.assertTrue(containsAllQueryParts(queries, "Action=AssumeRoleWithCertificate", "DurationSeconds=900"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "Action=AssumeRoleWithCustomToken", "Token=opaque"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> AssumeRoleSsoRequest.webIdentity(""));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> AssumeRoleWithCustomTokenRequest.of(""));
   }
 
 
@@ -857,6 +911,15 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"status\":\"ok\"}";
     }
     return "01234567890123456789012345678901234567890";
+  }
+
+  private static String stsSuccessXml() {
+    return "<AssumeRoleResponse><AssumeRoleResult><Credentials>"
+        + "<AccessKeyId>sts-access</AccessKeyId>"
+        + "<SecretAccessKey>sts-secret</SecretAccessKey>"
+        + "<SessionToken>sts-token</SessionToken>"
+        + "<Expiration>2030-01-01T00:00:00Z</Expiration>"
+        + "</Credentials></AssumeRoleResult></AssumeRoleResponse>";
   }
 
   private static String stage20S3ResponseBody(String query) {
