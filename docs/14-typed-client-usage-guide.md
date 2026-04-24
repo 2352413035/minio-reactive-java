@@ -52,6 +52,25 @@ client.listObjectVersions("bucket", "prefix/", true).collectList().block();
 client.listMultipartUploads("bucket", "prefix/", true).collectList().block();
 ```
 
+### S3 对象治理
+
+阶段 20 起，对象属性、保留策略、Legal Hold 和归档恢复也有 typed 入口：
+
+```java
+ObjectAttributes attributes = client.getObjectAttributes("bucket", "archive/a.txt").block();
+
+client.setObjectRetention(
+    "bucket",
+    "archive/a.txt",
+    ObjectRetentionConfiguration.governance("2030-01-01T00:00:00Z"))
+    .block();
+
+client.setObjectLegalHold("bucket", "archive/a.txt", ObjectLegalHoldConfiguration.enabled()).block();
+client.restoreObject("bucket", "archive/a.txt", RestoreObjectRequest.of(7, "Standard")).block();
+```
+
+这些方法的 advanced 兼容入口仍保留，但已经标记为 `@Deprecated`，业务代码应优先迁移到 typed 模型。object lock 和 restore 是否能在真实环境成功，取决于 bucket/object 的服务端配置。
+
 ## 管理端
 
 ```java

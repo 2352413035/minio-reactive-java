@@ -11,6 +11,9 @@ import io.minio.reactive.messages.admin.AdminTierList;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
 import io.minio.reactive.messages.admin.AddUserRequest;
+import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
+import io.minio.reactive.messages.ObjectRetentionConfiguration;
+import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -77,7 +80,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 26, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 35, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 0, 0);
@@ -418,6 +421,73 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
 
+  @Test
+  void shouldExposeS3ObjectGovernanceBusinessMethods() {
+    assertMonoMethodExists(ReactiveMinioClient.class, "getObjectAttributes");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getObjectRetention");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setObjectRetention");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getObjectLegalHold");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setObjectLegalHold");
+    assertMonoMethodExists(ReactiveMinioClient.class, "restoreObject");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectAttributes");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectRetention");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectLegalHold");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutObjectRetention");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutObjectLegalHold");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PostRestoreObject");
+  }
+
+
+  @Test
+  void shouldBuildS3ObjectGovernanceRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> objectAttributeHeaders = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  objectAttributeHeaders.add(request.headers().getFirst("X-Amz-Object-Attributes"));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage20S3ResponseBody(request.url().getQuery()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertEquals(42L, client.getObjectAttributes("bucket1", "folder/a.txt").block().objectSize());
+    Assertions.assertEquals(
+        ObjectRetentionConfiguration.GOVERNANCE,
+        client.getObjectRetention("bucket1", "folder/a.txt", "v1").block().mode());
+    client
+        .setObjectRetention(
+            "bucket1",
+            "folder/a.txt",
+            "v1",
+            ObjectRetentionConfiguration.governance("2030-01-01T00:00:00Z"))
+        .block();
+    Assertions.assertTrue(client.getObjectLegalHold("bucket1", "folder/a.txt", "v2").block().enabledValue());
+    client.setObjectLegalHold("bucket1", "folder/a.txt", "v2", ObjectLegalHoldConfiguration.enabled()).block();
+    client.restoreObject("bucket1", "folder/a.txt", "v3", RestoreObjectRequest.of(5, "Bulk")).block();
+
+    Assertions.assertTrue(paths.contains("/bucket1/folder/a.txt"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "attributes"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "retention", "versionId=v1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "legal-hold", "versionId=v2"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "restore", "versionId=v3"));
+    Assertions.assertTrue(objectAttributeHeaders.contains("ETag,ObjectSize,StorageClass,Checksum,ObjectParts"));
+  }
+
+
   private static void assertAllPublicOverloadsDeprecated(Class<?> type, String name) {
     int matched = 0;
     for (Method method : type.getMethods()) {
@@ -518,6 +588,19 @@ class ReactiveMinioSpecializedClientsTest {
       return "[]";
     }
     return "01234567890123456789012345678901234567890";
+  }
+
+  private static String stage20S3ResponseBody(String query) {
+    if (query != null && query.contains("attributes")) {
+      return "<GetObjectAttributesOutput><ETag>\"etag\"</ETag><ObjectSize>42</ObjectSize><StorageClass>STANDARD</StorageClass></GetObjectAttributesOutput>";
+    }
+    if (query != null && query.contains("retention")) {
+      return "<Retention><Mode>GOVERNANCE</Mode><RetainUntilDate>2030-01-01T00:00:00Z</RetainUntilDate></Retention>";
+    }
+    if (query != null && query.contains("legal-hold")) {
+      return "<LegalHold><Status>ON</Status></LegalHold>";
+    }
+    return "";
   }
 
   private static void assertMonoMethodExists(Class<?> type, String name) {

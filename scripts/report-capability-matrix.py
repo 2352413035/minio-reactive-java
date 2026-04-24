@@ -25,7 +25,9 @@ TYPED_METHODS = {
         'getBucketObjectLockConfiguration','setBucketObjectLockConfiguration','getBucketReplication','setBucketReplication','deleteBucketReplication',
         'getPresignedObjectUrl','getPresignedGetObjectUrl','listObjectVersions','listObjectVersionsPage',
         'createMultipartUpload','listMultipartUploads','listMultipartUploadsPage','uploadPart','listParts',
-        'completeMultipartUpload','abortMultipartUpload','uploadMultipartObject'
+        'completeMultipartUpload','abortMultipartUpload','uploadMultipartObject',
+        'getObjectAttributes','getObjectRetention','setObjectRetention',
+        'getObjectLegalHold','setObjectLegalHold','restoreObject'
     },
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',

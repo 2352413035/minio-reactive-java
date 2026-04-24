@@ -13,9 +13,13 @@ import io.minio.reactive.messages.ListPartsResult;
 import io.minio.reactive.messages.DeleteMarkerInfo;
 import io.minio.reactive.messages.MultipartUpload;
 import io.minio.reactive.messages.MultipartUploadInfo;
+import io.minio.reactive.messages.ObjectAttributes;
 import io.minio.reactive.messages.ObjectInfo;
+import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
+import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.PartInfo;
+import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.S3Error;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -262,6 +266,93 @@ public final class S3Xml {
     return tags;
   }
 
+  public static ObjectRetentionConfiguration parseObjectRetention(String xml) {
+    if (isBlank(xml)) {
+      return ObjectRetentionConfiguration.of("", "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    return ObjectRetentionConfiguration.of(text(root, "Mode"), text(root, "RetainUntilDate"));
+  }
+
+  public static String objectRetentionXml(ObjectRetentionConfiguration configuration) {
+    if (configuration == null) {
+      throw new IllegalArgumentException("对象保留配置不能为空");
+    }
+    StringBuilder builder = new StringBuilder();
+    builder.append("<Retention xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
+    if (!isBlank(configuration.mode())) {
+      builder.append("<Mode>").append(escapeXml(configuration.mode())).append("</Mode>");
+    }
+    if (!isBlank(configuration.retainUntilDate())) {
+      builder
+          .append("<RetainUntilDate>")
+          .append(escapeXml(configuration.retainUntilDate()))
+          .append("</RetainUntilDate>");
+    }
+    builder.append("</Retention>");
+    return builder.toString();
+  }
+
+  public static ObjectLegalHoldConfiguration parseObjectLegalHold(String xml) {
+    if (isBlank(xml)) {
+      return ObjectLegalHoldConfiguration.of("");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    return ObjectLegalHoldConfiguration.of(text(root, "Status"));
+  }
+
+  public static String objectLegalHoldXml(ObjectLegalHoldConfiguration configuration) {
+    if (configuration == null) {
+      throw new IllegalArgumentException("Legal Hold 配置不能为空");
+    }
+    StringBuilder builder = new StringBuilder();
+    builder.append("<LegalHold xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
+    if (!isBlank(configuration.status())) {
+      builder.append("<Status>").append(escapeXml(configuration.status())).append("</Status>");
+    }
+    builder.append("</LegalHold>");
+    return builder.toString();
+  }
+
+  public static String restoreObjectXml(RestoreObjectRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("对象恢复请求不能为空");
+    }
+    StringBuilder builder = new StringBuilder();
+    builder.append("<RestoreRequest xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
+    builder.append("<Days>").append(request.days()).append("</Days>");
+    if (!isBlank(request.tier())) {
+      builder
+          .append("<GlacierJobParameters><Tier>")
+          .append(escapeXml(request.tier()))
+          .append("</Tier></GlacierJobParameters>");
+    }
+    builder.append("</RestoreRequest>");
+    return builder.toString();
+  }
+
+  public static ObjectAttributes parseObjectAttributes(String xml) {
+    if (isBlank(xml)) {
+      return new ObjectAttributes("", "", 0L, "", "", "", "", "", 0);
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    Element checksum = firstElement(root, "Checksum");
+    Element objectParts = firstElement(root, "ObjectParts");
+    return new ObjectAttributes(
+        xml,
+        text(root, "ETag"),
+        parseLong(text(root, "ObjectSize")),
+        text(root, "StorageClass"),
+        checksum == null ? "" : text(checksum, "ChecksumCRC32"),
+        checksum == null ? "" : text(checksum, "ChecksumCRC32C"),
+        checksum == null ? "" : text(checksum, "ChecksumSHA1"),
+        checksum == null ? "" : text(checksum, "ChecksumSHA256"),
+        objectParts == null ? 0 : parseInt(text(objectParts, "TotalPartsCount")));
+  }
+
   private static List<String> commonPrefixes(Element root) {
     List<String> prefixes = new ArrayList<String>();
     NodeList commonPrefixes = root.getElementsByTagName("CommonPrefixes");
@@ -420,6 +511,15 @@ public final class S3Xml {
     Node node = nodes.item(0);
     String value = node == null ? null : node.getTextContent();
     return value == null ? "" : value.trim();
+  }
+
+  private static Element firstElement(Element element, String tagName) {
+    NodeList nodes = element.getElementsByTagName(tagName);
+    if (nodes.getLength() == 0) {
+      return null;
+    }
+    Node node = nodes.item(0);
+    return node instanceof Element ? (Element) node : null;
   }
 
   private static boolean parseBoolean(String value) {
