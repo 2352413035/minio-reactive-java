@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 76 | 77 | 0 | 0 | 0 |
-| admin | 128 | 43 | 128 | 0 | 9 | 29 |
+| admin | 128 | 50 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -183,6 +183,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 客户端证书入口支持 DurationSeconds，真实证书由调用方配置到 WebClient TLS 层。
 - 自定义 token 入口支持 Token、RoleArn 和 DurationSeconds。
 - STS product-typed 从 4 / 7 提升到 7 / 7。
+
+
+## 5.11 阶段 30 补充
+
+阶段 30 深化 Admin L1/L2 typed 摘要：
+
+- 新增策略绑定实体摘要。
+- 新增 IDP 配置列表与单配置 JSON 包装。
+- 新增 remote target 只读摘要，不暴露凭据字段。
+- 新增 batch job 列表、状态和详情摘要。
+- Admin product-typed 从 43 / 128 提升到 50 / 128。
 
 ## 6. 验证命令
 
