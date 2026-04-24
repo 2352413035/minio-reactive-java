@@ -205,6 +205,15 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - `run-destructive-tests.sh` 退出时生成本机报告，记录夹具开关、端点指纹和失败恢复提示，且不记录凭证。
 - `verify-env.sh` 仍拒绝共享 MinIO 与常见本机默认端点。
 
+## 5.13 阶段 32 补充
+
+阶段 32 完成 Crypto Gate 独立复审：
+
+- 继续保持 Crypto Gate Fail，不引入默认 madmin 响应解密依赖。
+- 新增 `scripts/madmin-fixtures/crypto-gate-status.properties`，记录 owner/security/architect 三方批准状态。
+- `check-crypto-gate.sh` 会校验状态文件、fixture、`pom.xml` 和源码 import。
+- 新增 `docs/30-stage32-crypto-gate-independent-review.md` 作为阶段 32 决策记录。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
