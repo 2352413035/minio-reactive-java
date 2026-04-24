@@ -16,7 +16,7 @@
 
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| s3 | 77 | 67 | 77 | 0 | 0 | 0 |
+| s3 | 77 | 72 | 77 | 0 | 0 | 0 |
 | admin | 128 | 43 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 4 | 7 | 0 | 0 | 0 |
@@ -154,6 +154,15 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 新增 `docs/24-stage26-release-closeout.md`，把 route parity、callability、typed maturity、Crypto Gate、destructive lab 和后续迭代方向集中成发布说明。
 - README 增加阶段 26 发布候选口径，避免用户把 route parity 误解为所有接口都已最终强类型化。
 - 后续计划应从“补目录”转为“提升产品 typed 成熟度和高风险真实验证”。
+
+## 5.8 阶段 27 补充
+
+阶段 27 继续提升 S3 typed 成熟度：
+
+- 新增 ACL Owner/Grant/Policy 模型和 object/bucket ACL typed 获取方法。
+- 新增 canned ACL 便捷写入方法，避免用户手写 `x-amz-acl` header。
+- 新增 SelectObjectContent 请求模型和响应边界对象，明确当前暂不承诺完整事件流 typed 解码。
+- S3 product-typed 从 67 / 77 提升到 72 / 77。
 
 ## 6. 验证命令
 

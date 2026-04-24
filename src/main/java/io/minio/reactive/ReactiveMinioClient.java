@@ -8,6 +8,7 @@ import io.minio.reactive.credentials.StaticCredentialsProvider;
 import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.http.ReactiveHttpClient;
 import io.minio.reactive.http.S3Request;
+import io.minio.reactive.messages.AccessControlPolicy;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.BucketAccelerateConfiguration;
 import io.minio.reactive.messages.BucketCorsConfiguration;
@@ -16,6 +17,7 @@ import io.minio.reactive.messages.BucketPolicyStatus;
 import io.minio.reactive.messages.BucketRequestPaymentConfiguration;
 import io.minio.reactive.messages.BucketVersioningConfiguration;
 import io.minio.reactive.messages.BucketWebsiteConfiguration;
+import io.minio.reactive.messages.CannedAcl;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.DeleteObjectsResult;
@@ -32,6 +34,8 @@ import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.PartInfo;
 import io.minio.reactive.messages.RestoreObjectRequest;
+import io.minio.reactive.messages.SelectObjectContentRequest;
+import io.minio.reactive.messages.SelectObjectContentResult;
 import io.minio.reactive.signer.S3RequestSigner;
 import io.minio.reactive.util.S3Escaper;
 import io.minio.reactive.util.S3Xml;
@@ -302,6 +306,44 @@ public final class ReactiveMinioClient {
     return sign(request(HttpMethod.HEAD, bucket, object).build()).flatMap(httpClient::exchangeToHeaders);
   }
 
+  /** 获取对象 ACL，返回 Owner、Grant 和原始 XML。 */
+  public Mono<AccessControlPolicy> getObjectAcl(String bucket, String object) {
+    S3Request request = request(HttpMethod.GET, bucket, object).queryParameter("acl", null).build();
+    return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseAccessControlPolicy);
+  }
+
+  /** 使用 canned ACL 设置对象权限，复杂 Grant XML 仍可走 advanced/raw 入口。 */
+  public Mono<Void> setObjectCannedAcl(String bucket, String object, CannedAcl cannedAcl) {
+    S3Request request =
+        request(HttpMethod.PUT, bucket, object)
+            .queryParameter("acl", null)
+            .header("x-amz-acl", requireCannedAcl(cannedAcl).headerValue())
+            .build();
+    return sign(request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /**
+   * 发起 S3 SelectObjectContent 请求。
+   *
+   * <p>MinIO/S3 Select 返回事件流，当前阶段先把请求模型和原始响应边界固定下来，后续再按事件流格式升级为 records/stats/progress 的完整 typed 解码。
+   */
+  public Mono<SelectObjectContentResult> selectObjectContent(
+      String bucket, String object, SelectObjectContentRequest selectRequest) {
+    String xml = S3Xml.selectObjectContentXml(selectRequest);
+    byte[] bytes = xml.getBytes(StandardCharsets.UTF_8);
+    S3Request request =
+        request(HttpMethod.POST, bucket, object)
+            .queryParameter("select", null)
+            .queryParameter("select-type", "2")
+            .contentType("application/xml")
+            .header("Content-Length", Integer.toString(bytes.length))
+            .body(bytes)
+            .build();
+    return sign(request)
+        .flatMap(httpClient::exchangeToString)
+        .map(SelectObjectContentResult::new);
+  }
+
   /**
    * 获取对象属性摘要。
    *
@@ -469,6 +511,21 @@ public final class ReactiveMinioClient {
   /** 获取 bucket request payment 配置摘要。 */
   public Mono<BucketRequestPaymentConfiguration> getBucketRequestPaymentConfiguration(String bucket) {
     return getBucketSubresource(bucket, "requestPayment").map(S3Xml::parseBucketRequestPayment);
+  }
+
+  /** 获取 bucket ACL，返回 Owner、Grant 和原始 XML。 */
+  public Mono<AccessControlPolicy> getBucketAcl(String bucket) {
+    return getBucketSubresource(bucket, "acl").map(S3Xml::parseAccessControlPolicy);
+  }
+
+  /** 使用 canned ACL 设置 bucket 权限，复杂 Grant XML 仍可走 advanced/raw 入口。 */
+  public Mono<Void> setBucketCannedAcl(String bucket, CannedAcl cannedAcl) {
+    S3Request request =
+        request(HttpMethod.PUT, bucket, null)
+            .queryParameter("acl", null)
+            .header("x-amz-acl", requireCannedAcl(cannedAcl).headerValue())
+            .build();
+    return sign(request).flatMap(httpClient::exchangeToVoid);
   }
 
   public Mono<String> getBucketPolicy(String bucket) {
@@ -780,6 +837,13 @@ public final class ReactiveMinioClient {
     return builder.toString();
   }
 
+  private static CannedAcl requireCannedAcl(CannedAcl cannedAcl) {
+    if (cannedAcl == null) {
+      throw new IllegalArgumentException("canned ACL 不能为空");
+    }
+    return cannedAcl;
+  }
+
   /** 目录型方法内部复用的空 Map。 */
   private static Map<String, String> emptyMap() {
     return Collections.<String, String>emptyMap();
@@ -924,18 +988,21 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_OBJECT_ACL`。 */
+  @Deprecated
   public Mono<String> s3GetObjectAcl(String bucket, String object) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_OBJECT_ACL"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_PUT_OBJECT_ACL`。 */
+  @Deprecated
   public Mono<String> s3PutObjectAcl(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_OBJECT_ACL"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_OBJECT_ACL`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutObjectAcl(String bucket, String object) {
     return s3PutObjectAcl(bucket, object, null, null);
   }
@@ -974,12 +1041,14 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_SELECT_OBJECT_CONTENT`。 */
+  @Deprecated
   public Mono<String> s3SelectObjectContent(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_SELECT_OBJECT_CONTENT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_SELECT_OBJECT_CONTENT`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3SelectObjectContent(String bucket, String object) {
     return s3SelectObjectContent(bucket, object, null, null);
   }
@@ -1160,18 +1229,21 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_BUCKET_ACL`。 */
+  @Deprecated
   public Mono<String> s3GetBucketAcl(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_ACL"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_PUT_BUCKET_ACL`。 */
+  @Deprecated
   public Mono<String> s3PutBucketAcl(String bucket, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_BUCKET_ACL"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_BUCKET_ACL`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutBucketAcl(String bucket) {
     return s3PutBucketAcl(bucket, null, null);
   }

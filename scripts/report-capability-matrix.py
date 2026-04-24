@@ -31,7 +31,9 @@ TYPED_METHODS = {
         'getBucketCorsConfiguration','setBucketCorsConfiguration','deleteBucketCorsConfiguration',
         'getBucketWebsiteConfiguration','deleteBucketWebsiteConfiguration',
         'getBucketLoggingConfiguration','getBucketPolicyStatus',
-        'getBucketAccelerateConfiguration','getBucketRequestPaymentConfiguration'
+        'getBucketAccelerateConfiguration','getBucketRequestPaymentConfiguration',
+        'getObjectAcl','setObjectCannedAcl','getBucketAcl','setBucketCannedAcl',
+        'selectObjectContent'
     },
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',

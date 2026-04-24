@@ -1,5 +1,8 @@
 package io.minio.reactive.util;
 
+import io.minio.reactive.messages.AccessControlGrant;
+import io.minio.reactive.messages.AccessControlOwner;
+import io.minio.reactive.messages.AccessControlPolicy;
 import io.minio.reactive.messages.BucketAccelerateConfiguration;
 import io.minio.reactive.messages.BucketCorsConfiguration;
 import io.minio.reactive.messages.BucketCorsRule;
@@ -28,6 +31,7 @@ import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.PartInfo;
 import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.S3Error;
+import io.minio.reactive.messages.SelectObjectContentRequest;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -340,6 +344,27 @@ public final class S3Xml {
     return builder.toString();
   }
 
+  public static String selectObjectContentXml(SelectObjectContentRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("S3 Select 请求不能为空");
+    }
+    StringBuilder builder = new StringBuilder();
+    builder.append("<SelectObjectContentRequest xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
+    builder.append("<Expression>").append(escapeXml(request.expression())).append("</Expression>");
+    builder
+        .append("<ExpressionType>")
+        .append(escapeXml(request.expressionType()))
+        .append("</ExpressionType>");
+    builder.append("<InputSerialization>").append(request.inputSerializationXml()).append("</InputSerialization>");
+    builder.append("<OutputSerialization>").append(request.outputSerializationXml()).append("</OutputSerialization>");
+    builder
+        .append("<RequestProgress><Enabled>")
+        .append(request.requestProgress())
+        .append("</Enabled></RequestProgress>");
+    builder.append("</SelectObjectContentRequest>");
+    return builder.toString();
+  }
+
   public static ObjectAttributes parseObjectAttributes(String xml) {
     if (isBlank(xml)) {
       return new ObjectAttributes("", "", 0L, "", "", "", "", "", 0);
@@ -358,6 +383,35 @@ public final class S3Xml {
         checksum == null ? "" : text(checksum, "ChecksumSHA1"),
         checksum == null ? "" : text(checksum, "ChecksumSHA256"),
         objectParts == null ? 0 : parseInt(text(objectParts, "TotalPartsCount")));
+  }
+
+  public static AccessControlPolicy parseAccessControlPolicy(String xml) {
+    if (isBlank(xml)) {
+      return new AccessControlPolicy(
+          new AccessControlOwner("", ""), Collections.<AccessControlGrant>emptyList(), "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    Element ownerElement = firstElement(root, "Owner");
+    AccessControlOwner owner =
+        ownerElement == null
+            ? new AccessControlOwner("", "")
+            : new AccessControlOwner(text(ownerElement, "ID"), text(ownerElement, "DisplayName"));
+    List<AccessControlGrant> grants = new ArrayList<AccessControlGrant>();
+    NodeList nodes = root.getElementsByTagName("Grant");
+    for (int i = 0; i < nodes.getLength(); i++) {
+      Element grant = (Element) nodes.item(i);
+      Element grantee = firstElement(grant, "Grantee");
+      grants.add(
+          new AccessControlGrant(
+              granteeType(grantee),
+              grantee == null ? "" : text(grantee, "ID"),
+              grantee == null ? "" : text(grantee, "DisplayName"),
+              grantee == null ? "" : text(grantee, "URI"),
+              grantee == null ? "" : text(grantee, "EmailAddress"),
+              text(grant, "Permission")));
+    }
+    return new AccessControlPolicy(owner, grants, xml);
   }
 
   private static List<String> commonPrefixes(Element root) {
@@ -619,6 +673,17 @@ public final class S3Xml {
     }
     Node node = nodes.item(0);
     return node instanceof Element ? (Element) node : null;
+  }
+
+  private static String granteeType(Element grantee) {
+    if (grantee == null) {
+      return "";
+    }
+    String xsiType = grantee.getAttribute("xsi:type");
+    if (!isBlank(xsiType)) {
+      return xsiType;
+    }
+    return grantee.getAttribute("type");
   }
 
   private static List<String> texts(Element element, String tagName) {

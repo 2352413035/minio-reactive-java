@@ -126,6 +126,38 @@ class S3XmlTest {
   }
 
   @Test
+  void shouldParseAccessControlPolicy() {
+    AccessControlPolicy policy =
+        S3Xml.parseAccessControlPolicy(
+            "<AccessControlPolicy>"
+                + "<Owner><ID>owner-id</ID><DisplayName>root</DisplayName></Owner>"
+                + "<AccessControlList>"
+                + "<Grant><Grantee xsi:type=\"CanonicalUser\"><ID>owner-id</ID><DisplayName>root</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant>"
+                + "<Grant><Grantee xsi:type=\"Group\"><URI>http://acs.amazonaws.com/groups/global/AllUsers</URI></Grantee><Permission>READ</Permission></Grant>"
+                + "</AccessControlList>"
+                + "</AccessControlPolicy>");
+
+    Assertions.assertEquals("owner-id", policy.owner().id());
+    Assertions.assertEquals("root", policy.owner().displayName());
+    Assertions.assertEquals(2, policy.grants().size());
+    Assertions.assertEquals("CanonicalUser", policy.grants().get(0).granteeType());
+    Assertions.assertEquals("FULL_CONTROL", policy.grants().get(0).permission());
+    Assertions.assertEquals("Group", policy.grants().get(1).granteeType());
+    Assertions.assertTrue(policy.grants().get(1).uri().contains("AllUsers"));
+    Assertions.assertTrue(policy.hasGrant("read"));
+  }
+
+  @Test
+  void shouldBuildSelectObjectContentXml() {
+    String xml = S3Xml.selectObjectContentXml(SelectObjectContentRequest.csv("select * from s3object"));
+
+    Assertions.assertTrue(xml.contains("<Expression>select * from s3object</Expression>"));
+    Assertions.assertTrue(xml.contains("<ExpressionType>SQL</ExpressionType>"));
+    Assertions.assertTrue(xml.contains("<InputSerialization>"));
+    Assertions.assertTrue(xml.contains("<OutputSerialization>"));
+  }
+
+  @Test
   void shouldBuildAndParseBucketCorsXml() {
     BucketCorsConfiguration configuration =
         BucketCorsConfiguration.of(

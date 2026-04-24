@@ -4,6 +4,13 @@
 
 ## 0.1.0-SNAPSHOT 阶段 26 发布候选
 
+### 阶段 27 补充
+
+- `ReactiveMinioClient` 新增对象/bucket ACL typed 方法和 canned ACL 便捷写入。
+- 新增 `AccessControlPolicy`、`AccessControlOwner`、`AccessControlGrant`、`CannedAcl`。
+- 新增 `SelectObjectContentRequest` 和 `SelectObjectContentResult`，先固定请求模型和原始事件流响应边界。
+- S3 product-typed 口径从 67 / 77 提升到 72 / 77。
+
 ### 已完成
 
 - 对照本地 `minio` 服务端公开路由，SDK catalog 覆盖 233 / 233，JDK8 与 JDK17+ 分支均无缺失、无额外 catalog。
