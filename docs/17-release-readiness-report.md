@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 94 | 128 | 0 | 9 | 29 |
+| admin | 128 | 97 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -449,6 +449,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - Admin product-typed 提升到 94 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
 
 详见 `docs/52-stage54-admin-policy-replication-boundary.md`。
+
+## 5.36 阶段 55 补充
+
+阶段 55 补充配置高风险操作产品边界：
+
+- `deleteConfigKvEntry(...)` 包装 `ADMIN_DELETE_CONFIG_KV`，要求非空请求体。
+- `clearConfigHistoryEntry(...)` 包装 `ADMIN_CLEAR_CONFIG_HISTORY_KV`，要求明确 `restoreId`。
+- `restoreConfigHistoryEntry(...)` 包装 `ADMIN_RESTORE_CONFIG_HISTORY_KV`，要求明确 `restoreId`。
+- 这些方法只固定高风险配置操作的文本响应边界，不读取、不保存真实配置值，不在共享 live 中真实执行。
+- Admin product-typed 提升到 97 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
+
+详见 `docs/53-stage55-admin-config-risk-boundary.md`。
 
 ## 6. 验证命令
 

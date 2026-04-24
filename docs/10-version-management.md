@@ -29,6 +29,7 @@ JDK8 分支：
 - `9bbbae4`：阶段 51 独立 lab 门禁复核检查点。
 - `e937e15`：阶段 52 发布复审与版本管理刷新检查点。
 - `445818c`：阶段 53 Admin 维护操作产品边界检查点。
+- `cfbaad2`：阶段 54 Admin 策略与复制轻量边界检查点。
 
 JDK17+ 分支：
 
@@ -38,8 +39,9 @@ JDK17+ 分支：
 - `f093021`：阶段 51 独立 lab 门禁复核检查点。
 - `1d79d3e`：阶段 52 发布复审与版本管理刷新检查点。
 - `da12ef7`：阶段 53 Admin 维护操作产品边界检查点。
+- `7d66e88`：阶段 54 Admin 策略与复制轻量边界检查点。
 
-阶段 54 复审口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 94 / 128，`raw-fallback = 0`。
+阶段 55 复审口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 97 / 128，`raw-fallback = 0`。
 
 ## 验证命令
 

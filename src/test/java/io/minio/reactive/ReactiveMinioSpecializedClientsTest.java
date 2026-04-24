@@ -681,6 +681,13 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage55AdminConfigRiskBoundaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "deleteConfigKvEntry");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "clearConfigHistoryEntry");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "restoreConfigHistoryEntry");
+  }
+
+  @Test
   void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -918,6 +925,66 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
+  }
+
+  @Test
+  void shouldBuildStage55AdminConfigRiskBoundaryRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage55AdminConfigRiskBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    byte[] deleteBody = "api requests_max".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    Assertions.assertEquals("config-kv-delete", admin.deleteConfigKvEntry(deleteBody).block().source());
+    Assertions.assertEquals(
+        "config-history-clear-ok", admin.clearConfigHistoryEntry("restore-1").block().rawText());
+    Assertions.assertEquals(
+        "config-history-restore-ok", admin.restoreConfigHistoryEntry("restore-1").block().rawText());
+    Assertions.assertEquals(
+        "config-history-restore-ok",
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_RESTORE_CONFIG_HISTORY_KV"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.singletonMap("restoreId", "restore-1"),
+                java.util.Collections.<String, String>emptyMap(),
+                null,
+                null)
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/del-config-kv"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/clear-config-history-kv"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/restore-config-history-kv"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "restoreId=restore-1"));
+    Assertions.assertTrue(contentTypes.contains("text/plain"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.deleteConfigKvEntry(new byte[0]));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.clearConfigHistoryEntry(" "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.restoreConfigHistoryEntry(null));
   }
 
   @Test
@@ -1697,6 +1764,19 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"key-id\":\"dedicated-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
     }
     return "{}";
+  }
+
+  private static String stage55AdminConfigRiskBody(String path) {
+    if (path.equals("/minio/admin/v3/del-config-kv")) {
+      return "config-kv-delete-ok";
+    }
+    if (path.equals("/minio/admin/v3/clear-config-history-kv")) {
+      return "config-history-clear-ok";
+    }
+    if (path.equals("/minio/admin/v3/restore-config-history-kv")) {
+      return "config-history-restore-ok";
+    }
+    return "";
   }
 
   private static String stage54AdminPolicyAndReplicationBody(String path) {

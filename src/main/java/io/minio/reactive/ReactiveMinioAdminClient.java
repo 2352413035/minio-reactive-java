@@ -68,6 +68,58 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         configText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
   }
 
+  /**
+   * 删除配置 KV 条目。
+   *
+   * <p>这是高风险配置变更，调用方必须传入 MinIO madmin 兼容请求体，并在执行前完成配置备份。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> deleteConfigKvEntry(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return deleteConfigKv(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("config-kv-delete", text));
+  }
+
+  /** 删除配置 KV 条目，默认使用 text/plain。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> deleteConfigKvEntry(
+      byte[] body) {
+    return deleteConfigKvEntry(body, "text/plain");
+  }
+
+  /** 清理指定配置历史；这是高风险维护操作，不在共享 live 中真实执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> clearConfigHistoryEntry(
+      String restoreId, byte[] body, String contentType) {
+    requireText("restoreId", restoreId);
+    return clearConfigHistoryKv(restoreId, body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "config-history-clear", text));
+  }
+
+  /** 清理指定配置历史，不携带请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> clearConfigHistoryEntry(
+      String restoreId) {
+    return clearConfigHistoryEntry(restoreId, null, null);
+  }
+
+  /** 恢复指定配置历史；调用方必须先确认备份、回滚窗口和 restoreId 来源。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> restoreConfigHistoryEntry(
+      String restoreId, byte[] body, String contentType) {
+    requireText("restoreId", restoreId);
+    return restoreConfigHistoryKv(restoreId, body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "config-history-restore", text));
+  }
+
+  /** 恢复指定配置历史，不携带请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> restoreConfigHistoryEntry(
+      String restoreId) {
+    return restoreConfigHistoryEntry(restoreId, null, null);
+  }
+
   /** 获取服务端信息摘要，返回强类型稳定字段并保留原始 JSON。 */
   public Mono<io.minio.reactive.messages.admin.AdminServerInfo> getServerInfo() {
     return serverInfo().map(io.minio.reactive.messages.admin.AdminServerInfo::parse);

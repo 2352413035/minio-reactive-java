@@ -66,7 +66,8 @@ TYPED_METHODS = {
         'startRebalance','stopRebalance',
         'getReplicationMrfInfo','verifyTierInfo',
         'attachBuiltinPolicy','detachBuiltinPolicy',
-        'attachLdapPolicy','detachLdapPolicy'
+        'attachLdapPolicy','detachLdapPolicy',
+        'deleteConfigKvEntry','clearConfigHistoryEntry','restoreConfigHistoryEntry'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {
