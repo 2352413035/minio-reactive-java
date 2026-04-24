@@ -7,6 +7,12 @@
 
 
 
+### 阶段 34 补充
+
+- `ReactiveMinioAdminClient` 新增 `getSiteReplicationMetainfo()`。
+- 新增 `traceStream()` / `logStream()`，以 `Flux<byte[]>` 暴露 Admin 诊断流。
+- Admin product-typed 口径从 50 / 128 提升到 53 / 128。
+
 ### 阶段 33 补充
 
 - `ReactiveMinioClient` 新增 `listenBucketNotification(...)` 与 `listenRootNotification(...)`。

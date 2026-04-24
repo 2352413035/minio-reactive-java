@@ -494,9 +494,16 @@ class ReactiveMinioSpecializedClientsTest {
     admin.getTierStats().block();
     admin.getSiteReplicationInfo().block();
     admin.getSiteReplicationStatus().block();
+    Assertions.assertEquals("ok", admin.getSiteReplicationMetainfo().block().values().get("status"));
     admin.getTopLocksInfo().block();
     admin.getObdInfo().block();
     admin.getHealthInfo().block();
+    Assertions.assertEquals(
+        "trace-line",
+        new String(admin.traceStream().blockFirst(), java.nio.charset.StandardCharsets.UTF_8).trim());
+    Assertions.assertEquals(
+        "log-line",
+        new String(admin.logStream().blockFirst(), java.nio.charset.StandardCharsets.UTF_8).trim());
     Assertions.assertTrue(admin.getConfigKvEncrypted("api").block().encryptedData().length > 0);
     Assertions.assertTrue(admin.listConfigHistoryKvEncrypted(1).block().encryptedData().length > 0);
     Assertions.assertTrue(admin.getConfigEncrypted().block().encryptedData().length > 0);
@@ -524,10 +531,13 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/rebalance/status"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/tier-stats"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/info"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/metainfo"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/status"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/top/locks"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/obdinfo"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/healthinfo"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/trace"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/log"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/get-config-kv"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/list-config-history-kv"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/config"));
@@ -551,9 +561,12 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTierStats");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationMetainfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTopLocksInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getObdInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getHealthInfo");
+    assertFluxMethodExists(ReactiveMinioAdminClient.class, "traceStream");
+    assertFluxMethodExists(ReactiveMinioAdminClient.class, "logStream");
     ReactiveMinioAdminClient admin =
         ReactiveMinioAdminClient.builder().endpoint("http://localhost:9000").region("us-east-1").build();
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getPoolStatus(" "));
@@ -998,11 +1011,18 @@ class ReactiveMinioSpecializedClientsTest {
         || path.endsWith("/rebalance/status")
         || path.endsWith("/tier-stats")
         || path.endsWith("/site-replication/info")
+        || path.endsWith("/site-replication/metainfo")
         || path.endsWith("/site-replication/status")
         || path.endsWith("/top/locks")
         || path.endsWith("/obdinfo")
         || path.endsWith("/healthinfo")) {
       return "{\"status\":\"ok\"}";
+    }
+    if (path.endsWith("/trace")) {
+      return "trace-line\n";
+    }
+    if (path.endsWith("/log")) {
+      return "log-line\n";
     }
     return "01234567890123456789012345678901234567890";
   }

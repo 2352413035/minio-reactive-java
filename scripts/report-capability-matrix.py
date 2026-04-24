@@ -47,7 +47,8 @@ TYPED_METHODS = {
         'setUserPolicy','setGroupPolicy','listUsersEncrypted','listGroupsTyped','getGroupInfo','setGroupEnabled','updateGroupMembers',
         'createServiceAccount','getServiceAccountInfoEncrypted','listServiceAccountsEncrypted','deleteServiceAccountTyped','addServiceAccount',
         'getBucketQuotaInfo','listTiers','listPolicyEntities','listIdpConfigs','getIdpConfigInfo',
-        'listRemoteTargetsInfo','listBatchJobsInfo','getBatchJobStatusInfo','describeBatchJobInfo'
+        'listRemoteTargetsInfo','listBatchJobsInfo','getBatchJobStatusInfo','describeBatchJobInfo',
+        'getSiteReplicationMetainfo','traceStream','logStream'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {
