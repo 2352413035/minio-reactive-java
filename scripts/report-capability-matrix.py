@@ -35,7 +35,7 @@ TYPED_METHODS = {
         'getObjectAcl','setObjectCannedAcl','getBucketAcl','setBucketCannedAcl',
         'selectObjectContent','getBucketNotificationConfiguration',
         'setBucketNotificationConfiguration','getBucketReplicationMetrics',
-        'getBucketReplicationMetricsV2'
+        'getBucketReplicationMetricsV2','listenBucketNotification','listenRootNotification'
     },
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',
@@ -93,7 +93,7 @@ def parse_catalog(java_file: Path):
 def public_methods(java_file: Path):
     text = java_file.read_text(encoding='utf-8')
     methods = []
-    for ret, name in re.findall(r'public\s+([A-Za-z0-9_<>\.? ,]+)\s+([a-zA-Z0-9_]+)\s*\(', text):
+    for ret, name in re.findall(r'public\s+([A-Za-z0-9_<>\.? ,\[\]]+)\s+([a-zA-Z0-9_]+)\s*\(', text):
         methods.append((ret.strip(), name))
     return methods, text
 

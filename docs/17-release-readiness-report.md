@@ -16,7 +16,7 @@
 
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| s3 | 77 | 76 | 77 | 0 | 0 | 0 |
+| s3 | 77 | 77 | 77 | 0 | 0 | 0 |
 | admin | 128 | 50 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
@@ -213,6 +213,15 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 新增 `scripts/madmin-fixtures/crypto-gate-status.properties`，记录 owner/security/architect 三方批准状态。
 - `check-crypto-gate.sh` 会校验状态文件、fixture、`pom.xml` 和源码 import。
 - 新增 `docs/30-stage32-crypto-gate-independent-review.md` 作为阶段 32 决策记录。
+
+## 5.14 阶段 33 补充
+
+阶段 33 补齐 S3 通知监听产品化边界：
+
+- 新增 `listenBucketNotification(...)` 和 `listenRootNotification(...)`。
+- 返回 `Flux<byte[]>`，明确这是长连接事件流。
+- advanced 的 `s3Listen*` 方法继续保留兼容，但不作为推荐业务入口。
+- S3 product-typed 从 76 / 77 提升到 77 / 77。
 
 ## 6. 验证命令
 

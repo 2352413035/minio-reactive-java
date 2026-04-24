@@ -31,3 +31,8 @@
 - `S3XmlTest` 覆盖 notification XML 生成和解析。
 - `ReactiveMinioSpecializedClientsTest` 覆盖 notification/replication metrics typed 方法暴露、query 构造和 deprecated 迁移标记。
 - `scripts/report-capability-matrix.py` 显示 S3 product-typed 从 72 / 77 提升到 76 / 77。
+
+
+## 阶段 33 补充
+
+通知监听现在提供 `listenBucketNotification(...)` 和 `listenRootNotification(...)`，以 `Flux<byte[]>` 暴露长连接事件流。配置读写仍使用阶段 28 的 notification typed XML 模型。
