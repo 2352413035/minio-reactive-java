@@ -9,7 +9,13 @@ import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.http.ReactiveHttpClient;
 import io.minio.reactive.http.S3Request;
 import io.minio.reactive.messages.BucketInfo;
+import io.minio.reactive.messages.BucketAccelerateConfiguration;
+import io.minio.reactive.messages.BucketCorsConfiguration;
+import io.minio.reactive.messages.BucketLoggingConfiguration;
+import io.minio.reactive.messages.BucketPolicyStatus;
+import io.minio.reactive.messages.BucketRequestPaymentConfiguration;
 import io.minio.reactive.messages.BucketVersioningConfiguration;
+import io.minio.reactive.messages.BucketWebsiteConfiguration;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.DeleteObjectsResult;
@@ -418,6 +424,51 @@ public final class ReactiveMinioClient {
   public Mono<Void> deleteBucketTags(String bucket) {
     S3Request request = request(HttpMethod.DELETE, bucket, null).queryParameter("tagging", null).build();
     return sign(request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 获取 bucket CORS 配置，返回规则列表模型。 */
+  public Mono<BucketCorsConfiguration> getBucketCorsConfiguration(String bucket) {
+    return getBucketSubresource(bucket, "cors").map(S3Xml::parseBucketCors);
+  }
+
+  /** 设置 bucket CORS 配置。 */
+  public Mono<Void> setBucketCorsConfiguration(String bucket, BucketCorsConfiguration configuration) {
+    return putBucketSubresource(bucket, "cors", S3Xml.bucketCorsXml(configuration), "application/xml");
+  }
+
+  /** 删除 bucket CORS 配置。 */
+  public Mono<Void> deleteBucketCorsConfiguration(String bucket) {
+    return deleteBucketSubresource(bucket, "cors");
+  }
+
+  /** 获取 bucket 静态网站配置摘要。 */
+  public Mono<BucketWebsiteConfiguration> getBucketWebsiteConfiguration(String bucket) {
+    return getBucketSubresource(bucket, "website").map(S3Xml::parseBucketWebsite);
+  }
+
+  /** 删除 bucket 静态网站配置。 */
+  public Mono<Void> deleteBucketWebsiteConfiguration(String bucket) {
+    return deleteBucketSubresource(bucket, "website");
+  }
+
+  /** 获取 bucket 日志配置摘要。 */
+  public Mono<BucketLoggingConfiguration> getBucketLoggingConfiguration(String bucket) {
+    return getBucketSubresource(bucket, "logging").map(S3Xml::parseBucketLogging);
+  }
+
+  /** 获取 bucket policy status 摘要。 */
+  public Mono<BucketPolicyStatus> getBucketPolicyStatus(String bucket) {
+    return getBucketSubresource(bucket, "policyStatus").map(S3Xml::parseBucketPolicyStatus);
+  }
+
+  /** 获取 bucket accelerate 配置摘要。 */
+  public Mono<BucketAccelerateConfiguration> getBucketAccelerateConfiguration(String bucket) {
+    return getBucketSubresource(bucket, "accelerate").map(S3Xml::parseBucketAccelerate);
+  }
+
+  /** 获取 bucket request payment 配置摘要。 */
+  public Mono<BucketRequestPaymentConfiguration> getBucketRequestPaymentConfiguration(String bucket) {
+    return getBucketSubresource(bucket, "requestPayment").map(S3Xml::parseBucketRequestPayment);
   }
 
   public Mono<String> getBucketPolicy(String bucket) {
@@ -1126,52 +1177,61 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_BUCKET_CORS`。 */
+  @Deprecated
   public Mono<String> s3GetBucketCors(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_CORS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_PUT_BUCKET_CORS`。 */
+  @Deprecated
   public Mono<String> s3PutBucketCors(String bucket, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_BUCKET_CORS"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_BUCKET_CORS`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutBucketCors(String bucket) {
     return s3PutBucketCors(bucket, null, null);
   }
 
   /** 调用 `S3_DELETE_BUCKET_CORS`。 */
+  @Deprecated
   public Mono<String> s3DeleteBucketCors(String bucket, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_DELETE_BUCKET_CORS"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_DELETE_BUCKET_CORS`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3DeleteBucketCors(String bucket) {
     return s3DeleteBucketCors(bucket, null, null);
   }
 
   /** 调用 `S3_GET_BUCKET_WEBSITE`。 */
+  @Deprecated
   public Mono<String> s3GetBucketWebsite(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_WEBSITE"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_GET_BUCKET_ACCELERATE`。 */
+  @Deprecated
   public Mono<String> s3GetBucketAccelerate(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_ACCELERATE"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_GET_BUCKET_REQUEST_PAYMENT`。 */
+  @Deprecated
   public Mono<String> s3GetBucketRequestPayment(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_REQUEST_PAYMENT"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_GET_BUCKET_LOGGING`。 */
+  @Deprecated
   public Mono<String> s3GetBucketLogging(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_LOGGING"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
@@ -1185,12 +1245,14 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_DELETE_BUCKET_WEBSITE`。 */
+  @Deprecated
   public Mono<String> s3DeleteBucketWebsite(String bucket, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_DELETE_BUCKET_WEBSITE"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_DELETE_BUCKET_WEBSITE`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3DeleteBucketWebsite(String bucket) {
     return s3DeleteBucketWebsite(bucket, null, null);
   }
@@ -1238,6 +1300,7 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_BUCKET_POLICY_STATUS`。 */
+  @Deprecated
   public Mono<String> s3GetBucketPolicyStatus(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_POLICY_STATUS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);

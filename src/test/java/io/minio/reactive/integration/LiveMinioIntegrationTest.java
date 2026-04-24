@@ -9,6 +9,8 @@ import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.errors.ReactiveMinioKmsException;
 import io.minio.reactive.errors.ReactiveS3Exception;
 import io.minio.reactive.messages.kms.KmsJsonResult;
+import io.minio.reactive.messages.BucketCorsConfiguration;
+import io.minio.reactive.messages.BucketCorsRule;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminAccountSummary;
@@ -174,6 +176,7 @@ class LiveMinioIntegrationTest {
     Assertions.assertEquals("alpha", client.getObjectAsString(bucket, "folder/a.txt").block());
     Assertions.assertFalse(client.statObject(bucket, "folder/a.txt").block().isEmpty());
     assertObjectAttributesIfServerSupportsIt();
+    assertBucketCorsIfServerSupportsIt();
     ReactiveS3Exception missingObject =
         Assertions.assertThrows(
             ReactiveS3Exception.class, () -> client.getObjectAsBytes(bucket, "missing-object.txt").block());
@@ -300,6 +303,27 @@ class LiveMinioIntegrationTest {
       Assertions.assertTrue(
           error.statusCode() == 400 || error.statusCode() == 501,
           "GetObjectAttributes 如果失败，应是服务端能力或参数边界，而不是 SDK 请求链路错误: " + error.responseBody());
+    }
+  }
+
+  private void assertBucketCorsIfServerSupportsIt() {
+    try {
+      BucketCorsConfiguration cors =
+          BucketCorsConfiguration.of(
+              Arrays.asList(
+                  new BucketCorsRule(
+                      Arrays.asList("GET"),
+                      Arrays.asList("*"),
+                      Arrays.asList("Authorization"),
+                      Arrays.asList("ETag"),
+                      60)));
+      client.setBucketCorsConfiguration(bucket, cors).block();
+      Assertions.assertFalse(client.getBucketCorsConfiguration(bucket).block().rules().isEmpty());
+      client.deleteBucketCorsConfiguration(bucket).block();
+    } catch (ReactiveS3Exception error) {
+      Assertions.assertTrue(
+          error.statusCode() == 400 || error.statusCode() == 501,
+          "Bucket CORS 如果失败，应是服务端能力或参数边界，而不是 SDK 请求链路错误: " + error.responseBody());
     }
   }
 

@@ -50,6 +50,7 @@ minio.content=hello from reactive minio sdk
 - 对象读写：`listObjects` / `listObjectsPage`、`putObject`、`getObject`、`getObjectRange`、`getObjectAsBytes`、`getObjectAsString`、`statObject`、`copyObject`、`removeObject`、`removeObjects`。
 - 对象和桶子资源：object/bucket tagging、bucket policy/lifecycle/versioning/notification/encryption/object-lock/replication 等 XML/JSON 入口，其中 bucket versioning 已提供 typed 配置对象。
 - 对象治理：object attributes、object retention、legal hold、restore 已提供 typed 请求/响应模型。
+- bucket 子资源治理：CORS、website、logging、policy status、accelerate、request payment 已提供 typed 或摘要模型。
 - 分片上传：create/uploadPart/listParts/complete/abort 基础流程，以及 `listMultipartUploads` / `listMultipartUploadsPage` typed 分页模型。
 - 版本能力：`listObjectVersions` / `listObjectVersionsPage` typed 分页模型。
 - Admin：server/storage/data-usage/account/config-help 等 L1 只读摘要模型，用户、用户组、策略、服务账号等 typed 或风险分层入口。
@@ -67,7 +68,7 @@ minio.content=hello from reactive minio sdk
 | --- | --- |
 | 路由对标 | 233 / 233，JDK8 与 JDK17+ 两个分支均无缺失、无额外 catalog。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有公开 catalog 路由至少有 typed 或 advanced 兼容入口。 |
-| 产品强类型成熟度 | S3 58 / 77、Admin 33 / 128、KMS 6 / 7、STS 4 / 7、Metrics 5 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
+| 产品强类型成熟度 | S3 67 / 77、Admin 33 / 128、KMS 6 / 7、STS 4 / 7、Metrics 5 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
 | 风险边界 | Admin 仍有 9 个加密响应边界、29 个破坏性操作边界；这些能力不能在共享环境中伪装成“普通已完成”。 |
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
@@ -130,7 +131,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 一般业务项目优先直接创建并使用 `ReactiveMinioClient`。只有需要管理端、KMS、STS、监控、健康检查等能力时，才直接创建对应专用客户端。所有客户端都是平级入口；`ReactiveMinioRawClient` 是最后的兜底层，用于尚未封装成专用方法的新接口或特殊接口。
 
-当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics 提供 Prometheus 文本包装和样本解析；STS 提供普通 AssumeRole / WebIdentity / ClientGrants / LDAP 临时凭证解析入口；KMS、Admin IAM、用户组、服务账号以及 S3 版本/分片列表、对象治理等子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
+当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics 提供 Prometheus 文本包装和样本解析；STS 提供普通 AssumeRole / WebIdentity / ClientGrants / LDAP 临时凭证解析入口；KMS、Admin IAM、用户组、服务账号以及 S3 版本/分片列表、对象治理、bucket CORS/website/logging/policy status 等子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
@@ -155,6 +156,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/16-crypto-boundary-map.md`
 - `docs/17-release-readiness-report.md`
 - `docs/18-stage20-s3-object-governance.md`
+- `docs/19-stage21-s3-bucket-subresources.md`
 - `docs/release-gates.md`
 - `scripts/madmin-fixtures/`
 - `scripts/minio-lab/`

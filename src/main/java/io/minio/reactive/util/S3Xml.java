@@ -1,7 +1,14 @@
 package io.minio.reactive.util;
 
+import io.minio.reactive.messages.BucketAccelerateConfiguration;
+import io.minio.reactive.messages.BucketCorsConfiguration;
+import io.minio.reactive.messages.BucketCorsRule;
 import io.minio.reactive.messages.BucketInfo;
+import io.minio.reactive.messages.BucketLoggingConfiguration;
+import io.minio.reactive.messages.BucketPolicyStatus;
+import io.minio.reactive.messages.BucketRequestPaymentConfiguration;
 import io.minio.reactive.messages.BucketVersioningConfiguration;
+import io.minio.reactive.messages.BucketWebsiteConfiguration;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.DeletedObject;
@@ -431,6 +438,98 @@ public final class S3Xml {
     return builder.toString();
   }
 
+  public static BucketCorsConfiguration parseBucketCors(String xml) {
+    if (isBlank(xml)) {
+      return BucketCorsConfiguration.empty();
+    }
+    Document document = parse(xml);
+    NodeList nodes = document.getDocumentElement().getElementsByTagName("CORSRule");
+    List<BucketCorsRule> rules = new ArrayList<BucketCorsRule>();
+    for (int i = 0; i < nodes.getLength(); i++) {
+      Element rule = (Element) nodes.item(i);
+      rules.add(
+          new BucketCorsRule(
+              texts(rule, "AllowedMethod"),
+              texts(rule, "AllowedOrigin"),
+              texts(rule, "AllowedHeader"),
+              texts(rule, "ExposeHeader"),
+              parseInt(text(rule, "MaxAgeSeconds"))));
+    }
+    return BucketCorsConfiguration.of(rules);
+  }
+
+  public static String bucketCorsXml(BucketCorsConfiguration configuration) {
+    BucketCorsConfiguration safe =
+        configuration == null ? BucketCorsConfiguration.empty() : configuration;
+    StringBuilder builder = new StringBuilder();
+    builder.append("<CORSConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
+    for (BucketCorsRule rule : safe.rules()) {
+      builder.append("<CORSRule>");
+      appendXmlValues(builder, "AllowedOrigin", rule.allowedOrigins());
+      appendXmlValues(builder, "AllowedMethod", rule.allowedMethods());
+      appendXmlValues(builder, "AllowedHeader", rule.allowedHeaders());
+      appendXmlValues(builder, "ExposeHeader", rule.exposeHeaders());
+      if (rule.maxAgeSeconds() > 0) {
+        builder.append("<MaxAgeSeconds>").append(rule.maxAgeSeconds()).append("</MaxAgeSeconds>");
+      }
+      builder.append("</CORSRule>");
+    }
+    builder.append("</CORSConfiguration>");
+    return builder.toString();
+  }
+
+  public static BucketWebsiteConfiguration parseBucketWebsite(String xml) {
+    if (isBlank(xml)) {
+      return new BucketWebsiteConfiguration("", "", "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    Element index = firstElement(root, "IndexDocument");
+    Element error = firstElement(root, "ErrorDocument");
+    return new BucketWebsiteConfiguration(
+        index == null ? "" : text(index, "Suffix"), error == null ? "" : text(error, "Key"), xml);
+  }
+
+  public static BucketLoggingConfiguration parseBucketLogging(String xml) {
+    if (isBlank(xml)) {
+      return new BucketLoggingConfiguration("", "", "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    Element enabled = firstElement(root, "LoggingEnabled");
+    return new BucketLoggingConfiguration(
+        enabled == null ? "" : text(enabled, "TargetBucket"),
+        enabled == null ? "" : text(enabled, "TargetPrefix"),
+        xml);
+  }
+
+  public static BucketPolicyStatus parseBucketPolicyStatus(String xml) {
+    if (isBlank(xml)) {
+      return new BucketPolicyStatus(false, "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    return new BucketPolicyStatus(parseBoolean(text(root, "IsPublic")), xml);
+  }
+
+  public static BucketAccelerateConfiguration parseBucketAccelerate(String xml) {
+    if (isBlank(xml)) {
+      return new BucketAccelerateConfiguration("", "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    return new BucketAccelerateConfiguration(text(root, "Status"), xml);
+  }
+
+  public static BucketRequestPaymentConfiguration parseBucketRequestPayment(String xml) {
+    if (isBlank(xml)) {
+      return new BucketRequestPaymentConfiguration("", "");
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    return new BucketRequestPaymentConfiguration(text(root, "Payer"), xml);
+  }
+
   public static String completeMultipartXml(List<CompletePart> parts) {
     StringBuilder builder = new StringBuilder();
     builder.append("<CompleteMultipartUpload>");
@@ -520,6 +619,32 @@ public final class S3Xml {
     }
     Node node = nodes.item(0);
     return node instanceof Element ? (Element) node : null;
+  }
+
+  private static List<String> texts(Element element, String tagName) {
+    NodeList nodes = element.getElementsByTagName(tagName);
+    List<String> result = new ArrayList<String>();
+    for (int i = 0; i < nodes.getLength(); i++) {
+      Node node = nodes.item(i);
+      String value = node == null ? null : node.getTextContent();
+      if (!isBlank(value)) {
+        result.add(value.trim());
+      }
+    }
+    return result;
+  }
+
+  private static void appendXmlValues(StringBuilder builder, String tagName, List<String> values) {
+    if (values == null) {
+      return;
+    }
+    for (String value : values) {
+      if (!isBlank(value)) {
+        builder.append('<').append(tagName).append('>')
+            .append(escapeXml(value))
+            .append("</").append(tagName).append('>');
+      }
+    }
   }
 
   private static boolean parseBoolean(String value) {
