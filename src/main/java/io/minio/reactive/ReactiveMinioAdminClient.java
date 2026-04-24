@@ -2176,6 +2176,14 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return replicationMrf(bucket).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取指定 bucket 的 replication MRF backlog 摘要，兼容服务端按行 JSON 流。 */
+  public Mono<io.minio.reactive.messages.admin.AdminReplicationMrfSummary>
+      getReplicationMrfSummary(String bucket) {
+    requireText("bucket", bucket);
+    return replicationMrf(bucket)
+        .map(io.minio.reactive.messages.admin.AdminReplicationMrfSummary::parse);
+  }
+
   /** 调用 `ADMIN_SET_REMOTE_TARGET`。 */
   public Mono<String> setRemoteTarget(String bucket, byte[] body, String contentType) {
     return executeToString("ADMIN_SET_REMOTE_TARGET", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
