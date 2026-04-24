@@ -213,6 +213,12 @@
 - 审计结论：当前没有公开路由缺口、产品入口缺口或 raw-only 缺口；剩余工作是 Crypto Gate、独立破坏性 lab、结果模型深化和发布工程。
 - 修正发布复审后续建议，避免继续把工作描述成“补 Admin 入口”。
 
+### 阶段 64 补充
+
+- 新增 `docs/62-stage64-release-engineering-gates.md`，明确正式发布前的 Crypto Gate、独立 lab、Maven/tag 发布工程清单。
+- 更新 `docs/release-gates.md`，补充阶段 64 后发布候选与正式发布的区别。
+- 继续保持 `0.1.0-SNAPSHOT`，本阶段不打 tag、不发布 Maven。
+
 
 ### 阶段 35 补充
 
