@@ -12,7 +12,7 @@
 
 阶段 26 不宣称“所有接口都已变成最终强类型模型”。它宣称的是：对标 MinIO 的路由、调用入口、文档口径、风险门禁和验证证据已经闭环，后续可以继续按产品 typed 成熟度迭代。
 
-阶段 27 到阶段 44 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据和中文异常体验，因此当前 S3/KMS/STS/Metrics/Health 已达到产品 typed 满格；其余风险边界仍然按 Crypto 与独立 lab 管理。
+阶段 27 到阶段 46 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据、中文异常体验、Crypto Gate 放行准备清单和发布复审刷新，因此当前 S3/KMS/STS/Metrics/Health 已达到产品 typed 满格；其余风险边界仍然按 Crypto 与独立 lab 管理。
 
 ## 2. 当前能力快照
 
@@ -66,7 +66,7 @@
 
 1. Admin L1/L2：继续把稳定只读响应升级为中文摘要模型。
 2. 独立 lab：执行 tier、remote target、batch job、site replication 写入矩阵并保存本机报告作为能力证明。
-3. Crypto Gate：完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
+3. Crypto Gate：阶段 45 已形成放行准备清单；真正实现前仍要完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
 4. 发布说明：继续使用 route parity、callability、typed maturity、live/destructive/crypto 边界分层口径。
 
 ## 7. 文档入口

@@ -76,6 +76,13 @@
 - `crypto-gate-status.properties` 继续保持 `fail`，owner/security/architect 批准状态仍为 `false`。
 - `encrypted-blocked = 9` 继续保留，默认 madmin 加密响应仍通过 `EncryptedAdminResponse` 暴露算法诊断边界。
 
+### 阶段 46 补充
+
+- 重新生成双分支 route parity 和 capability matrix 报告：路由对标仍为 233 / 233，catalog 缺失 0、额外 0。
+- 当前能力矩阵保持 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8，`raw-fallback = 0`。
+- 新增 `docs/44-stage46-release-review-refresh.md`，汇总阶段 40-45 的真实增量、发布边界和验证命令。
+- 发布口径继续禁止用单一百分比宣称完成，必须拆分 route parity、callability、typed maturity、live/destructive/crypto 边界。
+
 
 ### 阶段 35 补充
 

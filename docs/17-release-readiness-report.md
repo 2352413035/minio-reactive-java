@@ -345,6 +345,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/43-stage45-crypto-gate-pass-prep.md`。
 
+## 5.27 阶段 46 补充
+
+阶段 46 重新刷新发布复审：
+
+- 双分支 route parity 报告重新生成，仍为 233 / 233，catalog 缺失 0、额外 0。
+- 双分支 capability matrix 重新生成，Admin product-typed 保持 64 / 128，`raw-fallback = 0`。
+- 阶段 40-45 的增量已经整理到 `docs/44-stage46-release-review-refresh.md`。
+- 发布说明继续按 route parity、callability、typed maturity、Crypto Gate、破坏性 lab 分层描述，不能用单一百分比替代。
+
+详见 `docs/44-stage46-release-review-refresh.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
