@@ -56,6 +56,14 @@ class StrongBusinessModelsTest {
   }
 
   @Test
+  void shouldKeepTopLevelAdminJsonArrays() {
+    AdminJsonResult result = AdminJsonResult.parse("[{\"name\":\"ARCHIVE\"}]");
+
+    Assertions.assertTrue(result.values().containsKey("items"));
+    Assertions.assertTrue(result.rawJson().contains("ARCHIVE"));
+  }
+
+  @Test
   void shouldParseAdminUserAndPolicyModels() {
     AdminUserInfo user =
         AdminUserInfo.parse("{\"policyName\":\"readonly\",\"status\":\"enabled\",\"memberOf\":[\"dev\"],\"updatedAt\":\"now\"}");

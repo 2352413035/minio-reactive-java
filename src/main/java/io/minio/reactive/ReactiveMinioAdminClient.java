@@ -296,6 +296,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return backgroundHealStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取后台 heal 状态摘要，提取扫描对象数、离线节点、heal 磁盘和 set 计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBackgroundHealStatus>
+      getBackgroundHealStatusSummary() {
+    return backgroundHealStatus()
+        .map(io.minio.reactive.messages.admin.AdminBackgroundHealStatus::parse);
+  }
+
   /** 列出 pool 信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> listPoolsInfo() {
     return listPools().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
@@ -310,6 +317,11 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /** 获取 rebalance 状态，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getRebalanceStatus() {
     return rebalanceStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取 rebalance 状态摘要，提取任务 ID 和 pool 运行计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminRebalanceStatus> getRebalanceStatusSummary() {
+    return rebalanceStatus().map(io.minio.reactive.messages.admin.AdminRebalanceStatus::parse);
   }
 
   /**
@@ -417,6 +429,11 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /** 获取 tier 统计信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTierStats() {
     return tierStats().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取 tier 统计摘要，提取 tier 名称、对象数、版本数和容量汇总。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTierStatsSummary> getTierStatsSummary() {
+    return tierStats().map(io.minio.reactive.messages.admin.AdminTierStatsSummary::parse);
   }
 
   /** 获取站点复制信息，先以通用 JSON 结果保留全部字段。 */

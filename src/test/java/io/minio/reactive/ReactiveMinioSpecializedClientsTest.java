@@ -4,6 +4,9 @@ import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminAccountSummary;
 import io.minio.reactive.messages.admin.AdminBatchJobList;
+import io.minio.reactive.messages.admin.AdminBackgroundHealStatus;
+import io.minio.reactive.messages.admin.AdminRebalanceStatus;
+import io.minio.reactive.messages.admin.AdminTierStatsSummary;
 import io.minio.reactive.messages.admin.AdminBinaryResult;
 import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminConfigHelp;
@@ -418,6 +421,32 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(1, account.writableBucketCount());
     Assertions.assertTrue(account.policyJson().contains("2012-10-17"));
 
+    AdminBackgroundHealStatus healStatus =
+        AdminBackgroundHealStatus.parse(
+            "{\"ScannedItemsCount\":12,\"offline_nodes\":[\"node1\"],\"HealDisks\":[\"disk1\",\"disk2\"],\"sets\":[{}],\"mrf\":{\"node1\":{}},\"sc_parity\":{\"STANDARD\":2}}");
+    Assertions.assertEquals(12L, healStatus.scannedItemsCount());
+    Assertions.assertEquals(1, healStatus.offlineEndpointCount());
+    Assertions.assertEquals(2, healStatus.healDiskCount());
+    Assertions.assertEquals(1, healStatus.setCount());
+    Assertions.assertEquals(1, healStatus.mrfNodeCount());
+    Assertions.assertEquals(1, healStatus.storageClassParityCount());
+
+    AdminRebalanceStatus rebalanceStatus =
+        AdminRebalanceStatus.parse(
+            "{\"ID\":\"rebalance-1\",\"pools\":[{\"id\":0,\"status\":\"active\"},{\"id\":1,\"status\":\"\"}]}");
+    Assertions.assertEquals("rebalance-1", rebalanceStatus.operationId());
+    Assertions.assertEquals(2, rebalanceStatus.poolCount());
+    Assertions.assertEquals(1, rebalanceStatus.activePoolCount());
+
+    AdminTierStatsSummary tierStats =
+        AdminTierStatsSummary.parse(
+            "[{\"Name\":\"ARCHIVE\",\"Type\":\"s3\",\"Stats\":{\"totalSize\":1024,\"numVersions\":3,\"numObjects\":2}}]");
+    Assertions.assertEquals(1, tierStats.tierCount());
+    Assertions.assertEquals("ARCHIVE", tierStats.tierNames().get(0));
+    Assertions.assertEquals(1024L, tierStats.totalSize());
+    Assertions.assertEquals(3L, tierStats.totalVersions());
+    Assertions.assertEquals(2L, tierStats.totalObjects());
+
     AdminBucketQuota quota =
         AdminBucketQuota.parse("{\"quota\":1024,\"size\":2048,\"rate\":0,\"requests\":0,\"quotatype\":\"hard\"}");
     Assertions.assertEquals(1024, quota.quota());
@@ -495,10 +524,13 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(1, admin.listBatchJobsInfo().block().jobCount());
     Assertions.assertEquals("running", admin.getBatchJobStatusInfo().block().values().get("status"));
     Assertions.assertEquals("job-1", admin.describeBatchJobInfo().block().values().get("id"));
+    Assertions.assertEquals(12L, admin.getBackgroundHealStatusSummary().block().scannedItemsCount());
     admin.getBackgroundHealStatus().block();
     admin.listPoolsInfo().block();
     admin.getPoolStatus("pool-0").block();
+    Assertions.assertEquals(1, admin.getRebalanceStatusSummary().block().activePoolCount());
     admin.getRebalanceStatus().block();
+    Assertions.assertEquals(1, admin.getTierStatsSummary().block().tierCount());
     admin.getTierStats().block();
     admin.getSiteReplicationInfo().block();
     admin.getSiteReplicationStatus().block();
@@ -566,10 +598,13 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldExposeStage22AdminJsonSummaryMethods() {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBackgroundHealStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBackgroundHealStatusSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listPoolsInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getPoolStatus");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getRebalanceStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getRebalanceStatusSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTierStats");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTierStatsSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationStatus");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationMetainfo");
@@ -1993,11 +2028,17 @@ class ReactiveMinioSpecializedClientsTest {
     if (path.endsWith("/describe-job")) {
       return "{\"id\":\"job-1\",\"status\":\"running\"}";
     }
-    if (path.endsWith("/background-heal/status")
-        || path.endsWith("/pools/list")
+    if (path.endsWith("/background-heal/status")) {
+      return "{\"ScannedItemsCount\":12,\"offline_nodes\":[\"node1\"],\"HealDisks\":[\"disk1\"],\"sets\":[{}],\"mrf\":{\"node1\":{}},\"sc_parity\":{\"STANDARD\":2}}";
+    }
+    if (path.endsWith("/rebalance/status")) {
+      return "{\"ID\":\"rebalance-1\",\"pools\":[{\"id\":0,\"status\":\"active\"},{\"id\":1,\"status\":\"\"}]}";
+    }
+    if (path.endsWith("/tier-stats")) {
+      return "[{\"Name\":\"ARCHIVE\",\"Type\":\"s3\",\"Stats\":{\"totalSize\":1024,\"numVersions\":3,\"numObjects\":2}}]";
+    }
+    if (path.endsWith("/pools/list")
         || path.endsWith("/pools/status")
-        || path.endsWith("/rebalance/status")
-        || path.endsWith("/tier-stats")
         || path.endsWith("/site-replication/info")
         || path.endsWith("/site-replication/metainfo")
         || path.endsWith("/site-replication/status")
@@ -2012,7 +2053,7 @@ class ReactiveMinioSpecializedClientsTest {
     if (path.endsWith("/log")) {
       return "log-line\n";
     }
-    return "01234567890123456789012345678901234567890";
+    return "encrypted-placeholder-response-body";
   }
 
   private static String stage47AdminSensitiveExportBody(String path) {
