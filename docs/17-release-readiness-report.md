@@ -523,6 +523,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/58-stage60-release-candidate-final-review.md`。
 
+## 5.42 阶段 61 补充
+
+阶段 61 使用 `mc` 补充只读运维旁证：
+
+- `mc ready` 显示共享 MinIO `healthy = true`，未处于 maintenance mode。
+- `mc ls` 可以读取根路径，说明端点和运行时凭证可用于安全 smoke。
+- `mc admin info` 显示服务在线、区域为 `us-east-1`，bucket 数量为 1，对象数量为 362。
+- `.omx/reports/mc-readonly-stage61.md` 已保存本机输出，并通过真实凭证扫描。
+- 这些证据只说明共享端点可读，不代表破坏性 Admin 写入或 Crypto Gate 已放行。
+
+详见 `docs/59-stage61-mc-readonly-evidence.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
