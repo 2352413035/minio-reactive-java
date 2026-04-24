@@ -116,6 +116,11 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 
 这些摘要模型只提取稳定字段，完整响应仍可通过 `rawJson()`、`values()` 或原通用方法读取。
 
+阶段 67 起，锁热点与 health/OBD 诊断也有摘要入口：
+
+- `getTopLocksSummary()` 返回 `AdminTopLocksSummary`，用于快速查看读写锁数量和最长持有时间。
+- `getObdInfoSummary()` / `getHealthInfoSummary()` 返回 `AdminHealthInfoSummary`，用于快速查看部署 ID、region、server/bucket/object 数量和错误状态。
+
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
     .endpoint(endpoint)
