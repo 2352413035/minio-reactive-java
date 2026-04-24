@@ -117,6 +117,14 @@
 - Admin product-typed 从 78 / 128 提升到 81 / 128；破坏性边界不减少。
 - 新增 `docs/48-stage50-sensitive-import-lab-boundary.md` 记录导入恢复边界。
 
+### 阶段 51 补充
+
+- 复核破坏性 Admin 独立 lab 执行窗口：当前没有本机 `lab.properties`，因此不执行真实写入矩阵。
+- `verify-env.sh` 双分支确认缺少显式开关会失败，共享端点 `http://127.0.0.1:9000` 也会被拒绝。
+- 确认 `mc` 已安装，可用于后续独立 lab 的只读恢复核验提示。
+- `destructive-blocked = 29` 不减少；本阶段只证明门禁安全，不宣称真实破坏性能力通过。
+- 新增 `docs/49-stage51-independent-lab-window.md` 记录本次安全复核。
+
 
 ### 阶段 35 补充
 

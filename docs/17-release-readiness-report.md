@@ -400,6 +400,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/48-stage50-sensitive-import-lab-boundary.md`。
 
+## 5.32 阶段 51 补充
+
+阶段 51 复核独立 lab 执行窗口：
+
+- 当前没有 `scripts/minio-lab/lab.properties`，因此不执行真实破坏性矩阵。
+- 双分支 `verify-env.sh` 继续拒绝缺少显式开关的执行。
+- 双分支 `verify-env.sh` 继续拒绝共享端点 `http://127.0.0.1:9000`。
+- `mc` 已安装，可在后续独立 lab 中作为只读核验辅助。
+- `destructive-blocked = 29` 不减少。
+
+详见 `docs/49-stage51-independent-lab-window.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
