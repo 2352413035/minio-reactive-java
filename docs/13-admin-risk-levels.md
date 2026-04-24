@@ -74,10 +74,13 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 - `encrypted-blocked`：服务端默认返回 madmin 加密载荷，Crypto Gate Pass 前只暴露 `EncryptedAdminResponse`。
 - `destructive-blocked`：会修改服务端状态或需要独立实验环境的操作，只能通过破坏性实验环境验证。
 
-当前 Admin 口径以 `.omx/reports/capability-matrix.md` 为准：route-catalog 128，product-typed 50，advanced-compatible 128，encrypted-blocked 9，destructive-blocked 29。
+当前 Admin 口径以 `.omx/reports/capability-matrix.md` 为准：route-catalog 128，product-typed 53，advanced-compatible 128，encrypted-blocked 9，destructive-blocked 29。
 
 阶段 22 起，pool、rebalance、tier、site replication、top locks、OBD、health info 等只读状态接口先进入 `AdminJsonResult` typed 入口。它们仍保留完整原始 JSON，后续确认稳定字段后再拆成更细摘要模型。
 
 阶段 30 起，策略绑定实体、IDP 配置只读查询、remote target 只读列表、batch job 只读查询也进入 typed 摘要入口；对应写操作仍保持 L3 破坏性实验环境边界。
 
 阶段 31 起，破坏性实验环境的只读探测会同时比较 typed 摘要和 raw catalog 调用结果，用于证明专用客户端和兜底调用器的语义一致性。
+
+
+阶段 34 起，站点复制元信息、Admin trace 和 Admin log 也进入只读产品入口。trace/log 使用 `Flux<byte[]>` 暴露诊断流，不把长连接输出伪装成普通 JSON 摘要。

@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 50 | 128 | 0 | 9 | 29 |
+| admin | 128 | 53 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -222,6 +222,15 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 返回 `Flux<byte[]>`，明确这是长连接事件流。
 - advanced 的 `s3Listen*` 方法继续保留兼容，但不作为推荐业务入口。
 - S3 product-typed 从 76 / 77 提升到 77 / 77。
+
+## 5.15 阶段 34 补充
+
+阶段 34 继续扩展 Admin 只读摘要和诊断流边界：
+
+- 新增 `getSiteReplicationMetainfo()`，保留站点复制元信息 raw JSON。
+- 新增 `traceStream()` 和 `logStream()`，以响应式字节流暴露 Admin trace/log。
+- Admin product-typed 从 50 / 128 提升到 53 / 128。
+- encrypted-blocked 仍为 9，destructive-blocked 仍为 29。
 
 ## 6. 验证命令
 

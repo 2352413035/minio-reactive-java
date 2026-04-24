@@ -32,3 +32,8 @@
 - `ReactiveMinioSpecializedClientsTest` 覆盖 path/query 构造、JSON 解析和参数校验。
 - 能力矩阵 Admin `product-typed` 从 33 提升到 43。
 - 双分支保持相同 API 与相同验证结果。
+
+
+## 阶段 34 补充
+
+Admin 只读状态入口继续扩展：`getSiteReplicationMetainfo()` 返回 `AdminJsonResult`，`traceStream()` / `logStream()` 返回 `Flux<byte[]>`，明确 trace/log 是诊断流而不是普通一次性 JSON。

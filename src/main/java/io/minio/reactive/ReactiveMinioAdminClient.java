@@ -5,6 +5,7 @@ import io.minio.reactive.credentials.StaticCredentialsProvider;
 import io.minio.reactive.http.ReactiveHttpClient;
 import io.minio.reactive.signer.S3RequestSigner;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -138,6 +139,11 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return siteReplicationStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取站点复制元信息，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getSiteReplicationMetainfo() {
+    return siteReplicationMetainfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
   /** 获取锁热点信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTopLocksInfo() {
     return topLocks().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
@@ -151,6 +157,24 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /** 获取 Admin health info，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getHealthInfo() {
     return healthInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /**
+   * 读取 Admin trace 输出流。
+   *
+   * <p>trace 可能是持续输出的诊断流，不能把它当成普通 JSON 摘要。调用方应主动设置超时、过滤条件和取消策略。
+   */
+  public Flux<byte[]> traceStream() {
+    return executeToBody("ADMIN_TRACE", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /**
+   * 读取 Admin 日志输出流。
+   *
+   * <p>日志接口可能长时间保持连接，SDK 只固定响应式流式边界，不在这里猜测日志行格式。
+   */
+  public Flux<byte[]> logStream() {
+    return executeToBody("ADMIN_LOG", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
   /** 获取配置帮助信息；这是明文安全只读接口，不读取真实配置值。 */
