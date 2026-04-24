@@ -210,6 +210,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/64-stage66-admin-status-models.md`
 - `docs/65-stage67-admin-diagnostic-models.md`
 - `docs/66-stage68-site-replication-readonly-models.md`
+- `docs/67-stage69-admin-pool-readonly-models.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

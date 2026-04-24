@@ -127,6 +127,11 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 - `getSiteReplicationStatusSummary()` 返回 `AdminSiteReplicationStatusSummary`，用于查看站点数、最大对象规模和 mismatch 明细数量。
 - `getSiteReplicationMetainfoSummary()` 返回 `AdminSiteReplicationMetaInfoSummary`，用于查看本地站点 metadata 规模。
 
+阶段 69 起，pool 只读查询也有摘要入口：
+
+- `listPoolsSummary()` 返回 `AdminPoolListSummary`，用于查看 pool 数量和 decommission 状态计数。
+- `getPoolStatusSummary(pool)` 返回 `AdminPoolStatusSummary`，用于查看指定 pool 的 decommission 进度和失败计数。
+
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
     .endpoint(endpoint)

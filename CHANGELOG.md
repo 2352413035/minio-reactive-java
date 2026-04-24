@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 69 Admin pool 只读模型补充
+
+- 新增 `AdminPoolListSummary` 与 `AdminPoolStatusSummary` 两个只读摘要模型。
+- `ReactiveMinioAdminClient` 新增 `listPoolsSummary()` 与 `getPoolStatusSummary(pool)`。
+- 原 `listPoolsInfo()` 与 `getPoolStatus(pool)` 继续保留通用 JSON 入口。
+- 新增 `docs/67-stage69-admin-pool-readonly-models.md` 记录只读边界、decommission 写入不放行策略和验证口径。
+
 ## 阶段 68 站点复制只读模型补充
 
 - 新增 `AdminSiteReplicationInfoSummary`、`AdminSiteReplicationStatusSummary`、`AdminSiteReplicationMetaInfoSummary` 三个只读摘要模型。

@@ -308,10 +308,22 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return listPools().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 列出 pool 摘要，提取 pool 数量和 decommission 状态计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminPoolListSummary> listPoolsSummary() {
+    return listPools().map(io.minio.reactive.messages.admin.AdminPoolListSummary::parse);
+  }
+
   /** 获取指定 pool 状态，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getPoolStatus(String pool) {
     requireText("pool", pool);
     return poolStatus(pool).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取指定 pool 摘要，提取 decommission 进度和失败计数。 */
+  public Mono<io.minio.reactive.messages.admin.AdminPoolStatusSummary> getPoolStatusSummary(
+      String pool) {
+    requireText("pool", pool);
+    return poolStatus(pool).map(io.minio.reactive.messages.admin.AdminPoolStatusSummary::parse);
   }
 
   /** 获取 rebalance 状态，先以通用 JSON 结果保留全部字段。 */
