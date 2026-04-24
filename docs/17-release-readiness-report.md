@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 113 | 128 | 0 | 9 | 29 |
+| admin | 128 | 128 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -498,6 +498,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 当前仍没有独立破坏性 lab 配置，`destructive-blocked = 29` 继续保留。
 
 详见 `docs/56-stage58-crypto-lab-blocker-review.md`。
+
+## 5.40 阶段 59 补充
+
+阶段 59 补齐剩余 Admin 高风险/lab-only 产品边界：
+
+- IDP 配置新增/更新/删除、LDAP service account 新增都提供 `AdminTextResult` 产品入口。
+- bucket quota、remote target、replication diff、batch job、tier、site replication peer 和 force-unlock 等剩余维护写入入口都明确请求体、路径参数和风险边界。
+- mock 测试同时覆盖专用 Admin 客户端和 raw catalog 兜底路径，证明 raw 仍可作为新增或特殊接口的通用调用器。
+- 能力矩阵中的 Admin product-typed 达到 128 / 128，`raw-fallback = 0` 保持不变。
+- 这不表示 Crypto Gate 或破坏性 lab 已放行；`encrypted-blocked = 9`、`destructive-blocked = 29` 继续保留。
+
+详见 `docs/57-stage59-admin-lab-risk-boundaries.md`。
 
 ## 6. 验证命令
 

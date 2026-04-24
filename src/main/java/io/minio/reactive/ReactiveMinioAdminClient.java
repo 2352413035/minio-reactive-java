@@ -569,6 +569,279 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return revokeUserProviderTokens(userProvider, null, null);
   }
 
+  /** 新增 IDP 配置；这是身份源写入操作，只应在受控维护窗口执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addIdpConfigEntry(
+      String type, String name, byte[] body, String contentType) {
+    requireText("type", type);
+    requireText("name", name);
+    requireBytes("body", body);
+    return addIdpConfig(type, name, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("idp-config-add", text));
+  }
+
+  /** 新增 IDP 配置，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addIdpConfigEntry(
+      String type, String name, byte[] body) {
+    return addIdpConfigEntry(type, name, body, "application/json");
+  }
+
+  /** 更新 IDP 配置；请求体由调用方审计，SDK 不保存敏感身份源字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> updateIdpConfigEntry(
+      String type, String name, byte[] body, String contentType) {
+    requireText("type", type);
+    requireText("name", name);
+    requireBytes("body", body);
+    return updateIdpConfig(type, name, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("idp-config-update", text));
+  }
+
+  /** 更新 IDP 配置，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> updateIdpConfigEntry(
+      String type, String name, byte[] body) {
+    return updateIdpConfigEntry(type, name, body, "application/json");
+  }
+
+  /** 删除 IDP 配置；这是身份源高风险写入，必须明确 type 和 name。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> deleteIdpConfigEntry(
+      String type, String name, byte[] body, String contentType) {
+    requireText("type", type);
+    requireText("name", name);
+    return deleteIdpConfig(type, name, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("idp-config-delete", text));
+  }
+
+  /** 删除 IDP 配置，不携带请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> deleteIdpConfigEntry(
+      String type, String name) {
+    return deleteIdpConfigEntry(type, name, null, null);
+  }
+
+  /** 新增 LDAP 服务账号；服务端可能返回加密或敏感结果，调用方必须控制日志。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addLdapServiceAccountEntry(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return ldapAddServiceAccount(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("ldap-service-account-add", text));
+  }
+
+  /** 新增 LDAP 服务账号，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addLdapServiceAccountEntry(
+      byte[] body) {
+    return addLdapServiceAccountEntry(body, "application/json");
+  }
+
+  /** 设置 bucket quota；这是配置写入操作，不在共享 live 中真实执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> setBucketQuotaConfig(
+      String bucket, byte[] body, String contentType) {
+    requireText("bucket", bucket);
+    requireBytes("body", body);
+    return setBucketQuota(bucket, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("bucket-quota-set", text));
+  }
+
+  /** 设置 bucket quota，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> setBucketQuotaConfig(
+      String bucket, byte[] body) {
+    return setBucketQuotaConfig(bucket, body, "application/json");
+  }
+
+  /** 设置 remote target；请求体可能包含远端配置或凭据，SDK 不解析也不记录。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> setRemoteTargetConfig(
+      String bucket, byte[] body, String contentType) {
+    requireText("bucket", bucket);
+    requireBytes("body", body);
+    return setRemoteTarget(bucket, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("remote-target-set", text));
+  }
+
+  /** 设置 remote target，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> setRemoteTargetConfig(
+      String bucket, byte[] body) {
+    return setRemoteTargetConfig(bucket, body, "application/json");
+  }
+
+  /** 删除 remote target；必须明确 bucket 和 arn。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeRemoteTargetConfig(
+      String bucket, String arn, byte[] body, String contentType) {
+    requireText("bucket", bucket);
+    requireText("arn", arn);
+    return removeRemoteTarget(bucket, arn, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("remote-target-remove", text));
+  }
+
+  /** 删除 remote target，不携带请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeRemoteTargetConfig(
+      String bucket, String arn) {
+    return removeRemoteTargetConfig(bucket, arn, null, null);
+  }
+
+  /** 执行 replication diff；该操作可能消耗资源，只在独立 lab 中真实执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runReplicationDiff(
+      String bucket, byte[] body, String contentType) {
+    requireText("bucket", bucket);
+    requireBytes("body", body);
+    return replicationDiff(bucket, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("replication-diff", text));
+  }
+
+  /** 执行 replication diff，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runReplicationDiff(
+      String bucket, byte[] body) {
+    return runReplicationDiff(bucket, body, "application/json");
+  }
+
+  /** 启动 batch job；请求体必须由调用方确认并保留回滚方案。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startBatchJobRequest(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return startBatchJob(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("batch-job-start", text));
+  }
+
+  /** 启动 batch job，默认使用 application/yaml。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startBatchJobRequest(
+      byte[] body) {
+    return startBatchJobRequest(body, "application/yaml");
+  }
+
+  /** 取消 batch job；该操作只应在确认 job id 和影响范围后执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> cancelBatchJobRequest(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return cancelBatchJob(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("batch-job-cancel", text));
+  }
+
+  /** 取消 batch job，默认使用 application/yaml。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> cancelBatchJobRequest(
+      byte[] body) {
+    return cancelBatchJobRequest(body, "application/yaml");
+  }
+
+  /** 新增 tier 配置；请求体可能包含外部存储配置，SDK 不记录内容。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addTierConfig(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return addTier(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("tier-add", text));
+  }
+
+  /** 新增 tier 配置，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addTierConfig(byte[] body) {
+    return addTierConfig(body, "application/json");
+  }
+
+  /** 编辑 tier 配置；必须明确 tier 名称。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editTierConfig(
+      String tier, byte[] body, String contentType) {
+    requireText("tier", tier);
+    requireBytes("body", body);
+    return editTier(tier, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("tier-edit", text));
+  }
+
+  /** 编辑 tier 配置，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editTierConfig(
+      String tier, byte[] body) {
+    return editTierConfig(tier, body, "application/json");
+  }
+
+  /** 删除 tier 配置；必须明确 tier 名称。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeTierConfig(
+      String tier, byte[] body, String contentType) {
+    requireText("tier", tier);
+    return removeTier(tier, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("tier-remove", text));
+  }
+
+  /** 删除 tier 配置，不携带请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeTierConfig(String tier) {
+    return removeTierConfig(tier, null, null);
+  }
+
+  /** 新增站点复制配置；这是 lab-only 高风险写入。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addSiteReplicationConfig(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return siteReplicationAdd(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("site-replication-add", text));
+  }
+
+  /** 新增站点复制配置，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> addSiteReplicationConfig(
+      byte[] body) {
+    return addSiteReplicationConfig(body, "application/json");
+  }
+
+  /** 删除站点复制配置；只应在独立 lab 或维护窗口执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeSiteReplicationConfig(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return siteReplicationRemove(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("site-replication-remove", text));
+  }
+
+  /** 删除站点复制配置，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeSiteReplicationConfig(
+      byte[] body) {
+    return removeSiteReplicationConfig(body, "application/json");
+  }
+
+  /** 编辑站点复制配置；请求体不由 SDK 解析或记录。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editSiteReplicationConfig(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return siteReplicationEdit(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("site-replication-edit", text));
+  }
+
+  /** 编辑站点复制配置，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editSiteReplicationConfig(
+      byte[] body) {
+    return editSiteReplicationConfig(body, "application/json");
+  }
+
+  /** 编辑站点复制 peer；lab-only 高风险写入。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editSiteReplicationPeer(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return srPeerEdit(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("site-replication-peer-edit", text));
+  }
+
+  /** 编辑站点复制 peer，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> editSiteReplicationPeer(
+      byte[] body) {
+    return editSiteReplicationPeer(body, "application/json");
+  }
+
+  /** 删除站点复制 peer；lab-only 高风险写入。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeSiteReplicationPeer(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return srPeerRemove(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("site-replication-peer-remove", text));
+  }
+
+  /** 删除站点复制 peer，默认使用 application/json。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> removeSiteReplicationPeer(
+      byte[] body) {
+    return removeSiteReplicationPeer(body, "application/json");
+  }
+
+  /** 强制解锁路径；这是强破坏性维护操作，必须明确 paths。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> forceUnlockPaths(
+      String paths, byte[] body, String contentType) {
+    requireText("paths", paths);
+    return forceUnlock(paths, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("force-unlock", text));
+  }
+
+  /** 强制解锁路径，不携带请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> forceUnlockPaths(String paths) {
+    return forceUnlockPaths(paths, null, null);
+  }
+
   /** 获取锁热点信息，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTopLocksInfo() {
     return topLocks().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);

@@ -12,7 +12,7 @@
 
 阶段 26 不宣称“所有接口都已变成最终强类型模型”。它宣称的是：对标 MinIO 的路由、调用入口、文档口径、风险门禁和验证证据已经闭环，后续可以继续按产品 typed 成熟度迭代。
 
-阶段 27 到阶段 58 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据、中文异常体验、Crypto Gate 放行准备清单、发布复审刷新、敏感导出/导入边界、Admin KMS 桥接、独立 lab 门禁复核和 Admin 维护操作产品边界和策略/复制轻量边界和配置高风险边界和站点复制 peer lab-only 边界和服务类强破坏性边界和 Crypto/lab 阻塞复核，因此当前 S3/KMS/STS/Metrics/Health 已达到产品 typed 满格；其余风险边界仍然按 Crypto 与独立 lab 管理。
+阶段 27 到阶段 59 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁、正式中文示例、Admin 诊断包装、站点复制 peer IDP 安全摘要、破坏性 lab 步骤级证据、中文异常体验、Crypto Gate 放行准备清单、发布复审刷新、敏感导出/导入边界、Admin KMS 桥接、独立 lab 门禁复核和 Admin 维护操作产品边界和策略/复制轻量边界和配置高风险边界和站点复制 peer lab-only 边界和服务类强破坏性边界和 Crypto/lab 阻塞复核，以及剩余 Admin 高风险/lab-only 产品边界，因此当前 S3/Admin/KMS/STS/Metrics/Health 都已达到 product-typed 满格；风险接口仍然按 Crypto Gate 与独立 lab 管理。
 
 ## 2. 当前能力快照
 
@@ -21,7 +21,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 113 | 128 | 0 | 9 | 29 |
+| admin | 128 | 128 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -56,7 +56,7 @@
 
 1. Crypto Gate 仍未 Pass；阶段 32 已把 Fail 状态写入 `crypto-gate-status.properties` 并纳入脚本门禁，默认 madmin 加密响应不能明文 typed 解析。
 2. 破坏性 Admin 只能在独立 lab 验证，共享 MinIO 环境不应执行。
-3. Admin product-typed 数量仍低于 route-catalog，因为很多接口需要环境、权限或长期字段稳定性确认。
+3. Admin product-typed 数量已经与 route-catalog 对齐，但其中不少是明确风险边界或原始结果包装，仍需要独立 lab、权限和长期字段稳定性确认后才能升级为更细结果模型。
 4. STS 高级身份源（SSO、自定义 token、证书）仍需要独立身份源环境验证。
 5. 示例已收口到正式中文入口，但 KMS/STS 示例是否能真实运行仍取决于用户环境是否开启相应服务。
 
@@ -64,8 +64,8 @@
 
 下一轮计划不应再重复 route catalog 工作，而应优先提升产品 typed 成熟度：
 
-1. Admin L1/L2：继续把稳定只读响应升级为中文摘要模型。
-2. 独立 lab：执行 tier、remote target、batch job、site replication 写入矩阵并保存本机报告作为能力证明。
+1. Admin 模型深化：在 128 / 128 产品边界基础上，把更多稳定响应升级为中文摘要模型，而不是新增重复入口。
+2. 独立 lab：执行 tier、remote target、batch job、site replication、force-unlock 等写入矩阵并保存本机报告作为能力证明。
 3. Crypto Gate：阶段 45 已形成放行准备清单；真正实现前仍要完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
 4. 发布说明：继续使用 route parity、callability、typed maturity、live/destructive/crypto 边界分层口径。
 
