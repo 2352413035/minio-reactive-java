@@ -212,7 +212,7 @@ EncryptedAdminResponse accessKeyInfo = admin.getAccessKeyInfoEncrypted("svc-acce
 EncryptedAdminResponse accessKeys = admin.listAccessKeysEncrypted("all").block();
 ```
 
-这些响应需要等 Crypto Gate Pass 后，才会进入明文 typed 模型。阶段 18 起，边界对象会暴露 `algorithm()` / `algorithmName()`，便于日志和排障说明当前遇到的是哪一种 madmin 加密响应。
+这些响应需要等 Crypto Gate Pass 后，才会进入明文 typed 模型。阶段 18 起，边界对象会暴露 `algorithm()` / `algorithmName()`，便于日志和排障说明当前遇到的是哪一种 madmin 加密响应。阶段 73 起，还可以使用 `encryptedSize()`、`decryptSupported()`、`requiresCryptoGate()` 与 `diagnosticMessage()` 输出不含敏感内容的中文诊断。
 
 ## 错误诊断
 

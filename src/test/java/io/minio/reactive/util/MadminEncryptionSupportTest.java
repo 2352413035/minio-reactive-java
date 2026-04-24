@@ -39,6 +39,31 @@ class MadminEncryptionSupportTest {
     Assertions.assertTrue(response.isEncrypted());
     Assertions.assertEquals(MadminEncryptionAlgorithm.ARGON2ID_AES_GCM, response.algorithm());
     Assertions.assertEquals("Argon2id + AES-GCM", response.algorithmName());
+    Assertions.assertEquals(41, response.encryptedSize());
+    Assertions.assertFalse(response.decryptSupported());
+    Assertions.assertTrue(response.requiresCryptoGate());
+    Assertions.assertTrue(response.diagnosticMessage().contains("Crypto Gate"));
+  }
+
+  @Test
+  void shouldExposeEncryptedAdminResponseSafeDiagnostics() {
+    byte[] pbkdf = new byte[41];
+    pbkdf[32] = MadminEncryptionAlgorithm.PBKDF2_AES_GCM.id();
+    io.minio.reactive.messages.admin.EncryptedAdminResponse supported =
+        new io.minio.reactive.messages.admin.EncryptedAdminResponse(pbkdf);
+    io.minio.reactive.messages.admin.EncryptedAdminResponse plain =
+        new io.minio.reactive.messages.admin.EncryptedAdminResponse(new byte[10]);
+    io.minio.reactive.messages.admin.EncryptedAdminResponse empty =
+        new io.minio.reactive.messages.admin.EncryptedAdminResponse(null);
+
+    Assertions.assertTrue(supported.decryptSupported());
+    Assertions.assertFalse(supported.requiresCryptoGate());
+    Assertions.assertTrue(supported.diagnosticMessage().contains("当前支持"));
+    Assertions.assertFalse(plain.isEncrypted());
+    Assertions.assertEquals(10, plain.encryptedSize());
+    Assertions.assertTrue(plain.diagnosticMessage().contains("不是已识别"));
+    Assertions.assertEquals(0, empty.encryptedSize());
+    Assertions.assertTrue(empty.diagnosticMessage().contains("未收到"));
   }
 
   @Test

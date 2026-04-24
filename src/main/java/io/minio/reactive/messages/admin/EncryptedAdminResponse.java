@@ -29,4 +29,35 @@ public final class EncryptedAdminResponse {
     MadminEncryptionAlgorithm algorithm = algorithm();
     return algorithm == null ? "" : algorithm.displayName();
   }
+
+  /** 返回加密载荷字节数；只用于诊断，不代表明文大小。 */
+  public int encryptedSize() {
+    return encryptedData.length;
+  }
+
+  /** 当前 Java 端是否已经支持解密该响应声明的算法。 */
+  public boolean decryptSupported() {
+    MadminEncryptionAlgorithm algorithm = algorithm();
+    return algorithm != null && algorithm.decryptSupported();
+  }
+
+  /** 是否仍需要 Crypto Gate 放行后才能解密。 */
+  public boolean requiresCryptoGate() {
+    return isEncrypted() && !decryptSupported();
+  }
+
+  /** 返回不包含敏感内容的中文诊断说明。 */
+  public String diagnosticMessage() {
+    if (encryptedData.length == 0) {
+      return "未收到 madmin 加密响应载荷";
+    }
+    MadminEncryptionAlgorithm algorithm = algorithm();
+    if (algorithm == null) {
+      return "响应不是已识别的 madmin 加密载荷";
+    }
+    if (algorithm.decryptSupported()) {
+      return "madmin 加密算法 " + algorithm.displayName() + " 当前支持 Java 端解密";
+    }
+    return "madmin 加密算法 " + algorithm.displayName() + " 当前需要 Crypto Gate 放行后才能解密";
+  }
 }
