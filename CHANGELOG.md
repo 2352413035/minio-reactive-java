@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 65 发布交接补充
+
+- 新增 `docs/63-stage65-release-handoff.md`，把当前发布候选说明、外部门禁和正式发布前交接事项整理为可执行清单。
+- 明确阶段 65 不新增 API、不改变版本号、不打 tag、不发布 Maven；当前仍是 `0.1.0-SNAPSHOT`。
+- 继续保持 Crypto Gate Fail、独立破坏性 lab 未放行、`encrypted-blocked = 9`、`destructive-blocked = 29` 的边界。
+
 ## 0.1.0-SNAPSHOT 阶段 26 发布候选
 
 

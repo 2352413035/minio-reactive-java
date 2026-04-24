@@ -151,3 +151,13 @@
 6. 双分支工作区干净，提交信息符合 Lore Commit Protocol。
 
 在这些材料齐全前，版本继续保持 `0.1.0-SNAPSHOT`，不得用 route/product-typed 满格替代外部门禁。
+
+## 阶段 65 发布说明与阻塞交接
+
+阶段 65 后，任何对外发布说明都必须同时引用 `docs/63-stage65-release-handoff.md`，并把以下状态分开说明：
+
+- 已完成：route parity 233 / 233、产品化入口满格、专用客户端优先、raw 兜底可用。
+- 未放行：Crypto Gate Pass、独立破坏性 lab、Maven/tag 正式发布工程。
+- 可继续：结果模型深化、中文错误解释、示例和只读旁证。
+
+发布负责人接手时，应先按阶段 65 的阻塞交接表确认 owner、安全、架构、运维或发布负责人是否已经提供外部证据；没有外部证据时，不能降低 `encrypted-blocked` 或 `destructive-blocked`。
