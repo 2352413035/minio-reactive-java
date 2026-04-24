@@ -7,6 +7,12 @@
 
 
 
+### 阶段 33 补充
+
+- `ReactiveMinioClient` 新增 `listenBucketNotification(...)` 与 `listenRootNotification(...)`。
+- S3 通知监听以 `Flux<byte[]>` 暴露长连接事件流，不再把产品入口包装成一次性字符串读取。
+- S3 product-typed 口径从 76 / 77 提升到 77 / 77。
+
 ### 阶段 32 补充
 
 - Crypto Gate 独立复审结论继续保持 Fail：没有 owner/security/architect 三方批准，不引入默认响应解密依赖。

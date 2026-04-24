@@ -598,6 +598,39 @@ public final class ReactiveMinioClient {
     return setBucketNotification(bucket, S3Xml.bucketNotificationXml(configuration));
   }
 
+  /**
+   * 监听指定 bucket 的事件通知，并以响应式字节流返回服务端推送内容。
+   *
+   * <p>MinIO/S3 通知监听是长连接事件流，不能像普通配置查询那样收敛成一次性 `Mono<String>`。
+   * 调用方应主动订阅、设置超时或在业务停止时取消订阅。
+   */
+  public Flux<byte[]> listenBucketNotification(String bucket, String events) {
+    return endpointExecutor()
+        .executeToBody(
+            endpoint("S3_LISTEN_BUCKET_NOTIFICATION"),
+            map("bucket", bucket),
+            map("events", events),
+            emptyMap(),
+            null,
+            null);
+  }
+
+  /**
+   * 监听根路径事件通知，并以响应式字节流返回服务端推送内容。
+   *
+   * <p>这是 MinIO 扩展能力，适合运维或测试场景；普通业务代码通常优先监听明确 bucket。
+   */
+  public Flux<byte[]> listenRootNotification(String events) {
+    return endpointExecutor()
+        .executeToBody(
+            endpoint("S3_LISTEN_ROOT_NOTIFICATION"),
+            emptyMap(),
+            map("events", events),
+            emptyMap(),
+            null,
+            null);
+  }
+
   public Mono<String> getBucketEncryption(String bucket) {
     return getBucketSubresource(bucket, "encryption");
   }

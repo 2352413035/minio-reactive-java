@@ -704,6 +704,8 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeS3NotificationAndReplicationMetricsMethods() {
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketNotificationConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "setBucketNotificationConfiguration");
+    assertFluxMethodExists(ReactiveMinioClient.class, "listenBucketNotification");
+    assertFluxMethodExists(ReactiveMinioClient.class, "listenRootNotification");
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketReplicationMetrics");
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketReplicationMetricsV2");
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketNotification");
@@ -844,6 +846,16 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(
         "arn:minio:sqs::1:webhook",
         client.getBucketNotificationConfiguration("bucket1").block().targets().get(0).arn());
+    Assertions.assertEquals(
+        "event-stream",
+        new String(
+            client.listenBucketNotification("bucket1", "s3:ObjectCreated:*").blockFirst(),
+            java.nio.charset.StandardCharsets.UTF_8));
+    Assertions.assertEquals(
+        "event-stream",
+        new String(
+            client.listenRootNotification("s3:ObjectRemoved:*").blockFirst(),
+            java.nio.charset.StandardCharsets.UTF_8));
     BucketReplicationMetrics metrics = client.getBucketReplicationMetrics("bucket1").block();
     BucketReplicationMetrics metricsV2 = client.getBucketReplicationMetricsV2("bucket1").block();
 
@@ -851,7 +863,10 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals("v2", metricsV2.version());
     Assertions.assertEquals(123L, metricsV2.uptime());
     Assertions.assertTrue(paths.contains("/bucket1"));
+    Assertions.assertTrue(paths.contains("/"));
     Assertions.assertTrue(containsAllQueryParts(queries, "notification"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "events=s3:ObjectCreated:*"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "events=s3:ObjectRemoved:*"));
     Assertions.assertTrue(containsAllQueryParts(queries, "replication-metrics"));
     Assertions.assertTrue(containsAllQueryParts(queries, "replication-metrics=2"));
   }
@@ -1050,6 +1065,9 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   private static String stage28S3ResponseBody(String query) {
+    if (query != null && query.contains("events=")) {
+      return "event-stream";
+    }
     if (query != null && query.contains("notification")) {
       return "<NotificationConfiguration><QueueConfiguration><Id>queue-1</Id><Queue>arn:minio:sqs::1:webhook</Queue><Event>s3:ObjectCreated:*</Event></QueueConfiguration></NotificationConfiguration>";
     }
