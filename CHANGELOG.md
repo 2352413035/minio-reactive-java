@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 71 Replication MRF 只读模型补充
+
+- 新增 `AdminReplicationMrfSummary`，用于解析 `replication/mrf` 的按行 JSON backlog 与 keep-alive 空白。
+- `ReactiveMinioAdminClient` 新增 `getReplicationMrfSummary(bucket)`，原 `getReplicationMrfInfo(bucket)` 与 `replicationMrf(bucket)` 继续保留。
+- 新增 `docs/69-stage71-replication-mrf-readonly-models.md` 记录 MRF backlog 只读边界、字段口径和验证要求。
+
 ## 阶段 70 Admin batch job 只读模型补充
 
 - 新增 `AdminBatchJobStatusSummary` 与 `AdminBatchJobDescriptionSummary` 两个只读摘要模型。

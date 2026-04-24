@@ -138,6 +138,11 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 - `describeBatchJobSummary(jobId)` 返回 `AdminBatchJobDescriptionSummary`，用于从 MinIO 常见 YAML 描述中提取 id、user、started 和 jobType。
 - `startBatchJob` / `cancelBatchJob` 仍然属于独立 lab 或维护窗口能力，不在共享 live 中直接执行。
 
+阶段 71 起，replication MRF backlog 提供按行 JSON 流摘要入口：
+
+- `getReplicationMrfSummary(bucket)` 返回 `AdminReplicationMrfSummary`，用于统计 backlog 条目数、错误条目数和重试次数。
+- 原 `getReplicationMrfInfo(bucket)` 与 `replicationMrf(bucket)` 继续保留，用于兼容旧调用或读取完整原文。
+
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
     .endpoint(endpoint)

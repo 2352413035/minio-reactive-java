@@ -22,6 +22,7 @@ import io.minio.reactive.messages.admin.AdminPolicyEntities;
 import io.minio.reactive.messages.admin.AdminPoolStatusSummary;
 import io.minio.reactive.messages.admin.AdminPoolListSummary;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
+import io.minio.reactive.messages.admin.AdminReplicationMrfSummary;
 import io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings;
 import io.minio.reactive.messages.admin.AdminSiteReplicationStatusSummary;
 import io.minio.reactive.messages.admin.AdminSiteReplicationMetaInfoSummary;
@@ -564,6 +565,16 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(1, targets.targetCount());
     Assertions.assertTrue(targets.targets().get(0).secure());
 
+    AdminReplicationMrfSummary mrf =
+        AdminReplicationMrfSummary.parse(
+            "   \n"
+                + "{\"nodeName\":\"node-1\",\"bucket\":\"bucket1\",\"object\":\"a.txt\",\"versionId\":\"v1\",\"retryCount\":2}\n"
+                + "{\"NodeName\":\"node-2\",\"Bucket\":\"bucket1\",\"Object\":\"b.txt\",\"VersionID\":\"v2\",\"RetryCount\":3,\"Err\":\"temporary\"}");
+    Assertions.assertEquals(2, mrf.entryCount());
+    Assertions.assertEquals(1, mrf.errorCount());
+    Assertions.assertEquals(5, mrf.totalRetryCount());
+    Assertions.assertEquals("b.txt", mrf.entries().get(1).object());
+
     AdminBatchJobList jobs =
         AdminBatchJobList.parse(
             "{\"Jobs\":[{\"ID\":\"job-1\",\"Type\":\"replicate\",\"Status\":\"running\",\"User\":\"root\"}]}");
@@ -837,6 +848,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldExposeStage54AdminPolicyAndReplicationBoundaryMethods() {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getReplicationMrfInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getReplicationMrfSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "verifyTierInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "attachBuiltinPolicy");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "detachBuiltinPolicy");
@@ -1474,6 +1486,7 @@ class ReactiveMinioSpecializedClientsTest {
 
     byte[] body = "{\"policy\":\"readonly\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
     Assertions.assertEquals("ok", admin.getReplicationMrfInfo("bucket1").block().values().get("status"));
+    Assertions.assertEquals(1, admin.getReplicationMrfSummary("bucket1").block().entryCount());
     Assertions.assertEquals("tier-verify-ok", admin.verifyTierInfo("warm-tier").block().rawText());
     Assertions.assertEquals("builtin-policy-attach", admin.attachBuiltinPolicy(body).block().source());
     Assertions.assertEquals("builtin-policy-detach-ok", admin.detachBuiltinPolicy(body).block().rawText());
@@ -1499,6 +1512,7 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
     Assertions.assertTrue(contentTypes.contains("application/json"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getReplicationMrfInfo(""));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getReplicationMrfSummary(""));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.verifyTierInfo(" "));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.attachBuiltinPolicy(new byte[0]));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.detachLdapPolicy(null));
@@ -2346,7 +2360,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   private static String stage54AdminPolicyAndReplicationBody(String path) {
     if (path.equals("/minio/admin/v3/replication/mrf")) {
-      return "{\"status\":\"ok\"}";
+      return "{\"status\":\"ok\",\"nodeName\":\"node-1\",\"bucket\":\"bucket1\",\"object\":\"a.txt\",\"retryCount\":1}";
     }
     if (path.equals("/minio/admin/v3/tier/warm-tier")) {
       return "tier-verify-ok";
