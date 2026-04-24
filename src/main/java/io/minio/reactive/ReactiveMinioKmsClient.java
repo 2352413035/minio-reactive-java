@@ -63,6 +63,11 @@ public final class ReactiveMinioKmsClient extends ReactiveMinioCatalogClientSupp
         .map(io.minio.reactive.messages.kms.KmsKeyStatus::parse);
   }
 
+  /** 拉取 KMS Prometheus 指标文本。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeMetrics() {
+    return metrics().map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("kms", text));
+  }
+
   /** 调用 `KMS_STATUS`。 */
   public Mono<String> status() {
     return executeToString("KMS_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);

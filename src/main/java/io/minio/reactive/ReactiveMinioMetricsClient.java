@@ -59,6 +59,13 @@ public final class ReactiveMinioMetricsClient extends ReactiveMinioCatalogClient
         .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("v3" + normalizedPath, text));
   }
 
+  /** 拉取旧版 Prometheus 指标文本。 */
+  public Mono<io.minio.reactive.messages.metrics.PrometheusMetrics> scrapeLegacyMetrics(
+      String bearerToken) {
+    return prometheusLegacy(bearerToken)
+        .map(text -> new io.minio.reactive.messages.metrics.PrometheusMetrics("legacy", text));
+  }
+
   /** 调用 `METRICS_PROMETHEUS_LEGACY`。 */
   public Mono<String> prometheusLegacy(String bearerToken) {
     return executeToString("METRICS_PROMETHEUS_LEGACY", emptyMap(), emptyMap(), bearerHeaders(bearerToken), null, null);

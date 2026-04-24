@@ -168,7 +168,9 @@ EncryptedAdminResponse accessKeys = admin.listAccessKeysEncrypted("all").block()
 
 STS 已覆盖普通 AssumeRole、WebIdentity、ClientGrants、LDAP 四条 typed 主路径。证书登录、自定义 token 和 SSO 表单依赖独立安全环境或外部插件，当前保留 advanced 兼容入口。
 
-Metrics 继续返回 `PrometheusMetrics`，解析 metric 名、label、value，同时保留原始文本；SDK 不为每个 MinIO 指标名生成固定 Java 字段。
+Metrics 继续返回 `PrometheusMetrics`，解析 metric 名、label、value，同时保留原始文本；SDK 不为每个 MinIO 指标名生成固定 Java 字段。阶段 23 起，legacy metrics 也可通过 `scrapeLegacyMetrics(...)` 获得同样的 typed 包装。
+
+KMS 除状态、版本、key 列表和 key 状态外，也提供 `scrapeMetrics()`，用于读取 KMS Prometheus 指标文本。
 
 Health 同时提供业务判断方法和路由级状态方法：业务代码优先用 `isLive()` / `isReady()`，探针或网关场景再使用 `liveGet()` / `readyHead()` 等状态码入口。
 
