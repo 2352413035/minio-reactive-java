@@ -61,3 +61,10 @@
 - `architect`：架构边界、双分支语义一致性
 - `security-reviewer`：涉及 crypto 依赖或敏感响应时必须审查
 - `verifier`：验证证据与能力总表闭环
+
+
+## Destructive Admin Lab
+
+破坏性 Admin 测试必须通过 `scripts/minio-lab/verify-env.sh`，并且只能由 `scripts/minio-lab/run-destructive-tests.sh` 在独立可回滚环境中启动。默认 `mvn test` 只会跳过 destructive 用例，不允许修改共享 MinIO。
+
+真实 config write + restore 需要额外提供 `MINIO_LAB_TEST_CONFIG_KV` 与 `MINIO_LAB_RESTORE_CONFIG_KV`。这两个变量缺失时，测试只验证环境门禁，不执行配置写入。
