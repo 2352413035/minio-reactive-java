@@ -173,6 +173,31 @@ class DestructiveAdminIntegrationTest {
     Assertions.assertTrue(exercised, "至少需要执行一个可回滚写入夹具。");
   }
 
+  @Test
+  void shouldExerciseBatchAndSiteReplicationMatrixOnlyInsideVerifiedLab() throws Exception {
+    assumeDestructiveLabEnabled();
+    assertVerifiedLabEnvironment();
+    boolean writeAllowed = "true".equalsIgnoreCase(labValue("MINIO_LAB_ALLOW_WRITE_FIXTURES"));
+    boolean batchFixture = hasBatchJobWriteFixture();
+    boolean siteFixture = hasSiteReplicationWriteFixture();
+    Assumptions.assumeTrue(
+        writeAllowed && (batchFixture || siteFixture),
+        "缺少 MINIO_LAB_ALLOW_WRITE_FIXTURES=true 或 batch/site replication 写入夹具，跳过实验矩阵。");
+
+    ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
+    boolean exercised = false;
+    if (batchFixture) {
+      exerciseBatchJobWriteMatrix(admin, raw);
+      exercised = true;
+    }
+    if (siteFixture) {
+      exerciseSiteReplicationWriteMatrix(admin, raw);
+      exercised = true;
+    }
+    Assertions.assertTrue(exercised, "至少需要执行一个 batch 或 site replication 实验矩阵。");
+  }
+
   private static void assumeDestructiveLabEnabled() {
     Assumptions.assumeTrue(
         "true".equalsIgnoreCase(labValue("MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS")),
@@ -219,22 +244,36 @@ class DestructiveAdminIntegrationTest {
 
   private static boolean hasTierWriteFixture() {
     return notBlank(labValue("MINIO_LAB_TIER_WRITE_NAME"))
-        && notBlank(labValue("MINIO_LAB_ADD_TIER_BODY"))
+        && hasBody("MINIO_LAB_ADD_TIER_BODY", "MINIO_LAB_ADD_TIER_BODY_FILE")
         && "true".equalsIgnoreCase(labValue("MINIO_LAB_REMOVE_TIER_AFTER_TEST"));
   }
 
   private static boolean hasRemoteTargetWriteFixture() {
     return notBlank(labValue("MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET"))
-        && notBlank(labValue("MINIO_LAB_SET_REMOTE_TARGET_BODY"))
+        && hasBody("MINIO_LAB_SET_REMOTE_TARGET_BODY", "MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE")
         && notBlank(labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_ARN"))
         && "true".equalsIgnoreCase(labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST"));
+  }
+
+  private static boolean hasBatchJobWriteFixture() {
+    return hasBody("MINIO_LAB_BATCH_START_BODY", "MINIO_LAB_BATCH_START_BODY_FILE")
+        && hasBody("MINIO_LAB_BATCH_CANCEL_BODY", "MINIO_LAB_BATCH_CANCEL_BODY_FILE")
+        && "true".equalsIgnoreCase(labValue("MINIO_LAB_CANCEL_BATCH_AFTER_TEST"));
+  }
+
+  private static boolean hasSiteReplicationWriteFixture() {
+    return hasBody("MINIO_LAB_SITE_REPLICATION_ADD_BODY", "MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE")
+        && hasBody(
+            "MINIO_LAB_SITE_REPLICATION_REMOVE_BODY",
+            "MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE")
+        && "true".equalsIgnoreCase(labValue("MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST"));
   }
 
   private static void exerciseTierWriteFixture(
       ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
     String tier = labValue("MINIO_LAB_TIER_WRITE_NAME");
-    String addBody = labValue("MINIO_LAB_ADD_TIER_BODY");
-    String editBody = labValue("MINIO_LAB_EDIT_TIER_BODY");
+    String addBody = labBody("MINIO_LAB_ADD_TIER_BODY", "MINIO_LAB_ADD_TIER_BODY_FILE");
+    String editBody = labBody("MINIO_LAB_EDIT_TIER_BODY", "MINIO_LAB_EDIT_TIER_BODY_FILE");
     String contentType = getenvOrDefault("MINIO_LAB_TIER_WRITE_CONTENT_TYPE", "application/json");
     try {
       // 先走专用 Admin 客户端，再走 raw catalog 同一路由，
@@ -261,7 +300,8 @@ class DestructiveAdminIntegrationTest {
   private static void exerciseRemoteTargetWriteFixture(
       ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
     String bucket = labValue("MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET");
-    String body = labValue("MINIO_LAB_SET_REMOTE_TARGET_BODY");
+    String body =
+        labBody("MINIO_LAB_SET_REMOTE_TARGET_BODY", "MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE");
     String arn = labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_ARN");
     String type = getenvOrDefault("MINIO_LAB_REMOTE_TARGET_TYPE", "replication");
     String contentType =
@@ -291,6 +331,68 @@ class DestructiveAdminIntegrationTest {
           .block();
     }
     Assertions.assertNotNull(admin.listRemoteTargetsInfo(bucket, type).block());
+  }
+
+  private static void exerciseBatchJobWriteMatrix(
+      ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
+    String startBody =
+        labBody("MINIO_LAB_BATCH_START_BODY", "MINIO_LAB_BATCH_START_BODY_FILE");
+    String cancelBody =
+        labBody("MINIO_LAB_BATCH_CANCEL_BODY", "MINIO_LAB_BATCH_CANCEL_BODY_FILE");
+    String contentType = getenvOrDefault("MINIO_LAB_BATCH_JOB_CONTENT_TYPE", "application/yaml");
+    try {
+      // batch job 只在独立 lab 中启动；取消动作同时覆盖 raw 兜底路径。
+      admin.startBatchJob(bytes(startBody), contentType).block();
+      Assertions.assertNotNull(admin.listBatchJobsInfo().block());
+      Assertions.assertNotNull(admin.getBatchJobStatusInfo().block());
+      rawString(raw, "ADMIN_CANCEL_BATCH_JOB", emptyMap(), emptyMap(), bytes(cancelBody), contentType);
+    } finally {
+      admin.cancelBatchJob(bytes(cancelBody), contentType)
+          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+          .block();
+    }
+    Assertions.assertNotNull(admin.listBatchJobsInfo().block());
+  }
+
+  private static void exerciseSiteReplicationWriteMatrix(
+      ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
+    String addBody =
+        labBody("MINIO_LAB_SITE_REPLICATION_ADD_BODY", "MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE");
+    String editBody =
+        labBody(
+            "MINIO_LAB_SITE_REPLICATION_EDIT_BODY", "MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE");
+    String removeBody =
+        labBody(
+            "MINIO_LAB_SITE_REPLICATION_REMOVE_BODY",
+            "MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE");
+    String contentType =
+        getenvOrDefault("MINIO_LAB_SITE_REPLICATION_CONTENT_TYPE", "application/json");
+    try {
+      // site replication 写入影响集群拓扑，必须由独立 lab 提供 add/remove 请求体。
+      admin.siteReplicationAdd(bytes(addBody), contentType).block();
+      Assertions.assertNotNull(admin.getSiteReplicationInfo().block());
+      if (notBlank(editBody)) {
+        rawString(
+            raw,
+            "ADMIN_SITE_REPLICATION_EDIT",
+            emptyMap(),
+            emptyMap(),
+            bytes(editBody),
+            contentType);
+      }
+      rawString(
+          raw,
+          "ADMIN_SITE_REPLICATION_REMOVE",
+          emptyMap(),
+          emptyMap(),
+          bytes(removeBody),
+          contentType);
+    } finally {
+      admin.siteReplicationRemove(bytes(removeBody), contentType)
+          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+          .block();
+    }
+    Assertions.assertNotNull(admin.getSiteReplicationStatus().block());
   }
 
   private static Map<String, String> map(String... values) {
@@ -384,6 +486,26 @@ class DestructiveAdminIntegrationTest {
 
   private static byte[] bytes(String value) {
     return value.getBytes(StandardCharsets.UTF_8);
+  }
+
+  private static boolean hasBody(String bodyName, String fileName) {
+    return notBlank(labValue(bodyName)) || notBlank(labValue(fileName));
+  }
+
+  private static String labBody(String bodyName, String fileName) {
+    String inlineBody = labValue(bodyName);
+    if (notBlank(inlineBody)) {
+      return inlineBody;
+    }
+    String bodyFile = labValue(fileName);
+    if (!notBlank(bodyFile)) {
+      return "";
+    }
+    try {
+      return new String(Files.readAllBytes(Paths.get(bodyFile)), StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      throw new IllegalStateException("无法读取 destructive lab 请求体文件: " + bodyFile, e);
+    }
   }
 
   private static boolean notBlank(String value) {

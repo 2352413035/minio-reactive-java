@@ -1,0 +1,10 @@
+{
+  "sites": [
+    {
+      "name": "lab-peer-a",
+      "endpoint": "https://lab-peer-a.example.invalid",
+      "accessKey": "<仅本机私有>",
+      "secretKey": "<仅本机私有>"
+    }
+  ]
+}

@@ -13,6 +13,13 @@
 - `DestructiveAdminIntegrationTest` 对写入夹具同时覆盖 `ReactiveMinioAdminClient` 专用入口和 `ReactiveMinioRawClient` catalog 兜底入口。
 - 本机 lab 报告新增写入夹具开关、请求体设置状态和失败恢复提示；报告仍不输出凭证、请求体或签名。
 
+### 阶段 37 补充
+
+- 破坏性实验环境新增 batch job start/status/cancel 与 site replication add/edit/remove 实验矩阵。
+- 新增本机私有请求体文件变量，支持用 `*_BODY_FILE` 引用 YAML/JSON 模板，避免把多行请求体写入仓库。
+- 报告新增 batch/site replication 矩阵开关、请求体设置状态和恢复提示。
+- 新增 `scripts/minio-lab/templates/` 示例模板和 `docs/35-stage37-batch-site-replication-lab-matrix.md`。
+
 
 ### 阶段 35 补充
 

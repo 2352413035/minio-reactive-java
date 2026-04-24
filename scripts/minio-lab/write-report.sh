@@ -25,6 +25,16 @@ minio_lab_bool() {
   fi
 }
 
+minio_lab_bool_any() {
+  local first="${1:-}"
+  local second="${2:-}"
+  if [[ -n "$first" || -n "$second" ]]; then
+    printf '已设置'
+  else
+    printf '未设置'
+  fi
+}
+
 minio_lab_fixture_enabled() {
   local label="$1"
   local enabled="$2"
@@ -46,7 +56,7 @@ write_minio_lab_report() {
   mkdir -p "$report_dir"
   local report_file="$report_dir/destructive-lab-$timestamp.md"
 
-  local config_enabled quota_enabled remote_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled
+  local config_enabled quota_enabled remote_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled
   config_enabled="false"
   quota_enabled="false"
   remote_enabled="false"
@@ -54,6 +64,8 @@ write_minio_lab_report() {
   batch_enabled="false"
   tier_write_enabled="false"
   remote_write_enabled="false"
+  batch_write_enabled="false"
+  site_write_enabled="false"
 
   if [[ -n "${MINIO_LAB_TEST_CONFIG_KV:-}" && -n "${MINIO_LAB_RESTORE_CONFIG_KV:-}" ]]; then
     config_enabled="true"
@@ -72,16 +84,28 @@ write_minio_lab_report() {
   fi
   if [[ "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-}" == "true" \
     && -n "${MINIO_LAB_TIER_WRITE_NAME:-}" \
-    && -n "${MINIO_LAB_ADD_TIER_BODY:-}" \
+    && ( -n "${MINIO_LAB_ADD_TIER_BODY:-}" || -n "${MINIO_LAB_ADD_TIER_BODY_FILE:-}" ) \
     && "${MINIO_LAB_REMOVE_TIER_AFTER_TEST:-}" == "true" ]]; then
     tier_write_enabled="true"
   fi
   if [[ "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-}" == "true" \
     && -n "${MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET:-}" \
-    && -n "${MINIO_LAB_SET_REMOTE_TARGET_BODY:-}" \
+    && ( -n "${MINIO_LAB_SET_REMOTE_TARGET_BODY:-}" || -n "${MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE:-}" ) \
     && -n "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}" \
     && "${MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST:-}" == "true" ]]; then
     remote_write_enabled="true"
+  fi
+  if [[ "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-}" == "true" \
+    && ( -n "${MINIO_LAB_BATCH_START_BODY:-}" || -n "${MINIO_LAB_BATCH_START_BODY_FILE:-}" ) \
+    && ( -n "${MINIO_LAB_BATCH_CANCEL_BODY:-}" || -n "${MINIO_LAB_BATCH_CANCEL_BODY_FILE:-}" ) \
+    && "${MINIO_LAB_CANCEL_BATCH_AFTER_TEST:-}" == "true" ]]; then
+    batch_write_enabled="true"
+  fi
+  if [[ "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-}" == "true" \
+    && ( -n "${MINIO_LAB_SITE_REPLICATION_ADD_BODY:-}" || -n "${MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE:-}" ) \
+    && ( -n "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY:-}" || -n "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE:-}" ) \
+    && "${MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST:-}" == "true" ]]; then
+    site_write_enabled="true"
   fi
 
   {
@@ -102,6 +126,8 @@ write_minio_lab_report() {
     minio_lab_fixture_enabled 'batch job typed/raw 探测' "$batch_enabled"
     minio_lab_fixture_enabled 'tier add/edit/remove 写入 + 恢复' "$tier_write_enabled"
     minio_lab_fixture_enabled 'remote target set/remove 写入 + 恢复' "$remote_write_enabled"
+    minio_lab_fixture_enabled 'batch job start/status/cancel 实验矩阵' "$batch_write_enabled"
+    minio_lab_fixture_enabled 'site replication add/edit/remove 实验矩阵' "$site_write_enabled"
     printf '\n'
 
     printf '## 夹具指纹（不含凭证）\n\n'
@@ -109,13 +135,18 @@ write_minio_lab_report() {
     printf -- '- bucket：`%s`\n' "${MINIO_LAB_BUCKET:-未设置}"
     printf -- '- tier 名称：`%s`\n' "${MINIO_LAB_TIER_NAME:-未设置}"
     printf -- '- tier 写入名称：`%s`\n' "${MINIO_LAB_TIER_WRITE_NAME:-未设置}"
-    printf -- '- tier add 请求体：%s\n' "$(minio_lab_bool "${MINIO_LAB_ADD_TIER_BODY:-}")"
-    printf -- '- tier edit 请求体：%s\n' "$(minio_lab_bool "${MINIO_LAB_EDIT_TIER_BODY:-}")"
+    printf -- '- tier add 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_ADD_TIER_BODY:-}" "${MINIO_LAB_ADD_TIER_BODY_FILE:-}")"
+    printf -- '- tier edit 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_EDIT_TIER_BODY:-}" "${MINIO_LAB_EDIT_TIER_BODY_FILE:-}")"
     printf -- '- remote target 类型：`%s`\n' "${MINIO_LAB_REMOTE_TARGET_TYPE:-replication}"
     printf -- '- remote target 写入 bucket：`%s`\n' "${MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET:-未设置}"
-    printf -- '- remote target set 请求体：%s\n' "$(minio_lab_bool "${MINIO_LAB_SET_REMOTE_TARGET_BODY:-}")"
+    printf -- '- remote target set 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SET_REMOTE_TARGET_BODY:-}" "${MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE:-}")"
     printf -- '- remote target 预期 ARN：%s\n' "$(minio_lab_bool "${MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN:-}")"
     printf -- '- remote target 删除 ARN：%s\n' "$(minio_lab_bool "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}")"
+    printf -- '- batch job start 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_BATCH_START_BODY:-}" "${MINIO_LAB_BATCH_START_BODY_FILE:-}")"
+    printf -- '- batch job cancel 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_BATCH_CANCEL_BODY:-}" "${MINIO_LAB_BATCH_CANCEL_BODY_FILE:-}")"
+    printf -- '- site replication add 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_ADD_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE:-}")"
+    printf -- '- site replication edit 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_EDIT_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE:-}")"
+    printf -- '- site replication remove 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE:-}")"
     printf -- '- 写入夹具总开关：`%s`\n' "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-false}"
     printf -- '- batch job 预期 ID：%s\n\n' "$(minio_lab_bool "${MINIO_LAB_BATCH_EXPECTED_JOB_ID:-}")"
 
@@ -124,8 +155,10 @@ write_minio_lab_report() {
     printf '2. 如果 bucket quota 用例失败，使用 `MINIO_LAB_RESTORE_BUCKET_QUOTA_JSON` 对应值恢复 bucket quota。\n'
     printf '3. 如果 tier 写入夹具失败，优先执行 `MINIO_LAB_REMOVE_TIER_AFTER_TEST=true` 对应的 tier 删除恢复。\n'
     printf '4. 如果 remote target 写入夹具失败，优先使用 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` 删除刚写入的 target。\n'
-    printf '5. 如果 remote target、tier 或 batch job 探测失败，先查看 MinIO 管理日志，再用独立 lab 的控制台或 `mc admin` 回滚。\n'
-    printf '6. 不要把本报告复制到仓库；报告可能包含 lab 端点和资源名称，但不会包含凭证。\n'
+    printf '5. 如果 batch job 实验矩阵失败，优先使用 `MINIO_LAB_BATCH_CANCEL_BODY` 或对应文件取消刚启动的任务。\n'
+    printf '6. 如果 site replication 实验矩阵失败，优先使用 `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY` 或对应文件移除刚新增的站点复制配置。\n'
+    printf '7. 如果 remote target、tier 或 batch job 探测失败，先查看 MinIO 管理日志，再用独立 lab 的控制台或 `mc admin` 回滚。\n'
+    printf '8. 不要把本报告复制到仓库；报告可能包含 lab 端点和资源名称，但不会包含凭证。\n'
   } > "$report_file"
 
   printf 'MinIO 破坏性实验环境报告已生成：%s\n' "$report_file"

@@ -17,6 +17,8 @@
 - batch job typed/raw 探测：`<启用|跳过>`
 - tier add/edit/remove 写入 + 恢复：`<启用|跳过>`
 - remote target set/remove 写入 + 恢复：`<启用|跳过>`
+- batch job start/status/cancel 实验矩阵：`<启用|跳过>`
+- site replication add/edit/remove 实验矩阵：`<启用|跳过>`
 
 ## 夹具指纹（不含凭证）
 
@@ -31,6 +33,11 @@
 - remote target set 请求体：`<已设置|未设置>`
 - remote target 预期 ARN：`<已设置|未设置>`
 - remote target 删除 ARN：`<已设置|未设置>`
+- batch job start 请求体：`<已设置|未设置>`
+- batch job cancel 请求体：`<已设置|未设置>`
+- site replication add 请求体：`<已设置|未设置>`
+- site replication edit 请求体：`<已设置|未设置>`
+- site replication remove 请求体：`<已设置|未设置>`
 - 写入夹具总开关：`<true|false>`
 - batch job 预期 ID：`<已设置|未设置>`
 
@@ -40,5 +47,7 @@
 2. 如果 bucket quota 用例失败，使用 `MINIO_LAB_RESTORE_BUCKET_QUOTA_JSON` 对应值恢复 bucket quota。
 3. 如果 tier 写入夹具失败，优先执行 `MINIO_LAB_REMOVE_TIER_AFTER_TEST=true` 对应的 tier 删除恢复。
 4. 如果 remote target 写入夹具失败，优先使用 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` 删除刚写入的 target。
-5. 如果 remote target、tier 或 batch job 探测失败，先查看 MinIO 管理日志，再用独立 lab 的控制台或 `mc admin` 回滚。
-6. 不要把本报告复制到仓库；报告可能包含 lab 端点和资源名称，但不会包含凭证。
+5. 如果 batch job 实验矩阵失败，优先使用 `MINIO_LAB_BATCH_CANCEL_BODY` 或对应文件取消刚启动的任务。
+6. 如果 site replication 实验矩阵失败，优先使用 `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY` 或对应文件移除刚新增的站点复制配置。
+7. 如果 remote target、tier 或 batch job 探测失败，先查看 MinIO 管理日志，再用独立 lab 的控制台或 `mc admin` 回滚。
+8. 不要把本报告复制到仓库；报告可能包含 lab 端点和资源名称，但不会包含凭证。

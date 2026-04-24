@@ -1,0 +1,4 @@
+# batch job 取消请求体示例。
+# jobID 必须替换为独立 lab 中刚启动、允许取消的任务 ID。
+# 使用方式：MINIO_LAB_BATCH_CANCEL_BODY_FILE=/secure/path/batch-cancel-job.yaml
+jobID: lab-job-id

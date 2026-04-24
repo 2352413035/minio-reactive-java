@@ -103,7 +103,9 @@ MINIO_LAB_ALLOW_WRITE_FIXTURES=true
 MINIO_LAB_TIER_WRITE_NAME=reactive-lab-tier
 MINIO_LAB_TIER_WRITE_CONTENT_TYPE=application/json
 MINIO_LAB_ADD_TIER_BODY=<仅属于独立 lab 的 add tier 请求体>
+MINIO_LAB_ADD_TIER_BODY_FILE=<可选，本机私有请求体文件>
 MINIO_LAB_EDIT_TIER_BODY=<可选，仅属于独立 lab 的 edit tier 请求体>
+MINIO_LAB_EDIT_TIER_BODY_FILE=<可选，本机私有请求体文件>
 MINIO_LAB_REMOVE_TIER_AFTER_TEST=true
 ```
 
@@ -115,6 +117,7 @@ MINIO_LAB_REMOVE_TIER_AFTER_TEST=true
 MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET=lab-bucket
 MINIO_LAB_REMOTE_TARGET_WRITE_CONTENT_TYPE=application/json
 MINIO_LAB_SET_REMOTE_TARGET_BODY=<仅属于独立 lab 的 set remote target 请求体>
+MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE=<可选，本机私有请求体文件>
 MINIO_LAB_REMOVE_REMOTE_TARGET_ARN=<刚写入 target 的 ARN>
 MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true
 ```
@@ -122,6 +125,33 @@ MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true
 测试会先通过专用 Admin 客户端设置 target，再通过 raw catalog 验证同一路由的兜底可用性，最后使用 ARN 删除恢复。
 
 只要检测到写入请求体或 remote target 删除 ARN，但没有 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true`，`verify-env.sh` 就会拒绝执行。
+
+## batch job / site replication 实验矩阵
+
+阶段 37 起，独立 lab 可以为 batch job 和 site replication 建立更完整的实验矩阵。它们默认跳过，仍然必须复用写入总开关。
+
+### batch job start/status/cancel
+
+```properties
+MINIO_LAB_BATCH_JOB_CONTENT_TYPE=application/yaml
+MINIO_LAB_BATCH_START_BODY_FILE=/secure/path/batch-start-job.yaml
+MINIO_LAB_BATCH_CANCEL_BODY_FILE=/secure/path/batch-cancel-job.yaml
+MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true
+```
+
+测试会使用专用 Admin 客户端启动任务并读取状态，再使用 raw catalog 的 `ADMIN_CANCEL_BATCH_JOB` 取消任务；finally 中还会再次尝试专用客户端取消，降低残留任务风险。请求模板见 `scripts/minio-lab/templates/batch-start-job.yaml.example` 和 `scripts/minio-lab/templates/batch-cancel-job.yaml.example`。
+
+### site replication add/edit/remove
+
+```properties
+MINIO_LAB_SITE_REPLICATION_CONTENT_TYPE=application/json
+MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE=/secure/path/site-replication-add.json
+MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE=/secure/path/site-replication-edit.json
+MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE=/secure/path/site-replication-remove.json
+MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true
+```
+
+测试会使用专用 Admin 客户端新增站点复制配置，必要时使用 raw catalog 执行 edit，最后用 raw remove 和 finally 专用 remove 双重恢复。请求模板见 `scripts/minio-lab/templates/site-replication-*.json.example`。
 
 ## 执行报告
 
