@@ -3,10 +3,14 @@ package io.minio.reactive;
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminAccountSummary;
+import io.minio.reactive.messages.admin.AdminBatchJobList;
 import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminConfigHelp;
 import io.minio.reactive.messages.admin.AdminDataUsageSummary;
 import io.minio.reactive.messages.admin.AdminStorageSummary;
+import io.minio.reactive.messages.admin.AdminIdpConfigList;
+import io.minio.reactive.messages.admin.AdminPolicyEntities;
+import io.minio.reactive.messages.admin.AdminRemoteTargetList;
 import io.minio.reactive.messages.admin.AdminTierList;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
@@ -92,7 +96,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 129, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 7, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -420,6 +424,27 @@ class ReactiveMinioSpecializedClientsTest {
             "[{\"Version\":\"v1\",\"Type\":\"s3\",\"Name\":\"archive\"},{\"Version\":\"v1\",\"Type\":\"minio\",\"Name\":\"backup\"}]");
     Assertions.assertEquals(2, tiers.tierCount());
     Assertions.assertEquals("archive", tiers.tiers().get(0).name());
+
+    AdminPolicyEntities entities =
+        AdminPolicyEntities.parse(
+            "{\"UserMappings\":{\"user1\":[\"readonly\"]},\"GroupMappings\":{\"dev\":[\"readwrite\"]},\"PolicyMappings\":{\"readonly\":[\"user1\"]}}");
+    Assertions.assertEquals(3, entities.totalMappingCount());
+
+    AdminIdpConfigList idps = AdminIdpConfigList.parse("openid", "{\"primary\":{}}");
+    Assertions.assertEquals("openid", idps.type());
+    Assertions.assertEquals("primary", idps.names().get(0));
+
+    AdminRemoteTargetList targets =
+        AdminRemoteTargetList.parse(
+            "{\"Targets\":[{\"Arn\":\"arn:minio:replication::bucket:target\",\"Type\":\"replication\",\"Endpoint\":\"http://remote\",\"Secure\":true}]}");
+    Assertions.assertEquals(1, targets.targetCount());
+    Assertions.assertTrue(targets.targets().get(0).secure());
+
+    AdminBatchJobList jobs =
+        AdminBatchJobList.parse(
+            "{\"Jobs\":[{\"ID\":\"job-1\",\"Type\":\"replicate\",\"Status\":\"running\",\"User\":\"root\"}]}");
+    Assertions.assertEquals(1, jobs.jobCount());
+    Assertions.assertEquals("running", jobs.jobs().get(0).status());
   }
 
 
@@ -448,6 +473,9 @@ class ReactiveMinioSpecializedClientsTest {
             .build();
 
     admin.getConfigHelp("api", "requests_max").block();
+    Assertions.assertEquals(3, admin.listPolicyEntities().block().totalMappingCount());
+    Assertions.assertEquals("primary", admin.listIdpConfigs("openid").block().names().get(0));
+    Assertions.assertEquals("ok", admin.getIdpConfigInfo("openid", "primary").block().values().get("status"));
     admin.getStorageSummary().block();
     admin.getDataUsageSummary().block();
     admin.getAccountSummary().block();
@@ -455,6 +483,10 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(admin.listAccessKeysEncrypted("all").block().encryptedData().length > 0);
     admin.getBucketQuotaInfo("bucket1").block();
     admin.listTiers().block();
+    Assertions.assertEquals(1, admin.listRemoteTargetsInfo("bucket1", "replication").block().targetCount());
+    Assertions.assertEquals(1, admin.listBatchJobsInfo().block().jobCount());
+    Assertions.assertEquals("running", admin.getBatchJobStatusInfo().block().values().get("status"));
+    Assertions.assertEquals("job-1", admin.describeBatchJobInfo().block().values().get("id"));
     admin.getBackgroundHealStatus().block();
     admin.listPoolsInfo().block();
     admin.getPoolStatus("pool-0").block();
@@ -472,6 +504,9 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertThrows(UnsupportedOperationException.class, () -> admin.listAccessKeysTyped("all").block());
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/help-config-kv"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/builtin/policy-entities"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp-config/openid"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp-config/openid/primary"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/storageinfo"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/datausageinfo"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/accountinfo"));
@@ -479,6 +514,10 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/list-access-keys-bulk"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/get-bucket-quota"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/tier"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/list-remote-targets"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/list-jobs"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/status-job"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/describe-job"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/background-heal/status"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/pools/list"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/pools/status"));
@@ -496,6 +535,7 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "listType=all"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "type=replication"));
     Assertions.assertTrue(containsAllQueryParts(queries, "pool=pool-0"));
     Assertions.assertTrue(containsAllQueryParts(queries, "key=api"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listConfigHistoryKvEncrypted(-1));
@@ -517,6 +557,24 @@ class ReactiveMinioSpecializedClientsTest {
     ReactiveMinioAdminClient admin =
         ReactiveMinioAdminClient.builder().endpoint("http://localhost:9000").region("us-east-1").build();
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getPoolStatus(" "));
+  }
+
+  @Test
+  void shouldExposeStage30AdminSummaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listPolicyEntities");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listIdpConfigs");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getIdpConfigInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listRemoteTargetsInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listBatchJobsInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBatchJobStatusInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "describeBatchJobInfo");
+    assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "listBuiltinPolicyEntities");
+    assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "listIdpConfig");
+    assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "getIdpConfig");
+    assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "listRemoteTargets");
+    assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "listBatchJobs");
+    assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "batchJobStatus");
+    assertDeprecatedMethodExists(ReactiveMinioAdminClient.class, "describeBatchJob");
   }
 
 
@@ -877,6 +935,15 @@ class ReactiveMinioSpecializedClientsTest {
     if (path.endsWith("/help-config-kv")) {
       return "{\"subSys\":\"api\",\"description\":\"API 配置\",\"keysHelp\":[]}";
     }
+    if (path.endsWith("/idp/builtin/policy-entities")) {
+      return "{\"UserMappings\":{\"user1\":[\"readonly\"]},\"GroupMappings\":{\"dev\":[\"readwrite\"]},\"PolicyMappings\":{\"readonly\":[\"user1\"]}}";
+    }
+    if (path.endsWith("/idp-config/openid")) {
+      return "{\"primary\":{}}";
+    }
+    if (path.endsWith("/idp-config/openid/primary")) {
+      return "{\"status\":\"ok\"}";
+    }
     if (path.endsWith("/storageinfo")) {
       return "{\"Disks\":[],\"Backend\":{\"Type\":1,\"OnlineDisks\":{},\"OfflineDisks\":{}}}";
     }
@@ -897,6 +964,18 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (path.endsWith("/tier")) {
       return "[]";
+    }
+    if (path.endsWith("/list-remote-targets")) {
+      return "{\"Targets\":[{\"Arn\":\"arn:minio:replication::bucket:target\",\"Type\":\"replication\",\"Endpoint\":\"http://remote\",\"Secure\":true}]}";
+    }
+    if (path.endsWith("/list-jobs")) {
+      return "{\"Jobs\":[{\"ID\":\"job-1\",\"Type\":\"replicate\",\"Status\":\"running\",\"User\":\"root\"}]}";
+    }
+    if (path.endsWith("/status-job")) {
+      return "{\"status\":\"running\"}";
+    }
+    if (path.endsWith("/describe-job")) {
+      return "{\"id\":\"job-1\",\"status\":\"running\"}";
     }
     if (path.endsWith("/background-heal/status")
         || path.endsWith("/pools/list")

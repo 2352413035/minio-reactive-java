@@ -255,6 +255,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         null);
   }
 
+  /** 列出内置策略绑定实体摘要。 */
+  public Mono<io.minio.reactive.messages.admin.AdminPolicyEntities> listPolicyEntities() {
+    return listBuiltinPolicyEntities()
+        .map(io.minio.reactive.messages.admin.AdminPolicyEntities::parse);
+  }
+
 
   /** 列出全部用户的加密响应；默认响应解密能力完成前不伪装成明文用户列表。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listUsersEncrypted() {
@@ -804,6 +810,7 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
   /** 调用 `ADMIN_LIST_BUILTIN_POLICY_ENTITIES`。 */
+  @Deprecated
   public Mono<String> listBuiltinPolicyEntities() {
     return executeToString("ADMIN_LIST_BUILTIN_POLICY_ENTITIES", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
@@ -939,13 +946,28 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
   /** 调用 `ADMIN_LIST_IDP_CONFIG`。 */
+  @Deprecated
   public Mono<String> listIdpConfig(String type) {
     return executeToString("ADMIN_LIST_IDP_CONFIG", map("type", type), emptyMap(), emptyMap(), null, null);
   }
 
+  /** 列出指定类型的 IDP 配置名称；只读摘要保留原始 JSON。 */
+  public Mono<io.minio.reactive.messages.admin.AdminIdpConfigList> listIdpConfigs(String type) {
+    requireText("type", type);
+    return listIdpConfig(type).map(raw -> io.minio.reactive.messages.admin.AdminIdpConfigList.parse(type, raw));
+  }
+
   /** 调用 `ADMIN_GET_IDP_CONFIG`。 */
+  @Deprecated
   public Mono<String> getIdpConfig(String type, String name) {
     return executeToString("ADMIN_GET_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 获取单个 IDP 配置的通用 JSON 包装；字段可能随 MinIO 版本变化，因此保留原文。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getIdpConfigInfo(String type, String name) {
+    requireText("type", type);
+    requireText("name", name);
+    return getIdpConfig(type, name).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
   /** 调用 `ADMIN_DELETE_IDP_CONFIG`。 */
@@ -1021,8 +1043,18 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
   /** 调用 `ADMIN_LIST_REMOTE_TARGETS`。 */
+  @Deprecated
   public Mono<String> listRemoteTargets(String bucket, String type) {
     return executeToString("ADMIN_LIST_REMOTE_TARGETS", emptyMap(), map("bucket", bucket, "type", type), emptyMap(), null, null);
+  }
+
+  /** 列出 bucket remote target 只读摘要；凭据字段只保留在原始 JSON，不提供普通 getter。 */
+  public Mono<io.minio.reactive.messages.admin.AdminRemoteTargetList> listRemoteTargetsInfo(
+      String bucket, String type) {
+    requireText("bucket", bucket);
+    requireText("type", type);
+    return listRemoteTargets(bucket, type)
+        .map(io.minio.reactive.messages.admin.AdminRemoteTargetList::parse);
   }
 
   /** 调用 `ADMIN_SET_REMOTE_TARGET`。 */
@@ -1071,18 +1103,36 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
   /** 调用 `ADMIN_LIST_BATCH_JOBS`。 */
+  @Deprecated
   public Mono<String> listBatchJobs() {
     return executeToString("ADMIN_LIST_BATCH_JOBS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
+  /** 列出 batch job 摘要。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBatchJobList> listBatchJobsInfo() {
+    return listBatchJobs().map(io.minio.reactive.messages.admin.AdminBatchJobList::parse);
+  }
+
   /** 调用 `ADMIN_BATCH_JOB_STATUS`。 */
+  @Deprecated
   public Mono<String> batchJobStatus() {
     return executeToString("ADMIN_BATCH_JOB_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
+  /** 获取 batch job 状态通用 JSON 包装。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getBatchJobStatusInfo() {
+    return batchJobStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
   /** 调用 `ADMIN_DESCRIBE_BATCH_JOB`。 */
+  @Deprecated
   public Mono<String> describeBatchJob() {
     return executeToString("ADMIN_DESCRIBE_BATCH_JOB", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 获取 batch job 详情通用 JSON 包装。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> describeBatchJobInfo() {
+    return describeBatchJob().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
   /** 调用 `ADMIN_CANCEL_BATCH_JOB`。 */

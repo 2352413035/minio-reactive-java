@@ -6,6 +6,13 @@
 
 
 
+
+### 阶段 30 补充
+
+- `ReactiveMinioAdminClient` 新增策略绑定实体、IDP 配置、remote target、batch job 只读摘要入口。
+- 新增 `AdminPolicyEntities`、`AdminIdpConfigList`、`AdminRemoteTargetList`、`AdminBatchJobList`。
+- Admin product-typed 口径从 43 / 128 提升到 50 / 128。
+
 ### 阶段 29 补充
 
 - `ReactiveMinioStsClient` 新增 SSO、客户端证书、自定义 token 三类 typed 凭证入口。

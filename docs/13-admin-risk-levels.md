@@ -75,3 +75,5 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 当前 Admin 口径以 `.omx/reports/capability-matrix.md` 为准：route-catalog 128，product-typed 43，advanced-compatible 128，encrypted-blocked 9，destructive-blocked 29。
 
 阶段 22 起，pool、rebalance、tier、site replication、top locks、OBD、health info 等只读状态接口先进入 `AdminJsonResult` typed 入口。它们仍保留完整原始 JSON，后续确认稳定字段后再拆成更细摘要模型。
+
+阶段 30 起，策略绑定实体、IDP 配置只读查询、remote target 只读列表、batch job 只读查询也进入 typed 摘要入口；对应写操作仍保持 L3 destructive lab 边界。
