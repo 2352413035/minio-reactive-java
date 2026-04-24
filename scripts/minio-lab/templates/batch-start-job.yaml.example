@@ -1,0 +1,15 @@
+# batch job 启动请求体示例。
+# 这里只保留结构占位；真实 bucket、prefix、目标端点、凭证等必须放在本机私有文件中。
+# 使用方式：MINIO_LAB_BATCH_START_BODY_FILE=/secure/path/batch-start-job.yaml
+replicate:
+  apiVersion: v1
+  source:
+    type: minio
+    bucket: lab-source-bucket
+    prefix: lab-prefix/
+  target:
+    type: minio
+    bucket: lab-target-bucket
+  flags:
+    filter:
+      newerThan: 0s

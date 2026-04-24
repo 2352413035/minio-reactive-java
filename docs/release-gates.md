@@ -95,10 +95,17 @@
 - `MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET`
 - `MINIO_LAB_SET_REMOTE_TARGET_BODY`
 - `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN`
+- `MINIO_LAB_BATCH_START_BODY` / `MINIO_LAB_BATCH_START_BODY_FILE`
+- `MINIO_LAB_BATCH_CANCEL_BODY` / `MINIO_LAB_BATCH_CANCEL_BODY_FILE`
+- `MINIO_LAB_SITE_REPLICATION_ADD_BODY` / `MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE`
+- `MINIO_LAB_SITE_REPLICATION_EDIT_BODY` / `MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE`
+- `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY` / `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE`
 
 阶段 31 起，tier、remote target、batch job 夹具必须同时覆盖专用 typed 客户端和 `ReactiveMinioRawClient` catalog 兜底调用，证明“方便使用”和“灵活兜底”两条路径都可运行。这些夹具只能在独立 lab 中证明能力，不允许替代共享 live 门禁。
 
 阶段 36 起，tier 与 remote target 写入夹具必须先通过写入总开关，并在 finally 或报告恢复提示中保留删除路径。报告只允许记录请求体是否设置，不允许记录请求体内容。
+
+阶段 37 起，batch job 与 site replication 实验矩阵只能引用本机私有请求体或环境变量，发布证据必须包含 start/cancel 或 add/remove 的恢复路径；不能把站点复制拓扑或 batch job 真实参数写入仓库。
 
 `run-destructive-tests.sh` 每次退出都会生成本机报告，默认写入 `target/minio-lab-reports/`，也可以通过 `MINIO_LAB_REPORT_DIR` 覆盖。报告只记录环境指纹、夹具开关和恢复提示，不得包含 access key、secret key、session token 或请求签名。
 
