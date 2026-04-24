@@ -103,6 +103,32 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return accountInfo().map(io.minio.reactive.messages.admin.AdminAccountSummary::parse);
   }
 
+  /**
+   * 导出 IAM 备份包。
+   *
+   * <p>IAM 导出可能包含用户、策略、服务账号等敏感配置，产品入口只保留二进制边界，
+   * 不把内容解码成字符串，也不建议调用方写入普通日志。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminBinaryResult> exportIamData() {
+    return executeToBytes("ADMIN_EXPORT_IAM", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(bytes -> io.minio.reactive.messages.admin.AdminBinaryResult.of("export-iam", bytes));
+  }
+
+  /**
+   * 导出 bucket 元数据备份包。
+   *
+   * <p>bucket 元数据导出可能包含策略、复制、通知等环境配置，产品入口只保留二进制边界，
+   * 由调用方自行决定安全存储位置。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminBinaryResult> exportBucketMetadataData() {
+    return executeToBytes(
+            "ADMIN_EXPORT_BUCKET_METADATA", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(
+            bytes ->
+                io.minio.reactive.messages.admin.AdminBinaryResult.of(
+                    "export-bucket-metadata", bytes));
+  }
+
   /** 获取后台 heal 状态，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getBackgroundHealStatus() {
     return backgroundHealStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);

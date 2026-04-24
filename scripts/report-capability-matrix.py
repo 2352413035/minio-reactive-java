@@ -53,7 +53,8 @@ TYPED_METHODS = {
         'scrapeAdminMetrics','downloadInspectData','startProfiling',
         'downloadProfilingData','getProfileResult',
         'listLdapPolicyEntities','listLdapAccessKeySummaries',
-        'listOpenidAccessKeySummaries','getSiteReplicationPeerIdpSettings'
+        'listOpenidAccessKeySummaries','getSiteReplicationPeerIdpSettings',
+        'exportIamData','exportBucketMetadataData'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

@@ -356,6 +356,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/44-stage46-release-review-refresh.md`。
 
+## 5.28 阶段 47 补充
+
+阶段 47 补充 Admin 敏感导出产品边界：
+
+- `exportIamData()` 与 `exportBucketMetadataData()` 返回 `AdminBinaryResult`。
+- 导出包不解析成字符串，不建议写入普通日志。
+- 专用客户端和 raw `executeToBytes(...)` 使用同一 mock 路径验证。
+- Admin product-typed 提升到 66 / 128。
+
+详见 `docs/45-stage47-admin-sensitive-export.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
