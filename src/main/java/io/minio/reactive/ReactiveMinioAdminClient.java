@@ -77,14 +77,42 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return storageInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取存储信息摘要，提取磁盘在线/离线/修复状态并保留原始 JSON。 */
+  public Mono<io.minio.reactive.messages.admin.AdminStorageSummary> getStorageSummary() {
+    return storageInfo().map(io.minio.reactive.messages.admin.AdminStorageSummary::parse);
+  }
+
   /** 获取数据使用量信息，当前以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getDataUsageInfo() {
     return dataUsageInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
+  /** 获取数据使用量摘要，提取对象数、桶数和容量字段并保留原始 JSON。 */
+  public Mono<io.minio.reactive.messages.admin.AdminDataUsageSummary> getDataUsageSummary() {
+    return dataUsageInfo().map(io.minio.reactive.messages.admin.AdminDataUsageSummary::parse);
+  }
+
   /** 获取当前账号信息，当前以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getAccountInfo() {
     return accountInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取当前账号摘要，提取账号名、可读写 bucket 数和策略原文。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccountSummary> getAccountSummary() {
+    return accountInfo().map(io.minio.reactive.messages.admin.AdminAccountSummary::parse);
+  }
+
+  /** 获取配置帮助信息；这是明文安全只读接口，不读取真实配置值。 */
+  public Mono<io.minio.reactive.messages.admin.AdminConfigHelp> getConfigHelp(
+      String subSys, String key) {
+    requireText("subSys", subSys);
+    return helpConfigKv(subSys, key == null ? "" : key)
+        .map(io.minio.reactive.messages.admin.AdminConfigHelp::parse);
+  }
+
+  /** 获取指定配置子系统的帮助信息。 */
+  public Mono<io.minio.reactive.messages.admin.AdminConfigHelp> getConfigHelp(String subSys) {
+    return getConfigHelp(subSys, "");
   }
 
   /** 获取单个用户信息，当前以通用 JSON 结果保留全部字段。 */
@@ -180,6 +208,36 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /** 列出全部用户的加密响应；默认响应解密能力完成前不伪装成明文用户列表。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listUsersEncrypted() {
     return executeToBytes("ADMIN_LIST_USERS", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 获取配置 KV 的加密响应；配置读取由 MinIO 服务端加密返回，不能伪装成明文 typed 模型。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getConfigKvEncrypted(
+      String key) {
+    requireText("key", key);
+    return executeToBytes("ADMIN_GET_CONFIG_KV", emptyMap(), map("key", key), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 列出配置历史的加密响应；解密 Gate 通过前只暴露边界对象。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse>
+      listConfigHistoryKvEncrypted(int count) {
+    if (count < 0) {
+      throw new IllegalArgumentException("count 不能小于 0");
+    }
+    return executeToBytes(
+            "ADMIN_LIST_CONFIG_HISTORY_KV",
+            emptyMap(),
+            map("count", String.valueOf(count)),
+            emptyMap(),
+            null,
+            null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 获取完整配置的加密响应；这是 crypto boundary，不进入明文 typed 完成口径。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getConfigEncrypted() {
+    return executeToBytes("ADMIN_GET_CONFIG", emptyMap(), emptyMap(), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
@@ -578,19 +636,50 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
 
 
-  /** 获取 access key 信息，返回 typed 模型。 */
+  /** 获取 access key 信息的加密响应；当前 MinIO 服务端返回 madmin 加密载荷。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getAccessKeyInfoEncrypted(
+      String accessKey) {
+    requireText("accessKey", accessKey);
+    return executeToBytes(
+            "ADMIN_INFO_ACCESS_KEY",
+            emptyMap(),
+            map("accessKey", accessKey),
+            emptyMap(),
+            null,
+            null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 兼容保留：当前 MinIO 返回加密载荷，不能在 Crypto Gate Pass 前解析成明文模型。 */
   public Mono<io.minio.reactive.messages.admin.AdminAccessKeyInfo> getAccessKeyInfoTyped(
       String accessKey) {
     requireText("accessKey", accessKey);
-    return infoAccessKey(accessKey).map(io.minio.reactive.messages.admin.AdminAccessKeyInfo::parse);
+    return Mono.error(
+        new UnsupportedOperationException(
+            "ADMIN_INFO_ACCESS_KEY 返回 madmin 加密载荷；请使用 getAccessKeyInfoEncrypted(...)，等 Crypto Gate Pass 后再使用明文模型"));
   }
 
-  /** 列出 access key 批量信息，返回 typed 列表模型。 */
+  /** 列出 access key 批量信息的加密响应；当前 MinIO 服务端返回 madmin 加密载荷。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listAccessKeysEncrypted(
+      String listType) {
+    requireText("listType", listType);
+    return executeToBytes(
+            "ADMIN_LIST_ACCESS_KEYS_BULK",
+            emptyMap(),
+            map("listType", listType),
+            emptyMap(),
+            null,
+            null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 兼容保留：当前 MinIO 返回加密载荷，不能在 Crypto Gate Pass 前解析成明文列表模型。 */
   public Mono<io.minio.reactive.messages.admin.AdminAccessKeyList> listAccessKeysTyped(
       String listType) {
     requireText("listType", listType);
-    return listAccessKeysBulk(listType)
-        .map(io.minio.reactive.messages.admin.AdminAccessKeyList::parse);
+    return Mono.error(
+        new UnsupportedOperationException(
+            "ADMIN_LIST_ACCESS_KEYS_BULK 返回 madmin 加密载荷；请使用 listAccessKeysEncrypted(...)，等 Crypto Gate Pass 后再使用明文模型"));
   }
 
   /** 调用 `ADMIN_ADD_SERVICE_ACCOUNT`。 */
@@ -863,6 +952,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToString("ADMIN_GET_BUCKET_QUOTA", emptyMap(), map("bucket", bucket), emptyMap(), null, null);
   }
 
+  /** 获取 bucket quota 配置摘要；这是 L3 只读候选，默认仅做单元/mock 验证。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBucketQuota> getBucketQuotaInfo(
+      String bucket) {
+    requireText("bucket", bucket);
+    return getBucketQuota(bucket).map(io.minio.reactive.messages.admin.AdminBucketQuota::parse);
+  }
+
   /** 调用 `ADMIN_SET_BUCKET_QUOTA`。 */
   public Mono<String> setBucketQuota(String bucket, byte[] body, String contentType) {
     return executeToString("ADMIN_SET_BUCKET_QUOTA", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
@@ -986,6 +1082,11 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /** 调用 `ADMIN_LIST_TIER`。 */
   public Mono<String> listTier() {
     return executeToString("ADMIN_LIST_TIER", emptyMap(), emptyMap(), emptyMap(), null, null);
+  }
+
+  /** 列出远端 tier 配置摘要；凭据字段仍只保留在 MinIO 已脱敏的原始 JSON 中。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTierList> listTiers() {
+    return listTier().map(io.minio.reactive.messages.admin.AdminTierList::parse);
   }
 
   /** 调用 `ADMIN_REMOVE_TIER`。 */

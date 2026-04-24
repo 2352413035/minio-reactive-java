@@ -2,6 +2,12 @@ package io.minio.reactive;
 
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
+import io.minio.reactive.messages.admin.AdminAccountSummary;
+import io.minio.reactive.messages.admin.AdminBucketQuota;
+import io.minio.reactive.messages.admin.AdminConfigHelp;
+import io.minio.reactive.messages.admin.AdminDataUsageSummary;
+import io.minio.reactive.messages.admin.AdminStorageSummary;
+import io.minio.reactive.messages.admin.AdminTierList;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
 import io.minio.reactive.messages.admin.AddUserRequest;
@@ -280,8 +286,116 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldExposeAccessKeyBusinessMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getAccessKeyInfoEncrypted");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listAccessKeysEncrypted");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getAccessKeyInfoTyped");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listAccessKeysTyped");
+  }
+
+
+  @Test
+  void shouldParseStage15AdminPlaintextSafeModels() {
+    AdminConfigHelp help =
+        AdminConfigHelp.parse(
+            "{\"subSys\":\"api\",\"description\":\"API 配置\",\"multipleTargets\":false,\"keysHelp\":[{\"key\":\"requests_max\",\"description\":\"最大请求数\",\"optional\":true,\"type\":\"number\",\"multipleTargets\":false}]}");
+    Assertions.assertEquals("api", help.subSys());
+    Assertions.assertEquals("requests_max", help.keys().get(0));
+    Assertions.assertTrue(help.keysHelp().get(0).optional());
+
+    AdminStorageSummary storage =
+        AdminStorageSummary.parse(
+            "{\"Disks\":[{\"healing\":true},{\"healing\":false}],\"Backend\":{\"Type\":1,\"OnlineDisks\":{\"pool-0\":2},\"OfflineDisks\":{\"pool-0\":1}}}");
+    Assertions.assertEquals(2, storage.diskCount());
+    Assertions.assertEquals(2, storage.onlineDiskCount());
+    Assertions.assertEquals(1, storage.offlineDiskCount());
+    Assertions.assertEquals(1, storage.healingDiskCount());
+
+    AdminDataUsageSummary usage =
+        AdminDataUsageSummary.parse(
+            "{\"objectsCount\":7,\"objectsTotalSize\":4096,\"bucketsCount\":3,\"capacity\":100,\"freeCapacity\":60,\"usedCapacity\":40}");
+    Assertions.assertEquals(7, usage.objectsCount());
+    Assertions.assertEquals(4096, usage.objectsTotalSize());
+    Assertions.assertEquals(3, usage.bucketsCount());
+    Assertions.assertEquals(40, usage.totalUsedCapacity());
+
+    AdminAccountSummary account =
+        AdminAccountSummary.parse(
+            "{\"AccountName\":\"root\",\"Server\":{\"Type\":1},\"Policy\":{\"Version\":\"2012-10-17\"},\"Buckets\":[{\"name\":\"a\",\"access\":{\"read\":true,\"write\":true}},{\"name\":\"b\",\"access\":{\"read\":true,\"write\":false}}]}");
+    Assertions.assertEquals("root", account.accountName());
+    Assertions.assertEquals(2, account.bucketCount());
+    Assertions.assertEquals(2, account.readableBucketCount());
+    Assertions.assertEquals(1, account.writableBucketCount());
+    Assertions.assertTrue(account.policyJson().contains("2012-10-17"));
+
+    AdminBucketQuota quota =
+        AdminBucketQuota.parse("{\"quota\":1024,\"size\":2048,\"rate\":0,\"requests\":0,\"quotatype\":\"hard\"}");
+    Assertions.assertEquals(1024, quota.quota());
+    Assertions.assertEquals(2048, quota.size());
+    Assertions.assertEquals("hard", quota.quotaType());
+
+    AdminTierList tiers =
+        AdminTierList.parse(
+            "[{\"Version\":\"v1\",\"Type\":\"s3\",\"Name\":\"archive\"},{\"Version\":\"v1\",\"Type\":\"minio\",\"Name\":\"backup\"}]");
+    Assertions.assertEquals(2, tiers.tierCount());
+    Assertions.assertEquals("archive", tiers.tiers().get(0).name());
+  }
+
+
+  @Test
+  void shouldBuildStage15AdminPlaintextSafeRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage15AdminResponseBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    admin.getConfigHelp("api", "requests_max").block();
+    admin.getStorageSummary().block();
+    admin.getDataUsageSummary().block();
+    admin.getAccountSummary().block();
+    Assertions.assertTrue(admin.getAccessKeyInfoEncrypted("svc1").block().encryptedData().length > 0);
+    Assertions.assertTrue(admin.listAccessKeysEncrypted("all").block().encryptedData().length > 0);
+    admin.getBucketQuotaInfo("bucket1").block();
+    admin.listTiers().block();
+    Assertions.assertTrue(admin.getConfigKvEncrypted("api").block().encryptedData().length > 0);
+    Assertions.assertTrue(admin.listConfigHistoryKvEncrypted(1).block().encryptedData().length > 0);
+    Assertions.assertTrue(admin.getConfigEncrypted().block().encryptedData().length > 0);
+    Assertions.assertThrows(UnsupportedOperationException.class, () -> admin.getAccessKeyInfoTyped("svc1").block());
+    Assertions.assertThrows(UnsupportedOperationException.class, () -> admin.listAccessKeysTyped("all").block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/help-config-kv"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/storageinfo"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/datausageinfo"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/accountinfo"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/info-access-key"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/list-access-keys-bulk"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/get-bucket-quota"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/tier"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/get-config-kv"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/list-config-history-kv"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/config"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "subSys=api", "key=requests_max"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "listType=all"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "key=api"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listConfigHistoryKvEncrypted(-1));
   }
 
 
@@ -371,6 +485,34 @@ class ReactiveMinioSpecializedClientsTest {
       }
     }
     return false;
+  }
+
+  private static String stage15AdminResponseBody(String path) {
+    if (path.endsWith("/help-config-kv")) {
+      return "{\"subSys\":\"api\",\"description\":\"API 配置\",\"keysHelp\":[]}";
+    }
+    if (path.endsWith("/storageinfo")) {
+      return "{\"Disks\":[],\"Backend\":{\"Type\":1,\"OnlineDisks\":{},\"OfflineDisks\":{}}}";
+    }
+    if (path.endsWith("/datausageinfo")) {
+      return "{\"objectsCount\":0,\"objectsTotalSize\":0,\"bucketsCount\":0}";
+    }
+    if (path.endsWith("/accountinfo")) {
+      return "{\"AccountName\":\"root\",\"Server\":{\"Type\":1},\"Buckets\":[]}";
+    }
+    if (path.endsWith("/info-access-key")) {
+      return "{\"accessKey\":\"svc1\",\"accountStatus\":\"enabled\"}";
+    }
+    if (path.endsWith("/list-access-keys-bulk")) {
+      return "{\"serviceAccounts\":[],\"stsKeys\":[]}";
+    }
+    if (path.endsWith("/get-bucket-quota")) {
+      return "{\"quota\":0,\"size\":0,\"rate\":0,\"requests\":0,\"quotatype\":\"hard\"}";
+    }
+    if (path.endsWith("/tier")) {
+      return "[]";
+    }
+    return "01234567890123456789012345678901234567890";
   }
 
   private static void assertMonoMethodExists(Class<?> type, String name) {
