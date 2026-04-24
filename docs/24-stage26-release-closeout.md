@@ -12,7 +12,7 @@
 
 阶段 26 不宣称“所有接口都已变成最终强类型模型”。它宣称的是：对标 MinIO 的路由、调用入口、文档口径、风险门禁和验证证据已经闭环，后续可以继续按产品 typed 成熟度迭代。
 
-阶段 27 已在该候选口径之上补充 S3 ACL 与 Select typed 边界，因此当前 S3 product-typed 数字已提升到 72 / 77；其余结论不变。
+阶段 27 和阶段 28 已在该候选口径之上补充 S3 ACL、Select、notification 与 replication metrics typed 边界，因此当前 S3 product-typed 数字已提升到 76 / 77；其余结论不变。
 
 ## 2. 当前能力快照
 
@@ -20,7 +20,7 @@
 
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| s3 | 77 | 72 | 77 | 0 | 0 | 0 |
+| s3 | 77 | 76 | 77 | 0 | 0 | 0 |
 | admin | 128 | 43 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 4 | 7 | 0 | 0 | 0 |

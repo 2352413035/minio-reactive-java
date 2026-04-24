@@ -202,6 +202,31 @@ class S3XmlTest {
   }
 
   @Test
+  void shouldBuildAndParseBucketNotificationXml() {
+    BucketNotificationConfiguration configuration =
+        BucketNotificationConfiguration.of(
+            Arrays.asList(
+                new BucketNotificationTarget(
+                    "Queue",
+                    "queue-1",
+                    "arn:minio:sqs::1:webhook",
+                    Arrays.asList("s3:ObjectCreated:*"),
+                    "images/",
+                    ".jpg")));
+
+    BucketNotificationConfiguration parsed =
+        S3Xml.parseBucketNotification(S3Xml.bucketNotificationXml(configuration));
+
+    Assertions.assertEquals(1, parsed.targets().size());
+    Assertions.assertEquals("Queue", parsed.targets().get(0).type());
+    Assertions.assertEquals("queue-1", parsed.targets().get(0).id());
+    Assertions.assertEquals("arn:minio:sqs::1:webhook", parsed.targets().get(0).arn());
+    Assertions.assertEquals(Arrays.asList("s3:ObjectCreated:*"), parsed.targets().get(0).events());
+    Assertions.assertEquals("images/", parsed.targets().get(0).filterPrefix());
+    Assertions.assertEquals(".jpg", parsed.targets().get(0).filterSuffix());
+  }
+
+  @Test
   void shouldBuildCompleteMultipartXml() {
     String xml = S3Xml.completeMultipartXml(Arrays.asList(new CompletePart(1, "\"etag\"")));
 
