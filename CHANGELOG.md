@@ -157,6 +157,14 @@
 - Admin product-typed 从 94 / 128 提升到 97 / 128；Crypto Gate 与破坏性 lab 边界不变。
 - 新增 `docs/53-stage55-admin-config-risk-boundary.md` 记录配置高风险边界。
 
+### 阶段 56 补充
+
+- `ReactiveMinioAdminClient` 新增站点复制 peer join、bucket ops、IAM item、bucket metadata、resync、state edit 的 lab-only 产品入口。
+- 这些入口固定 madmin `api-version=1`，要求非空请求体，不解析、不保存请求体内容。
+- mock 测试同时验证 typed 方法和 raw catalog 兜底路径。
+- Admin product-typed 从 97 / 128 提升到 103 / 128；Crypto Gate 与破坏性 lab 边界不变。
+- 新增 `docs/54-stage56-site-replication-peer-lab-boundary.md` 记录站点复制 peer 写入边界。
+
 
 ### 阶段 35 补充
 

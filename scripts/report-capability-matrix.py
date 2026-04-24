@@ -67,7 +67,10 @@ TYPED_METHODS = {
         'getReplicationMrfInfo','verifyTierInfo',
         'attachBuiltinPolicy','detachBuiltinPolicy',
         'attachLdapPolicy','detachLdapPolicy',
-        'deleteConfigKvEntry','clearConfigHistoryEntry','restoreConfigHistoryEntry'
+        'deleteConfigKvEntry','clearConfigHistoryEntry','restoreConfigHistoryEntry',
+        'joinSiteReplicationPeer','applySiteReplicationPeerBucketOperation',
+        'applySiteReplicationPeerIamItem','applySiteReplicationPeerBucketMetadata',
+        'runSiteReplicationResyncOperation','editSiteReplicationState'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 97 | 128 | 0 | 9 | 29 |
+| admin | 128 | 103 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -461,6 +461,19 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - Admin product-typed 提升到 97 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
 
 详见 `docs/53-stage55-admin-config-risk-boundary.md`。
+
+## 5.37 阶段 56 补充
+
+阶段 56 补充站点复制 peer 写入类 lab-only 产品边界：
+
+- `joinSiteReplicationPeer(...)` 包装 peer join。
+- `applySiteReplicationPeerBucketOperation(...)` 包装 peer bucket 操作。
+- `applySiteReplicationPeerIamItem(...)` 与 `applySiteReplicationPeerBucketMetadata(...)` 包装 peer IAM/bucket metadata 同步。
+- `runSiteReplicationResyncOperation(...)` 与 `editSiteReplicationState(...)` 包装 resync/state edit。
+- 专用入口继续固定 `api-version=1`，要求非空请求体，不解析、不保存请求体内容。
+- Admin product-typed 提升到 103 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
+
+详见 `docs/54-stage56-site-replication-peer-lab-boundary.md`。
 
 ## 6. 验证命令
 
