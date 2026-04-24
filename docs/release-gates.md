@@ -31,16 +31,22 @@
 - 使用独立、可回滚的实验环境
 - 至少一条 config write + restore 流程成功
 
-## 4. 能力总表门禁
+## 4. 路由对标（route parity）与能力总表门禁
 
-发布或里程碑说明必须引用 `scripts/report-capability-matrix.py` 产物，而不是手写统计值。
+发布或里程碑说明必须引用脚本产物，而不是手写统计值。
 
-至少输出：
+路由对标必须输出：
 
-- `catalog`
-- `typed`
-- `advanced`
-- `raw-only`
+- `scripts/report-route-parity.py` 的 markdown 或 json 报告。
+- 服务端 router 与 SDK catalog 的 family/method/path/query/auth 差异。
+- `missingFromCatalog = 0` 且 `extraInCatalog = 0`，除非文档明确说明该路由是内部、dummy 或 rejected route。
+
+能力总表至少输出：
+
+- `route-catalog`
+- `product-typed`
+- `advanced-compatible`
+- `raw-fallback`
 - `encrypted-blocked`
 - `destructive-blocked`
 

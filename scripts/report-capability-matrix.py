@@ -34,7 +34,7 @@ TYPED_METHODS = {
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus'},
     'sts': {'assumeRoleWithWebIdentityCredentials','assumeRoleWithClientGrantsCredentials','assumeRoleWithLdapCredentials'},
     'metrics': {'scrapeClusterMetrics','scrapeNodeMetrics','scrapeBucketMetrics','scrapeResourceMetrics','scrapeV3'},
-    'health': {'checkLiveness','isLive','checkReadiness','isReady','checkCluster','checkClusterRead'},
+    'health': {'checkLiveness','isLive','checkReadiness','isReady','checkCluster','checkClusterRead','clusterGet','clusterHead','clusterReadGet','clusterReadHead','liveGet','liveHead','readyGet','readyHead'},
 }
 
 ENCRYPTED_BLOCKED = {
@@ -83,13 +83,15 @@ def advanced_count(family, methods, text):
     return 0
 
 
-def typed_count(family, methods):
+def typed_count(family, methods, catalog_count):
     names = {name for _, name in methods}
-    return len(names & TYPED_METHODS.get(family, set()))
+    # 这里统计的是产品化能力覆盖，不是公开方法数量；健康检查同时有 GET/HEAD 和业务便捷方法，按 route-catalog 上限收敛。
+    return min(len(names & TYPED_METHODS.get(family, set())), catalog_count)
 
 
-def raw_only_count(family, endpoint_names, adv, typed):
-    return max(len(endpoint_names) - adv - typed, 0)
+def raw_fallback_count(route_catalog, adv, typed):
+    # advanced 与 typed 不是互斥集合；兜底缺口按两者中覆盖更广的一侧扣减，避免把已覆盖的 Health HEAD 误报成 raw fallback 缺口。
+    return max(route_catalog - max(adv, typed), 0)
 
 
 def build_matrix(worktree: Path):
@@ -98,14 +100,15 @@ def build_matrix(worktree: Path):
     rows = []
     for family, rel in FAMILY_FILES.items():
         methods, text = public_methods(worktree / rel)
+        route_catalog = catalog_counts.get(family, 0)
         adv = advanced_count(family, methods, text)
-        typed = typed_count(family, methods)
+        typed = typed_count(family, methods, route_catalog)
         rows.append({
             'family': family,
-            'catalog': catalog_counts.get(family, 0),
-            'typed': typed,
-            'advanced': adv,
-            'raw-only': raw_only_count(family, endpoint_names.get(family, set()), adv, typed),
+            'route-catalog': route_catalog,
+            'product-typed': typed,
+            'advanced-compatible': adv,
+            'raw-fallback': raw_fallback_count(route_catalog, adv, typed),
             'encrypted-blocked': len(ENCRYPTED_BLOCKED.get(family, set())),
             'destructive-blocked': len(DESTRUCTIVE_BLOCKED.get(family, set())),
         })
@@ -113,13 +116,13 @@ def build_matrix(worktree: Path):
 
 
 def render_markdown(matrices):
-    parts = ["<!-- counts are capability-oriented, not mutually exclusive endpoint partitions -->", ""]
+    parts = ["<!-- counts distinguish route-catalog, product-typed, advanced-compatible, raw-fallback, and blocked-risk gates. -->", ""]
     for matrix in matrices:
         parts.append(f"## {matrix['worktree']}")
-        parts.append('| family | catalog | typed | advanced | raw-only | encrypted-blocked | destructive-blocked |')
+        parts.append('| family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |')
         parts.append('| --- | ---: | ---: | ---: | ---: | ---: | ---: |')
         for row in matrix['rows']:
-            parts.append(f"| {row['family']} | {row['catalog']} | {row['typed']} | {row['advanced']} | {row['raw-only']} | {row['encrypted-blocked']} | {row['destructive-blocked']} |")
+            parts.append(f"| {row['family']} | {row['route-catalog']} | {row['product-typed']} | {row['advanced-compatible']} | {row['raw-fallback']} | {row['encrypted-blocked']} | {row['destructive-blocked']} |")
         parts.append('')
     return '\n'.join(parts).strip() + '\n'
 

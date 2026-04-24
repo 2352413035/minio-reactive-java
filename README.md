@@ -146,4 +146,5 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/release-gates.md`
 - `scripts/madmin-fixtures/`
 - `scripts/minio-lab/`
+- `scripts/report-route-parity.py`
 - `scripts/report-capability-matrix.py`
