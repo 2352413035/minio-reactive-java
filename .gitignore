@@ -4,6 +4,7 @@ target/
 !**/src/test/**/target/
 .kotlin
 src/main/resources/minio-local.properties
+scripts/minio-lab/lab.properties
 
 ### Python 缓存 ###
 __pycache__/

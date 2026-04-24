@@ -72,6 +72,17 @@
 
 真实 config write + restore 需要额外提供 `MINIO_LAB_TEST_CONFIG_KV` 与 `MINIO_LAB_RESTORE_CONFIG_KV`。这两个变量缺失时，测试只验证环境门禁，不执行配置写入。
 
+阶段 24 起，destructive lab 推荐使用 `MINIO_LAB_CONFIG_FILE` 或本地 `scripts/minio-lab/lab.properties` 集中声明 lab 参数。仓库只提供 `lab.example.properties`，真实凭证不得提交。
+
+可选 lab fixture 包括：
+
+- `MINIO_LAB_TEST_BUCKET_QUOTA_JSON` / `MINIO_LAB_RESTORE_BUCKET_QUOTA_JSON`
+- `MINIO_LAB_TIER_NAME`
+- `MINIO_LAB_REMOTE_TARGET_TYPE`
+- `MINIO_LAB_ENABLE_BATCH_JOB_PROBES`
+
+这些 fixture 只能在独立 lab 中证明能力，不允许替代共享 live 门禁。
+
 ## 阶段 19 发布就绪检查清单
 
 发布或里程碑说明至少要附上以下证据：

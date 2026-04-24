@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=load-config.sh
+source "$SCRIPT_DIR/load-config.sh"
+load_minio_lab_config
+
 fail() {
   echo "$1" >&2
   exit 1
