@@ -24,6 +24,8 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 
 阶段 17 起，仓库提供 `scripts/minio-lab/run-destructive-tests.sh` 作为 destructive lab 的统一入口。真实 config write + restore 测试还要求 `MINIO_LAB_TEST_CONFIG_KV` 和 `MINIO_LAB_RESTORE_CONFIG_KV`，否则只校验 lab 门禁并跳过写入。
 
+阶段 24 起，lab 参数可以集中放在 `MINIO_LAB_CONFIG_FILE` 指向的本机配置文件，或未提交的 `scripts/minio-lab/lab.properties`。配置文件支持 config write + restore、bucket quota write + restore、tier/remote target/batch job 探测 fixture；所有 fixture 默认跳过，只有明确配置后才执行。
+
 ## 阶段 15 已产品化的明文安全入口
 
 阶段 15 的原则是：只把 MinIO 服务端明文返回、且不会修改共享环境的能力做成用户日常可用的 typed 入口；需要加密解密或会修改状态的能力继续保持边界。

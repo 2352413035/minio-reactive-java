@@ -4,6 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+# shellcheck source=load-config.sh
+source "$SCRIPT_DIR/load-config.sh"
+load_minio_lab_config
+
 "$SCRIPT_DIR/verify-env.sh"
 
 : "${MINIO_LAB_ENDPOINT:?缺少 MINIO_LAB_ENDPOINT}"

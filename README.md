@@ -56,7 +56,7 @@ minio.content=hello from reactive minio sdk
 - Admin：server/storage/data-usage/account/config-help、pool/rebalance/tier/site-replication/top-locks/obd/health 等 L1 只读摘要模型，用户、用户组、策略、服务账号等 typed 或风险分层入口。
 - KMS、STS、Metrics、Health：均有独立专用客户端；KMS/Metrics 指标入口保留 Prometheus 文本和样本解析，STS 普通 AssumeRole 已有 typed 请求对象，Health 已有布尔检查。
 - madmin 加密边界：配置、服务账号、access key 等默认加密响应显式返回 `EncryptedAdminResponse`，并暴露算法诊断信息，不伪装成明文模型。
-- destructive Admin lab：破坏性 Admin 测试只允许在独立可回滚环境中运行，默认共享 MinIO 集成测试不会修改危险配置。
+- destructive Admin lab：破坏性 Admin 测试只允许在独立可回滚环境中运行，支持独立 lab 配置文件；默认共享 MinIO 集成测试不会修改危险配置。
 
 这些能力已经通过 JDK8 单元测试以及真实 MinIO 集成测试进行了验证。
 
@@ -159,6 +159,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/19-stage21-s3-bucket-subresources.md`
 - `docs/20-stage22-admin-readonly-summaries.md`
 - `docs/21-stage23-kms-metrics-typed-gap.md`
+- `docs/22-stage24-destructive-lab-expansion.md`
 - `docs/release-gates.md`
 - `scripts/madmin-fixtures/`
 - `scripts/minio-lab/`
