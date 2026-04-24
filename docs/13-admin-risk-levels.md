@@ -22,9 +22,11 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 5. 通过 `MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true` 显式开启。
 6. 执行前运行 `scripts/minio-lab/verify-env.sh`。
 
-阶段 17 起，仓库提供 `scripts/minio-lab/run-destructive-tests.sh` 作为 destructive lab 的统一入口。真实 config write + restore 测试还要求 `MINIO_LAB_TEST_CONFIG_KV` 和 `MINIO_LAB_RESTORE_CONFIG_KV`，否则只校验 lab 门禁并跳过写入。
+阶段 17 起，仓库提供 `scripts/minio-lab/run-destructive-tests.sh` 作为 破坏性实验环境的统一入口。真实 config write + restore 测试还要求 `MINIO_LAB_TEST_CONFIG_KV` 和 `MINIO_LAB_RESTORE_CONFIG_KV`，否则只校验 lab 门禁并跳过写入。
 
-阶段 24 起，lab 参数可以集中放在 `MINIO_LAB_CONFIG_FILE` 指向的本机配置文件，或未提交的 `scripts/minio-lab/lab.properties`。配置文件支持 config write + restore、bucket quota write + restore、tier/remote target/batch job 探测 fixture；所有 fixture 默认跳过，只有明确配置后才执行。
+阶段 24 起，lab 参数可以集中放在 `MINIO_LAB_CONFIG_FILE` 指向的本机配置文件，或未提交的 `scripts/minio-lab/lab.properties`。配置文件支持 config write + restore、bucket quota write + restore、tier/remote target/batch job 探测夹具；所有夹具默认跳过，只有明确配置后才执行。
+
+阶段 31 起，tier、remote target、batch job 夹具需要同时验证专用 typed 客户端和 `ReactiveMinioRawClient` catalog 兜底调用。`run-destructive-tests.sh` 会生成本机报告，记录夹具开关、端点指纹和失败恢复提示，但不会写入凭证。
 
 ## 阶段 15 已产品化的明文安全入口
 
@@ -70,10 +72,12 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 - `product-typed`：已经有明确请求/响应模型、中文错误语义或风险说明，适合用户直接集成。
 - `advanced-compatible`：已保留可调用入口，但还没有足够产品化的 typed 模型。
 - `encrypted-blocked`：服务端默认返回 madmin 加密载荷，Crypto Gate Pass 前只暴露 `EncryptedAdminResponse`。
-- `destructive-blocked`：会修改服务端状态或需要独立实验环境的操作，只能通过 destructive lab 验证。
+- `destructive-blocked`：会修改服务端状态或需要独立实验环境的操作，只能通过破坏性实验环境验证。
 
-当前 Admin 口径以 `.omx/reports/capability-matrix.md` 为准：route-catalog 128，product-typed 43，advanced-compatible 128，encrypted-blocked 9，destructive-blocked 29。
+当前 Admin 口径以 `.omx/reports/capability-matrix.md` 为准：route-catalog 128，product-typed 50，advanced-compatible 128，encrypted-blocked 9，destructive-blocked 29。
 
 阶段 22 起，pool、rebalance、tier、site replication、top locks、OBD、health info 等只读状态接口先进入 `AdminJsonResult` typed 入口。它们仍保留完整原始 JSON，后续确认稳定字段后再拆成更细摘要模型。
 
-阶段 30 起，策略绑定实体、IDP 配置只读查询、remote target 只读列表、batch job 只读查询也进入 typed 摘要入口；对应写操作仍保持 L3 destructive lab 边界。
+阶段 30 起，策略绑定实体、IDP 配置只读查询、remote target 只读列表、batch job 只读查询也进入 typed 摘要入口；对应写操作仍保持 L3 破坏性实验环境边界。
+
+阶段 31 起，破坏性实验环境的只读探测会同时比较 typed 摘要和 raw catalog 调用结果，用于证明专用客户端和兜底调用器的语义一致性。

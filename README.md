@@ -57,7 +57,7 @@ minio.content=hello from reactive minio sdk
 - Admin：server/storage/data-usage/account/config-help、pool/rebalance/tier/site-replication/top-locks/obd/health 等 L1 只读摘要模型，用户、用户组、策略、服务账号等 typed 或风险分层入口。
 - KMS、STS、Metrics、Health：均有独立专用客户端；KMS/Metrics 指标入口保留 Prometheus 文本和样本解析，STS 普通 AssumeRole 已有 typed 请求对象，Health 已有布尔检查。
 - madmin 加密边界：配置、服务账号、access key 等默认加密响应显式返回 `EncryptedAdminResponse`，并暴露算法诊断信息，不伪装成明文模型。
-- destructive Admin lab：破坏性 Admin 测试只允许在独立可回滚环境中运行，支持独立 lab 配置文件；默认共享 MinIO 集成测试不会修改危险配置。
+- 破坏性 Admin 实验环境：破坏性 Admin 测试只允许在独立可回滚环境中运行，支持独立 lab 配置文件；默认共享 MinIO 集成测试不会修改危险配置。
 
 这些能力已经通过 JDK8 单元测试以及真实 MinIO 集成测试进行了验证。
 
@@ -74,7 +74,7 @@ minio.content=hello from reactive minio sdk
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
 
-阶段 26 已整理为 `0.1.0-SNAPSHOT` 发布候选口径：路由和调用入口闭环，常用 typed 客户端可用，Crypto/destructive 风险边界明确，后续继续按 product-typed 成熟度推进。详见 `CHANGELOG.md` 和 `docs/24-stage26-release-closeout.md`。
+阶段 26 已整理为 `0.1.0-SNAPSHOT` 发布候选口径：路由和调用入口闭环，常用 typed 客户端可用，Crypto/破坏性风险边界明确，后续继续按 product-typed 成熟度推进。详见 `CHANGELOG.md` 和 `docs/24-stage26-release-closeout.md`。
 
 ## 运行真实 MinIO 示例
 
@@ -136,7 +136,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics/KMS 提供 Prometheus 文本包装和样本解析；STS 提供普通 AssumeRole / WebIdentity / ClientGrants / LDAP / SSO / 证书 / 自定义 token 临时凭证解析入口；KMS、Admin IAM、用户组、服务账号、Admin 只读状态摘要、策略绑定实体、IDP 配置、remote target、batch job 摘要以及 S3 版本/分片列表、对象治理、bucket CORS/website/logging/policy status、ACL/Select 等子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
 
-阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。
+阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。阶段 31 把破坏性实验环境升级为 typed/raw 双路径校验：tier、remote target、batch job 夹具会先验证专用客户端摘要，再用 raw catalog 调用交叉佐证，同时生成本机执行报告。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
@@ -171,6 +171,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/26-stage28-s3-notification-replication.md`
 - `docs/27-stage29-sts-advanced-identity.md`
 - `docs/28-stage30-admin-l1-l2-summaries.md`
+- `docs/29-stage31-destructive-lab-fixtures.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

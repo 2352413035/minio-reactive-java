@@ -1,6 +1,12 @@
 package io.minio.reactive.integration;
 
 import io.minio.reactive.ReactiveMinioAdminClient;
+import io.minio.reactive.ReactiveMinioRawClient;
+import io.minio.reactive.catalog.MinioApiCatalog;
+import io.minio.reactive.messages.admin.AdminBatchJobList;
+import io.minio.reactive.messages.admin.AdminJsonResult;
+import io.minio.reactive.messages.admin.AdminRemoteTargetList;
+import io.minio.reactive.messages.admin.AdminTierList;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -80,22 +86,65 @@ class DestructiveAdminIntegrationTest {
     String tierName = labValue("MINIO_LAB_TIER_NAME");
     String bucket = labValue("MINIO_LAB_BUCKET");
     String remoteTargetType = getenvOrDefault("MINIO_LAB_REMOTE_TARGET_TYPE", "replication");
+    String expectedRemoteTargetArn = labValue("MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN");
+    String expectedBatchJobId = labValue("MINIO_LAB_BATCH_EXPECTED_JOB_ID");
     boolean batchProbes = "true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_BATCH_JOB_PROBES"));
     Assumptions.assumeTrue(
         notBlank(tierName) || notBlank(bucket) || batchProbes,
         "缺少 tier/remote target/batch job lab fixture，跳过可选 lab 探测。");
 
     ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
     if (notBlank(tierName)) {
+      AdminTierList typedTiers = admin.listTiers().block();
+      String rawTiers = rawString(raw, "ADMIN_LIST_TIER");
+      Assertions.assertNotNull(typedTiers);
+      Assertions.assertEquals(AdminTierList.parse(rawTiers).tierCount(), typedTiers.tierCount());
+      if ("true".equalsIgnoreCase(labValue("MINIO_LAB_EXPECT_TIER_IN_LIST"))) {
+        Assertions.assertTrue(
+            containsTierName(typedTiers, tierName),
+            "MINIO_LAB_EXPECT_TIER_IN_LIST=true 时，listTiers() 必须能看到指定 tier: " + tierName);
+      }
       Assertions.assertNotNull(admin.verifyTier(tierName).block());
     }
     if (notBlank(bucket)) {
-      Assertions.assertNotNull(admin.listRemoteTargets(bucket, remoteTargetType).block());
+      AdminRemoteTargetList typedTargets =
+          admin.listRemoteTargetsInfo(bucket, remoteTargetType).block();
+      String rawTargets =
+          rawString(raw, "ADMIN_LIST_REMOTE_TARGETS", map("bucket", bucket, "type", remoteTargetType));
+      Assertions.assertNotNull(typedTargets);
+      Assertions.assertEquals(
+          AdminRemoteTargetList.parse(rawTargets).targetCount(), typedTargets.targetCount());
+      if (notBlank(expectedRemoteTargetArn)) {
+        Assertions.assertTrue(
+            containsRemoteTargetArn(typedTargets, expectedRemoteTargetArn),
+            "MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN 已设置，但 typed remote target 摘要未找到该 ARN。");
+      }
     }
     if (batchProbes) {
-      Assertions.assertNotNull(admin.listBatchJobs().block());
-      Assertions.assertNotNull(admin.batchJobStatus().block());
-      Assertions.assertNotNull(admin.describeBatchJob().block());
+      AdminBatchJobList typedJobs = admin.listBatchJobsInfo().block();
+      String rawJobs = rawString(raw, "ADMIN_LIST_BATCH_JOBS");
+      Assertions.assertNotNull(typedJobs);
+      Assertions.assertEquals(AdminBatchJobList.parse(rawJobs).jobCount(), typedJobs.jobCount());
+
+      AdminJsonResult typedStatus = admin.getBatchJobStatusInfo().block();
+      String rawStatus = rawString(raw, "ADMIN_BATCH_JOB_STATUS");
+      Assertions.assertNotNull(typedStatus);
+      Assertions.assertEquals(AdminJsonResult.parse(rawStatus).rawJson(), typedStatus.rawJson());
+
+      AdminJsonResult typedDescription = admin.describeBatchJobInfo().block();
+      String rawDescription = rawString(raw, "ADMIN_DESCRIBE_BATCH_JOB");
+      Assertions.assertNotNull(typedDescription);
+      Assertions.assertEquals(
+          AdminJsonResult.parse(rawDescription).rawJson(), typedDescription.rawJson());
+
+      if (notBlank(expectedBatchJobId)) {
+        Assertions.assertTrue(
+            containsBatchJobId(typedJobs, expectedBatchJobId)
+                || typedStatus.rawJson().contains(expectedBatchJobId)
+                || typedDescription.rawJson().contains(expectedBatchJobId),
+            "MINIO_LAB_BATCH_EXPECTED_JOB_ID 已设置，但 batch job typed/raw 摘要均未找到该任务。");
+      }
     }
   }
 
@@ -133,6 +182,76 @@ class DestructiveAdminIntegrationTest {
         .region(getenvOrDefault("MINIO_LAB_REGION", "us-east-1"))
         .credentials(labValue("MINIO_LAB_ACCESS_KEY"), labValue("MINIO_LAB_SECRET_KEY"))
         .build();
+  }
+
+  private static ReactiveMinioRawClient labRawClient() {
+    return ReactiveMinioRawClient.builder()
+        .endpoint(labValue("MINIO_LAB_ENDPOINT"))
+        .region(getenvOrDefault("MINIO_LAB_REGION", "us-east-1"))
+        .credentials(labValue("MINIO_LAB_ACCESS_KEY"), labValue("MINIO_LAB_SECRET_KEY"))
+        .build();
+  }
+
+  private static Map<String, String> map(String... values) {
+    Map<String, String> result = new LinkedHashMap<String, String>();
+    for (int i = 0; i + 1 < values.length; i += 2) {
+      result.put(values[i], values[i + 1]);
+    }
+    return result;
+  }
+
+  private static String rawString(ReactiveMinioRawClient raw, String endpointName) {
+    return rawString(raw, endpointName, Collections.<String, String>emptyMap());
+  }
+
+  private static String rawString(
+      ReactiveMinioRawClient raw, String endpointName, Map<String, String> query) {
+    return raw
+        .executeToString(
+            MinioApiCatalog.byName(endpointName),
+            Collections.<String, String>emptyMap(),
+            query,
+            Collections.<String, String>emptyMap(),
+            null,
+            null)
+        .block();
+  }
+
+  private static boolean containsTierName(AdminTierList tiers, String tierName) {
+    if (tiers == null) {
+      return false;
+    }
+    for (AdminTierList.Tier tier : tiers.tiers()) {
+      if (tierName.equals(tier.name())) {
+        return true;
+      }
+    }
+    return tiers.rawJson().contains(tierName);
+  }
+
+  private static boolean containsRemoteTargetArn(
+      AdminRemoteTargetList targets, String expectedRemoteTargetArn) {
+    if (targets == null) {
+      return false;
+    }
+    for (AdminRemoteTargetList.Target target : targets.targets()) {
+      if (expectedRemoteTargetArn.equals(target.arn())) {
+        return true;
+      }
+    }
+    return targets.rawJson().contains(expectedRemoteTargetArn);
+  }
+
+  private static boolean containsBatchJobId(AdminBatchJobList jobs, String expectedBatchJobId) {
+    if (jobs == null) {
+      return false;
+    }
+    for (AdminBatchJobList.Job job : jobs.jobs()) {
+      if (expectedBatchJobId.equals(job.id())) {
+        return true;
+      }
+    }
+    return jobs.rawJson().contains(expectedBatchJobId);
   }
 
   private static String configSubSystem(String kvText) {

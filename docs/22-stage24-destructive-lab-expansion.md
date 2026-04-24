@@ -38,6 +38,6 @@ scripts/minio-lab/run-destructive-tests.sh
 
 ## 5. 验证要求
 
-- 默认 `mvn test` 必须继续跳过 destructive 测试，不修改共享 MinIO。
+- 默认 `mvn test` 必须继续跳过 破坏性测试，不修改共享 MinIO。
 - `verify-env.sh` 在缺少授权或指向共享 endpoint 时必须失败。
 - `run-destructive-tests.sh` 在独立 lab 配置存在时统一加载配置并执行 `DestructiveAdminIntegrationTest`。

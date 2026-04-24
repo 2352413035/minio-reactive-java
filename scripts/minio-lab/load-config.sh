@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 读取 destructive lab 配置文件。
+# 读取破坏性实验环境配置文件。
 # 配置文件采用简单 KEY=VALUE 格式；空行和 # 注释会被忽略。
 # 这里不使用 source，避免配置文件执行任意 shell 代码。
 
