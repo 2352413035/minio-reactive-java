@@ -378,6 +378,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/46-stage48-admin-diagnostic-probes.md`。
 
+## 5.30 阶段 49 补充
+
+阶段 49 收口 Admin KMS 与专用 KMS 客户端边界：
+
+- 普通 KMS 仍优先使用 `ReactiveMinioKmsClient`。
+- Admin KMS 只作为 madmin/Admin 路由兼容桥接。
+- 新增 Admin KMS typed 桥接方法，旧 `Mono<String>` 入口标记 `@Deprecated`。
+- Admin product-typed 提升到 78 / 128。
+
+详见 `docs/47-stage49-admin-kms-boundary.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：

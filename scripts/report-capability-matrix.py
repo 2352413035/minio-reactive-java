@@ -58,7 +58,8 @@ TYPED_METHODS = {
         'runClientDevnull','runClientDevnullExtraTime',
         'runSiteReplicationDevnull','runSiteReplicationNetperf',
         'runSpeedtest','runObjectSpeedtest','runDriveSpeedtest',
-        'runNetworkSpeedtest','runSiteSpeedtest'
+        'runNetworkSpeedtest','runSiteSpeedtest',
+        'getAdminKmsStatus','createAdminKmsKey','getAdminKmsKeyStatus'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {
