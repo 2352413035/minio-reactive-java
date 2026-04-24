@@ -49,7 +49,12 @@ TYPED_METHODS = {
         'getBucketQuotaInfo','listTiers'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
-    'sts': {'assumeRoleCredentials','assumeRoleWithWebIdentityCredentials','assumeRoleWithClientGrantsCredentials','assumeRoleWithLdapCredentials'},
+    'sts': {
+        'assumeRoleCredentials','assumeRoleWithWebIdentityCredentials',
+        'assumeRoleWithClientGrantsCredentials','assumeRoleWithLdapCredentials',
+        'assumeRoleSsoCredentials','assumeRoleWithCertificateCredentials',
+        'assumeRoleWithCustomTokenCredentials'
+    },
     'metrics': {'scrapeClusterMetrics','scrapeNodeMetrics','scrapeBucketMetrics','scrapeResourceMetrics','scrapeV3','scrapeLegacyMetrics'},
     'health': {'checkLiveness','isLive','checkReadiness','isReady','checkCluster','checkClusterRead','clusterGet','clusterHead','clusterReadGet','clusterReadHead','liveGet','liveHead','readyGet','readyHead'},
 }
