@@ -40,7 +40,7 @@
 
 ## 4. 路由对标（route parity）与能力总表门禁
 
-发布或里程碑说明必须引用脚本产物，而不是手写统计值。
+发布或里程碑说明必须引用脚本产物，而不是手写统计值。阶段 46 起，常规复审报告固定刷新 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md`、`.omx/reports/capability-matrix.md` 与对应 JSON 文件。
 
 路由对标必须输出：
 

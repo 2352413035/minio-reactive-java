@@ -56,3 +56,14 @@
 2. 独立 lab 真实执行证据：在用户提供的可回滚环境中跑 stage 36/37 写入矩阵，并把报告作为能力证明。
 3. Crypto Gate Pass 准备：做依赖、许可证、安全公告、FIPS/provider 与双分支测试矩阵审查。
 4. 发布说明：如果准备对外发布，使用本文件、`docs/17-release-readiness-report.md` 和 `docs/24-stage26-release-closeout.md` 的分层口径，不使用单一百分比。
+
+## 6. 阶段 46 复审刷新
+
+阶段 46 已重新生成常规发布复审报告：
+
+- `.omx/reports/route-parity-jdk8.md`
+- `.omx/reports/route-parity-jdk17.md`
+- `.omx/reports/capability-matrix.md`
+- `.omx/reports/capability-matrix.json`
+
+最新口径仍为双分支 233 / 233、catalog 缺失 0、额外 0，Admin product-typed 64 / 128，`raw-fallback = 0`。阶段 40-45 的增量详见 `docs/44-stage46-release-review-refresh.md`。
