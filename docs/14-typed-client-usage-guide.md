@@ -96,7 +96,7 @@ EncryptedAdminResponse accessKeyInfo = admin.getAccessKeyInfoEncrypted("svc-acce
 EncryptedAdminResponse accessKeys = admin.listAccessKeysEncrypted("all").block();
 ```
 
-这些响应需要等 Crypto Gate Pass 后，才会进入明文 typed 模型。
+这些响应需要等 Crypto Gate Pass 后，才会进入明文 typed 模型。阶段 18 起，边界对象会暴露 `algorithm()` / `algorithmName()`，便于日志和排障说明当前遇到的是哪一种 madmin 加密响应。
 
 ## 错误诊断
 
@@ -132,6 +132,15 @@ String body = raw.executeToString(
 ```
 
 使用 raw 前应先确认接口风险等级，尤其是 Admin 写操作。
+
+## 可编译示例
+
+仓库中的示例都放在 `io.minio.reactive.examples` 包下：
+
+- `ReactiveMinioLiveExample`：对象存储创建桶、上传、下载、删除闭环。
+- `ReactiveMinioTypedAdminExample`：Admin L1 只读摘要模型和加密响应边界。
+- `ReactiveMinioRawFallbackExample`：用 catalog + raw 兜底调用 S3/Admin 原始接口。
+- `ReactiveMinioOpsExample`：Health 布尔检查和 Metrics Prometheus 文本入口。
 
 ## 能力总表
 

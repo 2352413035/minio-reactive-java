@@ -58,3 +58,14 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 - 业务项目优先使用 L1/L2 typed 方法。
 - L3/L4 场景应先在测试环境验证，再迁移到生产。
 - 如果 SDK 尚未提供 typed 方法，可以使用 `ReactiveMinioRawClient` 兜底，但调用方需要自行承担协议和风险确认。
+
+## 发布口径
+
+阶段 19 起，Admin 不再用“接口数量完成百分比”描述进度，而是拆成以下几类：
+
+- `product-typed`：已经有明确请求/响应模型、中文错误语义或风险说明，适合用户直接集成。
+- `advanced-compatible`：已保留可调用入口，但还没有足够产品化的 typed 模型。
+- `encrypted-blocked`：服务端默认返回 madmin 加密载荷，Crypto Gate Pass 前只暴露 `EncryptedAdminResponse`。
+- `destructive-blocked`：会修改服务端状态或需要独立实验环境的操作，只能通过 destructive lab 验证。
+
+当前 Admin 口径以 `.omx/reports/capability-matrix.md` 为准：route-catalog 128，product-typed 33，advanced-compatible 128，encrypted-blocked 9，destructive-blocked 29。

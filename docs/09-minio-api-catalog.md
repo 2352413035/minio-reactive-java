@@ -1,11 +1,12 @@
 # 09 MinIO API 目录覆盖说明
 
-当前项目提供两层 API：
+当前项目提供三类 API：
 
 1. `ReactiveMinioClient`：面向常用 S3 对象存储场景的强类型、Reactor 风格便捷客户端。
-2. `ReactiveMinioRawClient` + `MinioApiCatalog`：面向 MinIO 服务端公开 HTTP 路由的完整目录和原始响应式执行器。
+2. `ReactiveMinioAdminClient`、`ReactiveMinioKmsClient`、`ReactiveMinioStsClient`、`ReactiveMinioMetricsClient`、`ReactiveMinioHealthClient`：和对象存储客户端平级的专用领域客户端。
+3. `ReactiveMinioRawClient` + `MinioApiCatalog`：面向 MinIO 服务端公开 HTTP 路由的完整目录和原始响应式执行器。
 
-这两层的关系是：常用对象存储操作优先使用强类型客户端；管理端、KMS、STS、监控、健康检查等接口优先使用对应专用客户端；尚未建模或新出现的接口再通过原始执行器完整暴露。
+它们的关系是：常用对象存储操作优先使用 `ReactiveMinioClient`；管理端、KMS、STS、监控、健康检查等接口优先使用对应专用客户端；尚未建模或新出现的接口再通过 raw 完整暴露。raw 是兜底能力，不是普通业务主路径。
 
 ## 已覆盖的路由来源
 
@@ -30,6 +31,23 @@
 | `health` | 8 | `/minio/health/*` 存活和就绪检查接口 |
 | `metrics` | 6 | Prometheus 以及 metrics v2/v3 监控接口 |
 | `sts` | 7 | AWS STS 兼容接口 |
+
+## 当前完成度口径
+
+阶段 19 之后，项目用以下口径说明“对标 MinIO”的进度，不再使用单一完成百分比：
+
+| 口径 | JDK8 / JDK17+ 当前结果 | 解释 |
+| --- | --- | --- |
+| route parity | 233 / 233，missing 0，extra 0 | SDK catalog 与本地 `minio` router 在 family/method/path/query/auth 语义上对齐。 |
+| callability | raw-fallback 0 | 每个公开 catalog 路由至少有 typed 或 advanced 兼容入口。 |
+| product typed | S3 52 / 77、Admin 33 / 128、KMS 6 / 7、STS 4 / 7、Metrics 5 / 6、Health 8 / 8 | 这是用户友好强类型成熟度，不代表剩余路由不能调用。 |
+| blocked risk | encrypted-blocked 9、destructive-blocked 29 | 这些接口受 madmin 加密响应或破坏性操作边界限制，不能在共享环境中伪装成普通 typed 完成。 |
+
+机器报告统一由 `scripts/report-route-parity.py` 和 `scripts/report-capability-matrix.py` 生成，当前结果见：
+
+- `.omx/reports/route-parity-jdk8.md`
+- `.omx/reports/route-parity-jdk17.md`
+- `.omx/reports/capability-matrix.md`
 
 ## 使用示例
 
@@ -67,6 +85,13 @@ String xml = raw.executeToString(
 - 健康检查优先使用 `ReactiveMinioHealthClient`。
 - 如果 SDK 暂时没有跟上某个新增 API，或者专用客户端还没有更细的返回模型，可以使用 `ReactiveMinioRawClient` 兜底调用；raw 不作为普通业务首选路径。
 - 后续如果为某类接口补充更强的请求/响应模型，不应删除 `MinioApiCatalog` 中已有的原始接口覆盖。
+
+当前仓库还提供四个可编译示例：
+
+- `ReactiveMinioLiveExample`：对象存储主路径。
+- `ReactiveMinioTypedAdminExample`：Admin 只读 typed 模型与加密边界。
+- `ReactiveMinioRawFallbackExample`：raw 兜底调用 S3 与 Admin 原始接口。
+- `ReactiveMinioOpsExample`：Health 与 Metrics 运维入口。
 
 ## 认证语义
 
@@ -108,7 +133,7 @@ String xml = raw.executeToString(
 5. `ReactiveMinioMetricsClient`：监控指标接口。
 6. `ReactiveMinioHealthClient`：健康检查接口。
 
-这些专用客户端的方法名来自 `MinioApiCatalog` 中的接口名。当前已经为 Health、Metrics、STS、KMS、Admin 增加了第一批强业务入口，例如健康检查布尔结果、Prometheus 文本包装、STS 临时凭证解析、KMS/Admin JSON 包装。其它非对象存储接口仍可能先返回原始文本响应；后续会继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
+这些专用客户端的方法名既保留 `MinioApiCatalog` 中的接口名以便对照，又逐步补充用户更容易理解的业务方法。当前已经为 Health、Metrics、STS、KMS、Admin 增加了第一批强业务入口，例如健康检查布尔结果、Prometheus 文本包装和样本解析、STS 临时凭证解析、KMS/Admin JSON 摘要模型。其它非对象存储接口仍可能先返回原始文本响应；后续会继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
 
 强类型客户端不应只是把 `ReactiveMinioRawClient` 再包一层，而应像 `ReactiveMinioClient` 一样表达清楚请求对象、响应模型、错误语义和安全边界。它们可以复用 `MinioApiCatalog` 的路径、query、认证方式等元数据来避免重复维护，也可以复用底层签名和 HTTP 发送能力；`ReactiveMinioRawClient` 的定位是兜底调用器，用于 SDK 尚未产品化某个接口或用户需要直接访问新增 MinIO route 的场景。
 
