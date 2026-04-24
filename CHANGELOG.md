@@ -172,6 +172,13 @@
 - Admin product-typed 从 103 / 128 提升到 108 / 128；Crypto Gate 与破坏性 lab 边界不变。
 - 新增 `docs/55-stage57-service-update-token-boundary.md` 记录服务类高风险边界。
 
+### 阶段 58 补充
+
+- 复核 Crypto Gate 与独立 lab 阻塞状态，继续保持 Gate Fail 和共享端点拒绝。
+- 能力矩阵把既有 `EncryptedAdminResponse` 产品边界纳入 product-typed 统计，包括配置、access key 和配置历史加密响应入口。
+- Admin product-typed 从 108 / 128 提升到 113 / 128；`encrypted-blocked = 9` 与 `destructive-blocked = 29` 不减少。
+- 新增 `docs/56-stage58-crypto-lab-blocker-review.md` 记录为什么这是统计修正而不是 Crypto Gate Pass。
+
 
 ### 阶段 35 补充
 
