@@ -197,15 +197,33 @@ class ReactiveMinioSpecializedClientsTest {
             .webClient(webClient)
             .credentials("ak", "sk")
             .build();
+    ReactiveMinioMetricsClient metrics =
+        ReactiveMinioMetricsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
 
     admin.putPolicy("readonly", "{\"Version\":\"2012-10-17\"}").block();
     admin.setUserPolicy("readonly", "user1").block();
     kms.getKeyStatus("key1").block();
+    Assertions.assertEquals("kms", kms.scrapeMetrics().block().scope());
+    Assertions.assertEquals("legacy", metrics.scrapeLegacyMetrics("token").block().scope());
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/add-canned-policy"));
+    Assertions.assertTrue(paths.contains("/minio/kms/v1/metrics"));
+    Assertions.assertTrue(paths.contains("/minio/prometheus/metrics"));
     Assertions.assertTrue(queries.contains("name=readonly"));
     Assertions.assertTrue(containsAllQueryParts(queries, "policyName=readonly", "userOrGroup=user1", "isGroup=false"));
     Assertions.assertTrue(queries.contains("key-id=key1"));
+  }
+
+
+  @Test
+  void shouldExposeStage23KmsAndMetricsTypedMethods() {
+    assertMonoMethodExists(ReactiveMinioKmsClient.class, "scrapeMetrics");
+    assertMonoMethodExists(ReactiveMinioMetricsClient.class, "scrapeLegacyMetrics");
   }
 
 
