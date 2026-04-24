@@ -24,7 +24,7 @@
 - 固定 `madmin-go` 版本
 - 夹具元数据 与文档一致
 
-`check-crypto-gate.sh` 的通过含义是：当前 Gate Fail 边界仍被正确执行。阶段 32 起，它还会校验 `scripts/madmin-fixtures/crypto-gate-status.properties` 中的三方批准状态。它会确认 夹具可用，并检查 `pom.xml` 与源码 import 没有引入未批准 crypto/native 依赖。它不代表默认 madmin 加密响应已经可以明文 typed 解析。
+`check-crypto-gate.sh` 的通过含义是：当前 Gate Fail 边界仍被正确执行。阶段 32 起，它还会校验 `scripts/madmin-fixtures/crypto-gate-status.properties` 中的三方批准状态。它会确认 夹具可用，并检查 `pom.xml` 与源码 import 没有引入未批准 crypto/native 依赖。它不代表默认 madmin 加密响应已经可以明文 typed 解析。阶段 45 起，任何 Gate Pass 实现还必须先对照 `docs/43-stage45-crypto-gate-pass-prep.md` 补齐候选依赖、许可证、安全公告、Provider/FIPS、四个 JDK 版本测试矩阵和失败回退证据。
 
 ## 3. 破坏性 Admin 门禁
 

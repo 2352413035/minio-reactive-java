@@ -99,3 +99,9 @@ scripts/madmin-fixtures/check-crypto-gate.sh
 因此，本 SDK 继续支持 PBKDF2 + AES-GCM 请求载荷和 fixture 解密；madmin-go 默认响应仍返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmName()` 给出中文诊断边界。
 
 详见 `docs/23-stage25-crypto-gate-review.md` 与 `docs/adr/001-madmin-default-encryption-dependency.md`。
+
+## 7. 阶段 45 Gate Pass 准备清单
+
+阶段 45 没有改变 Gate Fail 结论，也没有新增任何依赖。它只把后续真正 Gate Pass 前必须准备的材料拆细：候选依赖、许可证与安全公告复核、owner/security/architect 三方批准、Provider/FIPS 行为说明、JDK8/JDK17/JDK21/JDK25 测试矩阵、两类 madmin-go 默认算法 fixture 解密证明，以及失败时继续回退到 `EncryptedAdminResponse` 的语义。
+
+详见 `docs/43-stage45-crypto-gate-pass-prep.md`。

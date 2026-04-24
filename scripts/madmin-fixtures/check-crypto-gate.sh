@@ -41,4 +41,4 @@ if find "$REPO_ROOT/src" -name '*.java' -print0 \
 fi
 
 echo "Crypto Gate Fail 状态已复核：状态文件、fixture、pom.xml 与源码 import 均未放行默认响应解密。"
-echo "决策记录：docs/adr/001-madmin-default-encryption-dependency.md；阶段记录：docs/23-stage25-crypto-gate-review.md、docs/30-stage32-crypto-gate-independent-review.md"
+echo "决策记录：docs/adr/001-madmin-default-encryption-dependency.md；阶段记录：docs/23-stage25-crypto-gate-review.md、docs/30-stage32-crypto-gate-independent-review.md；放行准备清单：docs/43-stage45-crypto-gate-pass-prep.md"

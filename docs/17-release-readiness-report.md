@@ -334,6 +334,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/42-stage44-error-experience.md`。
 
+## 5.26 阶段 45 补充
+
+阶段 45 只做 Crypto Gate Pass 准备，不直接放行：
+
+- `crypto-gate-status.properties` 继续保持 `fail`，三方批准仍为 `false`。
+- 不新增 crypto/native/provider 依赖，不修改 `pom.xml`。
+- 新增候选方案、批准材料、JDK8/JDK17/JDK21/JDK25 测试矩阵和失败回退清单。
+- `encrypted-blocked = 9` 仍是发布边界，默认 madmin 加密响应继续返回 `EncryptedAdminResponse`。
+
+详见 `docs/43-stage45-crypto-gate-pass-prep.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
