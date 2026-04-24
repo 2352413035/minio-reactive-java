@@ -48,14 +48,14 @@
 | route parity | 233 / 233，missing 0，extra 0 |
 | capability matrix | 双分支一致 |
 | Crypto Gate | Gate Fail 边界已验证并加固 |
-| destructive lab gate | 独立 lab 配置和共享环境拒绝逻辑已验证 |
+| 破坏性实验环境门禁 | 独立 lab 配置、共享环境拒绝逻辑、typed/raw 双路径报告模板已验证 |
 | secret scan | 当前文件未写入用户提供的真实 MinIO 凭证 |
 | `git diff --check` | 通过 |
 
 ## 5. 剩余风险
 
 1. Crypto Gate 仍未 Pass，默认 madmin 加密响应不能明文 typed 解析。
-2. destructive Admin 只能在独立 lab 验证，共享 MinIO 环境不应执行。
+2. 破坏性 Admin 只能在独立 lab 验证，共享 MinIO 环境不应执行。
 3. Admin product-typed 数量仍低于 route-catalog，因为很多接口需要环境、权限或长期字段稳定性确认。
 4. STS 高级身份源（SSO、自定义 token、证书）仍需要独立身份源环境验证。
 5. S3 advanced-compatible 中仍有部分低频子资源可以继续产品化。
@@ -67,7 +67,7 @@
 1. S3 剩余高频能力：ACL、select、notification listen、object lambda/extract 等。
 2. Admin L1/L2：policy attachment、IDP/LDAP/OpenID 只读配置、batch job/remote target 查询摘要。
 3. STS：SSO、自定义 token、证书身份源测试环境与请求模型。
-4. destructive lab：更多可回滚 fixture 和失败恢复流程。
+4. 破坏性实验环境：在阶段 31 typed/raw 双路径和报告模板基础上，继续补 site replication、remote target 写入/移除、batch job 启停/取消等更重可回滚夹具。
 5. Crypto Gate：完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
 
 ## 7. 文档入口

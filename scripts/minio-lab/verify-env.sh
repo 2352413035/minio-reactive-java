@@ -16,7 +16,7 @@ normalize_endpoint() {
   printf '%s' "$value"
 }
 
-[[ "${MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS:-}" == "true" ]] || fail "必须显式设置 MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true 才能执行 destructive Admin 测试。"
+[[ "${MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS:-}" == "true" ]] || fail "必须显式设置 MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true 才能执行 破坏性 Admin 测试。"
 [[ -n "${MINIO_LAB_ENDPOINT:-}" ]] || fail "缺少 MINIO_LAB_ENDPOINT。"
 [[ -n "${MINIO_LAB_ACCESS_KEY:-}" ]] || fail "缺少 MINIO_LAB_ACCESS_KEY。"
 [[ -n "${MINIO_LAB_SECRET_KEY:-}" ]] || fail "缺少 MINIO_LAB_SECRET_KEY。"
@@ -35,4 +35,4 @@ if [[ -n "${MINIO_ENDPOINT:-}" ]]; then
   [[ "$endpoint" != "$normal_endpoint" ]] || fail "MINIO_LAB_ENDPOINT 不能与 MINIO_ENDPOINT 指向同一环境。"
 fi
 
-echo "MinIO destructive lab 环境校验通过：$endpoint"
+echo "MinIO 破坏性实验环境校验通过：$endpoint"

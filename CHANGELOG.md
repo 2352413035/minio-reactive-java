@@ -7,6 +7,13 @@
 
 
 
+### 阶段 31 补充
+
+- 破坏性实验环境的 tier、remote target、batch job 夹具改为 typed/raw 双路径校验。
+- `run-destructive-tests.sh` 每次退出都会生成本机报告，记录夹具开关、端点指纹和失败恢复提示。
+- 新增 `write-report.sh` 与 `report-template.md`，报告不写入 access key、secret key 或请求签名。
+- `verify-env.sh` 继续拒绝共享 MinIO 和常见本机默认端点。
+
 ### 阶段 30 补充
 
 - `ReactiveMinioAdminClient` 新增策略绑定实体、IDP 配置、remote target、batch job 只读摘要入口。
@@ -41,8 +48,8 @@
 - `ReactiveMinioAdminClient` 覆盖安全只读摘要、IAM、用户、用户组、策略、服务账号和风险分层入口。
 - `ReactiveMinioKmsClient`、`ReactiveMinioStsClient`、`ReactiveMinioMetricsClient`、`ReactiveMinioHealthClient` 均作为平级专用客户端提供。
 - `ReactiveMinioRawClient` 保留为新增接口和特殊接口的兜底入口。
-- madmin PBKDF2 + AES-GCM 写入方向和 fixture 解密已支持；默认 Argon2id / ChaCha20 加密响应保持 `EncryptedAdminResponse` 边界。
-- destructive Admin 测试已迁移到独立 lab 门禁和本机配置文件，默认共享 MinIO 测试不会执行破坏性写入。
+- madmin PBKDF2 + AES-GCM 写入方向和 夹具解密已支持；默认 Argon2id / ChaCha20 加密响应保持 `EncryptedAdminResponse` 边界。
+- 破坏性 Admin 测试已迁移到独立 lab 门禁和本机配置文件，默认共享 MinIO 测试不会执行破坏性写入。
 
 ### 仍需显式说明的边界
 
