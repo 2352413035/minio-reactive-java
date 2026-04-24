@@ -628,7 +628,9 @@ class ReactiveMinioSpecializedClientsTest {
     admin.getConfigHelp("api", "requests_max").block();
     Assertions.assertEquals(3, admin.listPolicyEntities().block().totalMappingCount());
     Assertions.assertEquals("primary", admin.listIdpConfigs("openid").block().names().get(0));
+    Assertions.assertTrue(admin.listIdpConfigsEncrypted("openid").block().encryptedData().length > 0);
     Assertions.assertEquals("ok", admin.getIdpConfigInfo("openid", "primary").block().values().get("status"));
+    Assertions.assertTrue(admin.getIdpConfigEncrypted("openid", "primary").block().encryptedData().length > 0);
     admin.getStorageSummary().block();
     admin.getDataUsageSummary().block();
     admin.getAccountSummary().block();
@@ -722,6 +724,8 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "jobId=job-1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "key=api"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listConfigHistoryKvEncrypted(-1));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listIdpConfigsEncrypted(" "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getIdpConfigEncrypted("openid", null));
   }
 
 
@@ -760,7 +764,9 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeStage30AdminSummaryMethods() {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listPolicyEntities");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listIdpConfigs");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listIdpConfigsEncrypted");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getIdpConfigInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getIdpConfigEncrypted");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listRemoteTargetsInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "listBatchJobsInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBatchJobStatusInfo");

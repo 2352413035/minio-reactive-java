@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 72 IDP 配置加密边界补充
+
+- `ReactiveMinioAdminClient` 新增 `listIdpConfigsEncrypted(type)` 与 `getIdpConfigEncrypted(type, name)`。
+- 明确 MinIO IDP 配置读取真实响应属于 madmin 加密边界，默认 Crypto Gate 未通过前不伪装成明文配置模型。
+- 新增 `docs/70-stage72-idp-config-encrypted-boundary.md` 记录使用方式、安全边界和验证口径。
+
 ## 阶段 71 Replication MRF 只读模型补充
 
 - 新增 `AdminReplicationMrfSummary`，用于解析 `replication/mrf` 的按行 JSON backlog 与 keep-alive 空白。
