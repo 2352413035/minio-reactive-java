@@ -209,6 +209,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/63-stage65-release-handoff.md`
 - `docs/64-stage66-admin-status-models.md`
 - `docs/65-stage67-admin-diagnostic-models.md`
+- `docs/66-stage68-site-replication-readonly-models.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

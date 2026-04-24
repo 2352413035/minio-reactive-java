@@ -19,6 +19,9 @@ import io.minio.reactive.messages.admin.AdminIdpConfigList;
 import io.minio.reactive.messages.admin.AdminPolicyEntities;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
 import io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings;
+import io.minio.reactive.messages.admin.AdminSiteReplicationStatusSummary;
+import io.minio.reactive.messages.admin.AdminSiteReplicationMetaInfoSummary;
+import io.minio.reactive.messages.admin.AdminSiteReplicationInfoSummary;
 import io.minio.reactive.messages.admin.AdminTierList;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
@@ -470,6 +473,44 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(5L, healthInfo.objectCount());
     Assertions.assertEquals("error", AdminHealthInfoSummary.parse("{\"error\":\"boom\"}").status());
 
+    AdminSiteReplicationInfoSummary siteInfo =
+        AdminSiteReplicationInfoSummary.parse(
+            "{\"enabled\":true,\"name\":\"primary\",\"sites\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"serviceAccountAccessKey\":\"svc-key\",\"apiVersion\":\"1\"}");
+    Assertions.assertTrue(siteInfo.enabled());
+    Assertions.assertEquals("primary", siteInfo.name());
+    Assertions.assertEquals(2, siteInfo.siteCount());
+    Assertions.assertTrue(siteInfo.serviceAccountAccessKeyPresent());
+    Assertions.assertEquals("1", siteInfo.apiVersion());
+
+    AdminSiteReplicationStatusSummary siteStatus =
+        AdminSiteReplicationStatusSummary.parse(
+            "{\"Enabled\":true,\"MaxBuckets\":2,\"MaxUsers\":3,\"MaxGroups\":4,\"MaxPolicies\":5,\"Sites\":{\"dep1\":{\"name\":\"a\"},\"dep2\":{\"name\":\"b\"}},\"BucketStats\":{\"bucket1\":{\"dep1\":{}}},\"PolicyStats\":{\"readonly\":{\"dep1\":{}}},\"UserStats\":{\"user1\":{\"dep1\":{}}},\"GroupStats\":{\"dev\":{\"dep1\":{}}},\"ILMExpiryStats\":{\"rule1\":{\"dep1\":{}}},\"Metrics\":{\"pending\":1},\"apiVersion\":\"1\"}");
+    Assertions.assertTrue(siteStatus.enabled());
+    Assertions.assertEquals(2, siteStatus.siteCount());
+    Assertions.assertEquals(2, siteStatus.maxBuckets());
+    Assertions.assertEquals(3, siteStatus.maxUsers());
+    Assertions.assertEquals(4, siteStatus.maxGroups());
+    Assertions.assertEquals(5, siteStatus.maxPolicies());
+    Assertions.assertEquals(1, siteStatus.bucketStatsEntryCount());
+    Assertions.assertEquals(1, siteStatus.policyStatsEntryCount());
+    Assertions.assertEquals(1, siteStatus.userStatsEntryCount());
+    Assertions.assertEquals(1, siteStatus.groupStatsEntryCount());
+    Assertions.assertEquals(1, siteStatus.ilmExpiryStatsEntryCount());
+    Assertions.assertTrue(siteStatus.metricsPresent());
+
+    AdminSiteReplicationMetaInfoSummary siteMeta =
+        AdminSiteReplicationMetaInfoSummary.parse(
+            "{\"Enabled\":true,\"Name\":\"primary\",\"DeploymentID\":\"dep1\",\"Buckets\":{\"bucket1\":{}},\"Policies\":{\"readonly\":{}},\"UserInfoMap\":{\"user1\":{}},\"GroupDescMap\":{\"dev\":{}},\"ReplicationCfg\":{\"bucket1\":{}},\"ILMExpiryRules\":{\"rule1\":{}},\"apiVersion\":\"1\"}");
+    Assertions.assertTrue(siteMeta.enabled());
+    Assertions.assertEquals("primary", siteMeta.name());
+    Assertions.assertEquals("dep1", siteMeta.deploymentId());
+    Assertions.assertEquals(1, siteMeta.bucketCount());
+    Assertions.assertEquals(1, siteMeta.policyCount());
+    Assertions.assertEquals(1, siteMeta.userCount());
+    Assertions.assertEquals(1, siteMeta.groupCount());
+    Assertions.assertEquals(1, siteMeta.replicationConfigCount());
+    Assertions.assertEquals(1, siteMeta.ilmExpiryRuleCount());
+
     AdminBucketQuota quota =
         AdminBucketQuota.parse("{\"quota\":1024,\"size\":2048,\"rate\":0,\"requests\":0,\"quotatype\":\"hard\"}");
     Assertions.assertEquals(1024, quota.quota());
@@ -555,9 +596,12 @@ class ReactiveMinioSpecializedClientsTest {
     admin.getRebalanceStatus().block();
     Assertions.assertEquals(1, admin.getTierStatsSummary().block().tierCount());
     admin.getTierStats().block();
+    Assertions.assertTrue(admin.getSiteReplicationInfoSummary().block().enabled());
     admin.getSiteReplicationInfo().block();
+    Assertions.assertEquals(2, admin.getSiteReplicationStatusSummary().block().siteCount());
     admin.getSiteReplicationStatus().block();
-    Assertions.assertEquals("ok", admin.getSiteReplicationMetainfo().block().values().get("status"));
+    Assertions.assertEquals(1, admin.getSiteReplicationMetainfoSummary().block().bucketCount());
+    Assertions.assertEquals("primary", admin.getSiteReplicationMetainfo().block().values().get("Name"));
     Assertions.assertEquals(1, admin.getTopLocksSummary().block().writeLockCount());
     admin.getTopLocksInfo().block();
     Assertions.assertEquals("dep", admin.getObdInfoSummary().block().deploymentId());
@@ -632,8 +676,11 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTierStats");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTierStatsSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationInfoSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationStatusSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationMetainfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationMetainfoSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTopLocksInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTopLocksSummary");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "getObdInfo");
@@ -2072,11 +2119,16 @@ class ReactiveMinioSpecializedClientsTest {
     if (path.endsWith("/obdinfo") || path.endsWith("/healthinfo")) {
       return "{\"version\":\"3\",\"timestamp\":\"2026-04-24T00:00:00Z\",\"minio\":{\"info\":{\"deploymentID\":\"dep\",\"region\":\"us-east-1\",\"buckets\":{\"count\":2},\"objects\":{\"count\":5},\"servers\":[{},{}]}}}";
     }
-    if (path.endsWith("/pools/list")
-        || path.endsWith("/pools/status")
-        || path.endsWith("/site-replication/info")
-        || path.endsWith("/site-replication/metainfo")
-        || path.endsWith("/site-replication/status")) {
+    if (path.endsWith("/site-replication/info")) {
+      return "{\"enabled\":true,\"name\":\"primary\",\"sites\":[{\"name\":\"a\"},{\"name\":\"b\"}],\"serviceAccountAccessKey\":\"svc-key\",\"apiVersion\":\"1\"}";
+    }
+    if (path.endsWith("/site-replication/status")) {
+      return "{\"Enabled\":true,\"MaxBuckets\":2,\"MaxUsers\":3,\"MaxGroups\":4,\"MaxPolicies\":5,\"Sites\":{\"dep1\":{\"name\":\"a\"},\"dep2\":{\"name\":\"b\"}},\"BucketStats\":{\"bucket1\":{\"dep1\":{}}},\"Metrics\":{\"pending\":1},\"apiVersion\":\"1\"}";
+    }
+    if (path.endsWith("/site-replication/metainfo")) {
+      return "{\"Enabled\":true,\"Name\":\"primary\",\"DeploymentID\":\"dep1\",\"Buckets\":{\"bucket1\":{}},\"Policies\":{\"readonly\":{}},\"UserInfoMap\":{\"user1\":{}},\"GroupDescMap\":{\"dev\":{}},\"ReplicationCfg\":{\"bucket1\":{}},\"ILMExpiryRules\":{\"rule1\":{}},\"apiVersion\":\"1\"}";
+    }
+    if (path.endsWith("/pools/list") || path.endsWith("/pools/status")) {
       return "{\"status\":\"ok\"}";
     }
     if (path.endsWith("/trace")) {
