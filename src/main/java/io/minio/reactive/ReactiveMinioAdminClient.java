@@ -381,6 +381,40 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
   /**
+   * 通过 Admin 路由读取 KMS 状态。
+   *
+   * <p>普通 KMS 场景优先使用 `ReactiveMinioKmsClient#getStatus()`；该方法用于需要明确走
+   * madmin 兼容路径的集成环境。
+   */
+  public Mono<io.minio.reactive.messages.kms.KmsJsonResult> getAdminKmsStatus() {
+    return kmsStatus().map(io.minio.reactive.messages.kms.KmsJsonResult::parse);
+  }
+
+  /**
+   * 通过 Admin 路由创建 KMS key。
+   *
+   * <p>普通 KMS 场景优先使用 `ReactiveMinioKmsClient#createKey(...)`；该方法只保留
+   * madmin 兼容路径的强类型入口。
+   */
+  public Mono<Void> createAdminKmsKey(String keyId) {
+    requireText("keyId", keyId);
+    return executeToVoid("ADMIN_KMS_KEY_CREATE", emptyMap(), map("key-id", keyId), emptyMap(), null, null);
+  }
+
+  /** 通过 Admin 路由获取默认 KMS key 状态；普通场景优先使用 `ReactiveMinioKmsClient`。 */
+  public Mono<io.minio.reactive.messages.kms.KmsKeyStatus> getAdminKmsKeyStatus() {
+    return kmsKeyStatus().map(io.minio.reactive.messages.kms.KmsKeyStatus::parse);
+  }
+
+  /** 通过 Admin 路由获取指定 KMS key 状态；普通场景优先使用 `ReactiveMinioKmsClient`。 */
+  public Mono<io.minio.reactive.messages.kms.KmsKeyStatus> getAdminKmsKeyStatus(String keyId) {
+    requireText("keyId", keyId);
+    return executeToString(
+            "ADMIN_KMS_KEY_STATUS", emptyMap(), map("key-id", keyId), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.kms.KmsKeyStatus::parse);
+  }
+
+  /**
    * 读取 Admin trace 输出流。
    *
    * <p>trace 可能是持续输出的诊断流，不能把它当成普通 JSON 摘要。调用方应主动设置超时、过滤条件和取消策略。
@@ -1770,27 +1804,32 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToString("ADMIN_LOG", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用 `ADMIN_KMS_STATUS`。 */
+  /** 调用 `ADMIN_KMS_STATUS`。推荐优先使用 `getAdminKmsStatus()` 或 `ReactiveMinioKmsClient#getStatus()`。 */
+  @Deprecated
   public Mono<String> kmsStatus(byte[] body, String contentType) {
     return executeToString("ADMIN_KMS_STATUS", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }
 
-  /** 调用 `ADMIN_KMS_STATUS`，不携带请求体。 */
+  /** 调用 `ADMIN_KMS_STATUS`，不携带请求体。推荐优先使用 `getAdminKmsStatus()`。 */
+  @Deprecated
   public Mono<String> kmsStatus() {
     return kmsStatus(null, null);
   }
 
-  /** 调用 `ADMIN_KMS_KEY_CREATE`。 */
+  /** 调用 `ADMIN_KMS_KEY_CREATE`。推荐优先使用 `createAdminKmsKey(...)` 或 `ReactiveMinioKmsClient#createKey(...)`。 */
+  @Deprecated
   public Mono<String> kmsKeyCreate(String keyId, byte[] body, String contentType) {
     return executeToString("ADMIN_KMS_KEY_CREATE", emptyMap(), map("key-id", keyId), emptyMap(), body, contentType);
   }
 
-  /** 调用 `ADMIN_KMS_KEY_CREATE`，不携带请求体。 */
+  /** 调用 `ADMIN_KMS_KEY_CREATE`，不携带请求体。推荐优先使用 `createAdminKmsKey(...)`。 */
+  @Deprecated
   public Mono<String> kmsKeyCreate(String keyId) {
     return kmsKeyCreate(keyId, null, null);
   }
 
-  /** 调用 `ADMIN_KMS_KEY_STATUS`。 */
+  /** 调用 `ADMIN_KMS_KEY_STATUS`。推荐优先使用 `getAdminKmsKeyStatus()` 或 `ReactiveMinioKmsClient#getKeyStatus()`。 */
+  @Deprecated
   public Mono<String> kmsKeyStatus() {
     return executeToString("ADMIN_KMS_KEY_STATUS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }

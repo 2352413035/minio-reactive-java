@@ -28,7 +28,7 @@
 | 客户端 | public `Mono<String>` | `@Deprecated` | raw-ish `executeTo*` | 说明 |
 | --- | ---: | ---: | ---: | --- |
 | `ReactiveMinioClient` | 129 | 26 | 5 | 对象存储主客户端，仍含 S3 catalog 风格高级入口和少量底层执行入口。 |
-| `ReactiveMinioAdminClient` | 201 | 0 | 0 | 管理端 advanced 入口最多，是后续 typed 化重点。 |
+| `ReactiveMinioAdminClient` | 201 | 12 | 0 | 管理端 advanced 入口最多，是后续 typed 化重点；Admin KMS 字符串入口已迁移到 typed 桥接方法。 |
 | `ReactiveMinioKmsClient` | 8 | 0 | 0 | KMS 已有第一批 typed 方法，兼容入口短期保留。 |
 | `ReactiveMinioStsClient` | 14 | 0 | 0 | STS 已有请求对象和凭证结果模型，兼容入口短期保留。 |
 | `ReactiveMinioMetricsClient` | 6 | 0 | 0 | Metrics 已有 Prometheus 文本模型，兼容入口短期保留。 |
@@ -122,3 +122,9 @@ MinIO 管理端的一些写接口并不是普通 JSON body。服务端会调用 
 ## 配置写接口当前边界
 
 `ReactiveMinioAdminClient#setConfigKvText(...)` 和 `setConfigText(...)` 已经能生成 madmin 兼容加密请求体并发送到对应管理端接口。由于这类操作会直接修改 MinIO 服务端配置，集成测试不会在共享测试环境中执行真实配置写入。调用方使用前应先确认配置文本正确，并在可回滚环境中验证。
+
+## Admin KMS 与专用 KMS 客户端
+
+阶段 49 起，普通 KMS 场景继续优先使用 `ReactiveMinioKmsClient`。`ReactiveMinioAdminClient` 中的 `getAdminKmsStatus()`、`createAdminKmsKey(...)`、`getAdminKmsKeyStatus(...)` 只用于必须走 `/minio/admin/v3/kms/...` 的 madmin 兼容场景。
+
+旧的 `kmsStatus()`、`kmsKeyCreate(...)`、`kmsKeyStatus()` 字符串入口已标记为 `@Deprecated`，迁移时优先选择专用 KMS 客户端；只有需要 Admin 路由审计/兼容时才选择 Admin KMS 桥接方法。

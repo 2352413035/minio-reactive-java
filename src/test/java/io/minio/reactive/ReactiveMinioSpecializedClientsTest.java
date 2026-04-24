@@ -17,6 +17,8 @@ import io.minio.reactive.messages.admin.AdminSiteReplicationPeerIdpSettings;
 import io.minio.reactive.messages.admin.AdminTierList;
 import io.minio.reactive.messages.admin.EncryptedAdminResponse;
 import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
+import io.minio.reactive.messages.kms.KmsJsonResult;
+import io.minio.reactive.messages.kms.KmsKeyStatus;
 import io.minio.reactive.messages.admin.AddUserRequest;
 import io.minio.reactive.messages.BucketCorsConfiguration;
 import io.minio.reactive.messages.BucketCorsRule;
@@ -99,7 +101,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 129, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 7, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 12, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -625,6 +627,16 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage49AdminKmsBridgeMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getAdminKmsStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "createAdminKmsKey");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getAdminKmsKeyStatus");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioAdminClient.class, "kmsStatus");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioAdminClient.class, "kmsKeyCreate");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioAdminClient.class, "kmsKeyStatus");
+  }
+
+  @Test
   void shouldExposeStage48AdminDiagnosticProbeMethods() {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "runClientDevnull");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "runClientDevnullExtraTime");
@@ -692,6 +704,70 @@ class ReactiveMinioSpecializedClientsTest {
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/export-iam"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/export-bucket-metadata"));
+  }
+
+  @Test
+  void shouldBuildStage49AdminKmsBridgeRequestsAndKeepDedicatedKmsPreferred() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage49AdminKmsBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioKmsClient kms =
+        ReactiveMinioKmsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    KmsJsonResult adminStatus = admin.getAdminKmsStatus().block();
+    admin.createAdminKmsKey("admin-key").block();
+    KmsKeyStatus adminKeyStatus = admin.getAdminKmsKeyStatus("admin-key").block();
+    KmsJsonResult dedicatedStatus = kms.getStatus().block();
+    KmsKeyStatus dedicatedKeyStatus = kms.getKeyStatus("dedicated-key").block();
+
+    Assertions.assertEquals("admin", adminStatus.values().get("source"));
+    Assertions.assertEquals("admin-key", adminKeyStatus.keyId());
+    Assertions.assertTrue(adminKeyStatus.isOk());
+    Assertions.assertEquals("dedicated", dedicatedStatus.values().get("source"));
+    Assertions.assertEquals("dedicated-key", dedicatedKeyStatus.keyId());
+    Assertions.assertTrue(
+        raw.executeToString(MinioApiCatalog.byName("ADMIN_KMS_STATUS"))
+            .block()
+            .contains("admin"));
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/kms/status"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/kms/key/create"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/kms/key/status"));
+    Assertions.assertTrue(paths.contains("/minio/kms/v1/status"));
+    Assertions.assertTrue(paths.contains("/minio/kms/v1/key/status"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "key-id=admin-key"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "key-id=dedicated-key"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.createAdminKmsKey(" "));
   }
 
   @Test
@@ -1374,6 +1450,22 @@ class ReactiveMinioSpecializedClientsTest {
       return "bucket-metadata-bytes";
     }
     return "";
+  }
+
+  private static String stage49AdminKmsBody(String path) {
+    if (path.equals("/minio/admin/v3/kms/status")) {
+      return "{\"source\":\"admin\"}";
+    }
+    if (path.equals("/minio/admin/v3/kms/key/status")) {
+      return "{\"key-id\":\"admin-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
+    }
+    if (path.equals("/minio/kms/v1/status")) {
+      return "{\"source\":\"dedicated\"}";
+    }
+    if (path.equals("/minio/kms/v1/key/status")) {
+      return "{\"key-id\":\"dedicated-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
+    }
+    return "{}";
   }
 
   private static String stage48AdminDiagnosticProbeBody(String path) {

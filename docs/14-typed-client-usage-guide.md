@@ -238,3 +238,21 @@ AdminTextResult result = admin.runNetworkSpeedtest().block();
 ```
 
 这些接口可能消耗集群资源，不能在共享 MinIO live 测试中默认执行。业务系统应在独立维护窗口中调用，并自行设置超时、取消策略和日志脱敏。
+
+## 9.8 Admin KMS 桥接路径
+
+普通 KMS 场景优先使用 `ReactiveMinioKmsClient`：
+
+```java
+KmsJsonResult status = kms.getStatus().block();
+KmsKeyStatus key = kms.getKeyStatus("key-1").block();
+```
+
+如果必须走 Admin/madmin 兼容路径，可以使用 Admin KMS 桥接方法：
+
+```java
+KmsJsonResult status = admin.getAdminKmsStatus().block();
+KmsKeyStatus key = admin.getAdminKmsKeyStatus("key-1").block();
+```
+
+旧的 `kmsStatus()`、`kmsKeyCreate(...)`、`kmsKeyStatus()` 字符串入口已经标记为 `@Deprecated`，仅用于二进制兼容和低层排障。

@@ -99,6 +99,15 @@
 - Admin product-typed 从 66 / 128 提升到 75 / 128；加密和破坏性边界不变。
 - 新增 `docs/46-stage48-admin-diagnostic-probes.md` 记录诊断/压测/探测接口边界。
 
+### 阶段 49 补充
+
+- 明确 KMS 普通业务优先使用 `ReactiveMinioKmsClient`，Admin KMS 只作为 `/minio/admin/v3/kms/...` 的 madmin 兼容桥接路径。
+- `ReactiveMinioAdminClient` 新增 `getAdminKmsStatus()`、`createAdminKmsKey(...)`、`getAdminKmsKeyStatus(...)` typed 桥接方法。
+- 旧的 Admin KMS `Mono<String>` advanced 入口标记 `@Deprecated`，保留二进制兼容但不再推荐。
+- 单元测试同时验证 Admin KMS 桥接、专用 KMS 客户端和 raw 兜底路径。
+- Admin product-typed 从 75 / 128 提升到 78 / 128。
+- 新增 `docs/47-stage49-admin-kms-boundary.md` 记录 KMS 客户端选择边界。
+
 
 ### 阶段 35 补充
 
