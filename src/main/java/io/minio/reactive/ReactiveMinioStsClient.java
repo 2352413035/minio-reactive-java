@@ -22,6 +22,20 @@ public final class ReactiveMinioStsClient extends ReactiveMinioCatalogClientSupp
     return new Builder();
   }
 
+  /** 使用已签名的长期凭证申请普通 AssumeRole 临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleCredentials(
+      io.minio.reactive.messages.sts.AssumeRoleRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("request 不能为空");
+    }
+    return assumeRoleForm(request.toFormBytes(), "application/x-www-form-urlencoded")
+        .map(io.minio.reactive.util.S3Xml::parseAssumeRoleResult);
+  }
+
+  /** 使用默认参数申请普通 AssumeRole 临时凭证。 */
+  public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleCredentials() {
+    return assumeRoleCredentials(io.minio.reactive.messages.sts.AssumeRoleRequest.builder().build());
+  }
 
   /** 使用 WebIdentity 请求对象换取临时凭证。 */
   public Mono<io.minio.reactive.messages.sts.AssumeRoleResult> assumeRoleWithWebIdentityCredentials(

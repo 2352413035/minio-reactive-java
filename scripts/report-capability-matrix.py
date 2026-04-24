@@ -23,7 +23,9 @@ TYPED_METHODS = {
         'getBucketVersioningConfiguration','setBucketVersioningConfiguration','setBucketVersioningEnabled',
         'getBucketNotification','setBucketNotification','getBucketEncryption','setBucketEncryption','deleteBucketEncryption',
         'getBucketObjectLockConfiguration','setBucketObjectLockConfiguration','getBucketReplication','setBucketReplication','deleteBucketReplication',
-        'getPresignedObjectUrl','getPresignedGetObjectUrl','createMultipartUpload','uploadPart','listParts','completeMultipartUpload','abortMultipartUpload','uploadMultipartObject'
+        'getPresignedObjectUrl','getPresignedGetObjectUrl','listObjectVersions','listObjectVersionsPage',
+        'createMultipartUpload','listMultipartUploads','listMultipartUploadsPage','uploadPart','listParts',
+        'completeMultipartUpload','abortMultipartUpload','uploadMultipartObject'
     },
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',
@@ -34,7 +36,7 @@ TYPED_METHODS = {
         'getBucketQuotaInfo','listTiers'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus'},
-    'sts': {'assumeRoleWithWebIdentityCredentials','assumeRoleWithClientGrantsCredentials','assumeRoleWithLdapCredentials'},
+    'sts': {'assumeRoleCredentials','assumeRoleWithWebIdentityCredentials','assumeRoleWithClientGrantsCredentials','assumeRoleWithLdapCredentials'},
     'metrics': {'scrapeClusterMetrics','scrapeNodeMetrics','scrapeBucketMetrics','scrapeResourceMetrics','scrapeV3'},
     'health': {'checkLiveness','isLive','checkReadiness','isReady','checkCluster','checkClusterRead','clusterGet','clusterHead','clusterReadGet','clusterReadHead','liveGet','liveHead','readyGet','readyHead'},
 }

@@ -7,9 +7,14 @@ import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.DeletedObject;
 import io.minio.reactive.messages.DeleteObjectsResult;
 import io.minio.reactive.messages.ListObjectsResult;
+import io.minio.reactive.messages.ListObjectVersionsResult;
+import io.minio.reactive.messages.ListMultipartUploadsResult;
 import io.minio.reactive.messages.ListPartsResult;
+import io.minio.reactive.messages.DeleteMarkerInfo;
 import io.minio.reactive.messages.MultipartUpload;
+import io.minio.reactive.messages.MultipartUploadInfo;
 import io.minio.reactive.messages.ObjectInfo;
+import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.PartInfo;
 import io.minio.reactive.messages.S3Error;
 import java.io.ByteArrayInputStream;
@@ -83,6 +88,85 @@ public final class S3Xml {
         text(root, "NextContinuationToken"),
         objects,
         prefixes);
+  }
+
+  public static ListObjectVersionsResult parseListObjectVersions(String xml) {
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    List<ObjectVersionInfo> versions = new ArrayList<ObjectVersionInfo>();
+    NodeList versionNodes = root.getElementsByTagName("Version");
+    for (int i = 0; i < versionNodes.getLength(); i++) {
+      Element version = (Element) versionNodes.item(i);
+      versions.add(
+          new ObjectVersionInfo(
+              text(version, "Key"),
+              text(version, "VersionId"),
+              parseBoolean(text(version, "IsLatest")),
+              text(version, "LastModified"),
+              text(version, "ETag"),
+              parseLong(text(version, "Size")),
+              text(version, "StorageClass"),
+              text(version, "ID"),
+              text(version, "DisplayName")));
+    }
+
+    List<DeleteMarkerInfo> deleteMarkers = new ArrayList<DeleteMarkerInfo>();
+    NodeList markerNodes = root.getElementsByTagName("DeleteMarker");
+    for (int i = 0; i < markerNodes.getLength(); i++) {
+      Element marker = (Element) markerNodes.item(i);
+      deleteMarkers.add(
+          new DeleteMarkerInfo(
+              text(marker, "Key"),
+              text(marker, "VersionId"),
+              parseBoolean(text(marker, "IsLatest")),
+              text(marker, "LastModified"),
+              text(marker, "ID"),
+              text(marker, "DisplayName")));
+    }
+
+    return new ListObjectVersionsResult(
+        text(root, "Name"),
+        text(root, "Prefix"),
+        text(root, "KeyMarker"),
+        text(root, "VersionIdMarker"),
+        text(root, "NextKeyMarker"),
+        text(root, "NextVersionIdMarker"),
+        text(root, "Delimiter"),
+        parseInt(text(root, "MaxKeys")),
+        parseBoolean(text(root, "IsTruncated")),
+        versions,
+        deleteMarkers,
+        commonPrefixes(root));
+  }
+
+  public static ListMultipartUploadsResult parseListMultipartUploads(String xml) {
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    List<MultipartUploadInfo> uploads = new ArrayList<MultipartUploadInfo>();
+    NodeList uploadNodes = root.getElementsByTagName("Upload");
+    for (int i = 0; i < uploadNodes.getLength(); i++) {
+      Element upload = (Element) uploadNodes.item(i);
+      uploads.add(
+          new MultipartUploadInfo(
+              text(upload, "Key"),
+              text(upload, "UploadId"),
+              text(upload, "Initiated"),
+              text(upload, "StorageClass"),
+              text(upload, "ID"),
+              text(upload, "DisplayName")));
+    }
+    return new ListMultipartUploadsResult(
+        text(root, "Bucket"),
+        text(root, "Prefix"),
+        text(root, "KeyMarker"),
+        text(root, "UploadIdMarker"),
+        text(root, "NextKeyMarker"),
+        text(root, "NextUploadIdMarker"),
+        text(root, "Delimiter"),
+        parseInt(text(root, "MaxUploads")),
+        parseBoolean(text(root, "IsTruncated")),
+        uploads,
+        commonPrefixes(root));
   }
 
   public static MultipartUpload parseCreateMultipartUpload(String xml) {
@@ -176,6 +260,15 @@ public final class S3Xml {
       tags.put(text(tag, "Key"), text(tag, "Value"));
     }
     return tags;
+  }
+
+  private static List<String> commonPrefixes(Element root) {
+    List<String> prefixes = new ArrayList<String>();
+    NodeList commonPrefixes = root.getElementsByTagName("CommonPrefixes");
+    for (int i = 0; i < commonPrefixes.getLength(); i++) {
+      prefixes.add(text((Element) commonPrefixes.item(i), "Prefix"));
+    }
+    return prefixes;
   }
 
 

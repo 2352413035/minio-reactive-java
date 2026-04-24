@@ -30,6 +30,28 @@ client.setObjectTags("bucket", "hello.txt", tags).block();
 client.setBucketVersioningEnabled("bucket", true).block();
 ```
 
+
+### S3 版本和分片上传列表
+
+阶段 16 起，版本列表和未完成分片上传列表已经有 typed 分页模型：
+
+```java
+ListObjectVersionsResult versions = client
+    .listObjectVersionsPage("bucket", "prefix/", null, null, null, 1000)
+    .block();
+
+ListMultipartUploadsResult uploads = client
+    .listMultipartUploadsPage("bucket", "prefix/", null, null, null, 1000)
+    .block();
+```
+
+如果只关心普通对象版本或上传会话，可以使用 Flux 便捷入口：
+
+```java
+client.listObjectVersions("bucket", "prefix/", true).collectList().block();
+client.listMultipartUploads("bucket", "prefix/", true).collectList().block();
+```
+
 ## 管理端
 
 ```java
@@ -85,6 +107,15 @@ EncryptedAdminResponse accessKeys = admin.listAccessKeysEncrypted("all").block()
 - `ReactiveMinioStsException`
 - `ReactiveMinioMetricsException`
 - `ReactiveMinioHealthException`
+
+
+## STS / Metrics / Health
+
+STS 已覆盖普通 AssumeRole、WebIdentity、ClientGrants、LDAP 四条 typed 主路径。证书登录、自定义 token 和 SSO 表单依赖独立安全环境或外部插件，当前保留 advanced 兼容入口。
+
+Metrics 继续返回 `PrometheusMetrics`，解析 metric 名、label、value，同时保留原始文本；SDK 不为每个 MinIO 指标名生成固定 Java 字段。
+
+Health 同时提供业务判断方法和路由级状态方法：业务代码优先用 `isLive()` / `isReady()`，探针或网关场景再使用 `liveGet()` / `readyHead()` 等状态码入口。
 
 ## Raw 兜底
 
