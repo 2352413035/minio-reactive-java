@@ -659,6 +659,58 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "profilerType=cpu"));
   }
 
+  @Test
+  void shouldExposeStage41AdminIamIdpReadonlyMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listLdapPolicyEntities");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listLdapAccessKeySummaries");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listOpenidAccessKeySummaries");
+  }
+
+  @Test
+  void shouldBuildStage41AdminIamIdpReadonlyRequestsWithoutSecrets() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage41AdminIamIdpBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertEquals(2, admin.listLdapPolicyEntities().block().totalMappingCount());
+    Assertions.assertEquals(
+        1, admin.listLdapAccessKeySummaries("user1", "svcacc").block().totalCount());
+    Assertions.assertEquals(1, admin.listLdapAccessKeySummaries("sts").block().totalCount());
+    Assertions.assertEquals(1, admin.listOpenidAccessKeySummaries("svcacc").block().totalCount());
+    Assertions.assertEquals(
+        "ldap-ak",
+        admin.listLdapAccessKeySummaries("user1", "svcacc")
+            .block()
+            .serviceAccounts()
+            .get(0)
+            .accessKey());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/ldap/policy-entities"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/ldap/list-access-keys"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/ldap/list-access-keys-bulk"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/openid/list-access-keys-bulk"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "userDN=user1", "listType=svcacc"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "listType=sts"));
+  }
+
 
   @Test
   void shouldExposeS3VersioningBusinessMethods() {
@@ -1117,6 +1169,22 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (path.endsWith("/profile")) {
       return "profile text";
+    }
+    return "{}";
+  }
+
+  private static String stage41AdminIamIdpBody(String path) {
+    if (path.endsWith("/idp/ldap/policy-entities")) {
+      return "{\"UserMappings\":{\"user1\":[\"readonly\"]},\"GroupMappings\":{\"dev\":[\"readwrite\"]}}";
+    }
+    if (path.endsWith("/idp/ldap/list-access-keys")) {
+      return "{\"serviceAccounts\":[{\"accessKey\":\"ldap-ak\",\"secretKey\":\"不应暴露\",\"accountStatus\":\"enabled\",\"policy\":\"{}\"}],\"stsKeys\":[]}";
+    }
+    if (path.endsWith("/idp/ldap/list-access-keys-bulk")) {
+      return "{\"serviceAccounts\":[],\"stsKeys\":[{\"accessKey\":\"ldap-sts\",\"sessionToken\":\"不应暴露\",\"accountStatus\":\"enabled\"}]}";
+    }
+    if (path.endsWith("/idp/openid/list-access-keys-bulk")) {
+      return "{\"serviceAccounts\":[{\"accessKey\":\"openid-ak\",\"secretKey\":\"不应暴露\",\"accountStatus\":\"enabled\"}],\"stsKeys\":[]}";
     }
     return "{}";
   }

@@ -40,6 +40,13 @@
 - Admin product-typed 口径从 55 / 128 提升到 60 / 128；加密和破坏性边界不变。
 - 新增 `docs/38-stage40-admin-diagnostics-typed-wrappers.md` 记录使用建议和风险边界。
 
+### 阶段 41 补充
+
+- `ReactiveMinioAdminClient` 新增 LDAP 策略实体和 LDAP/OpenID access key 只读摘要入口。
+- 新增 `AdminAccessKeySummary` 与 `AdminAccessKeySummaryList`，故意不保存 raw JSON，避免 secret、session token 或私钥泄漏到普通模型。
+- Admin product-typed 口径从 60 / 128 提升到 63 / 128；加密和破坏性边界不变。
+- 新增 `docs/39-stage41-admin-iam-idp-readonly.md` 记录敏感字段处理原则。
+
 
 ### 阶段 35 补充
 

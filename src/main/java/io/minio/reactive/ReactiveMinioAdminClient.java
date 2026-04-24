@@ -343,6 +343,11 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.AdminPolicyEntities::parse);
   }
 
+  /** 列出 LDAP 策略绑定实体摘要；只统计映射数量并保留原始策略实体 JSON。 */
+  public Mono<io.minio.reactive.messages.admin.AdminPolicyEntities> listLdapPolicyEntities() {
+    return ldapPolicyEntities().map(io.minio.reactive.messages.admin.AdminPolicyEntities::parse);
+  }
+
 
   /** 列出全部用户的加密响应；默认响应解密能力完成前不伪装成明文用户列表。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listUsersEncrypted() {
@@ -834,6 +839,31 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     requireText("accessKey", accessKey);
     return temporaryAccountInfo(accessKey)
         .map(io.minio.reactive.messages.admin.AdminAccessKeyInfo::parse);
+  }
+
+  /** 列出指定 LDAP 用户 DN 的 access key 只读摘要；不会保留 secret 或 token 字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeySummaryList>
+      listLdapAccessKeySummaries(String userDN, String listType) {
+    requireText("userDN", userDN);
+    requireText("listType", listType);
+    return ldapListAccessKeys(userDN, listType)
+        .map(io.minio.reactive.messages.admin.AdminAccessKeySummaryList::parse);
+  }
+
+  /** 批量列出 LDAP access key 只读摘要；不会保留 secret 或 token 字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeySummaryList>
+      listLdapAccessKeySummaries(String listType) {
+    requireText("listType", listType);
+    return ldapListAccessKeysBulk(listType)
+        .map(io.minio.reactive.messages.admin.AdminAccessKeySummaryList::parse);
+  }
+
+  /** 批量列出 OpenID access key 只读摘要；不会保留 secret 或 token 字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeySummaryList>
+      listOpenidAccessKeySummaries(String listType) {
+    requireText("listType", listType);
+    return openidListAccessKeysBulk(listType)
+        .map(io.minio.reactive.messages.admin.AdminAccessKeySummaryList::parse);
   }
 
   /** 调用 `ADMIN_ADD_SERVICE_ACCOUNT`。 */
