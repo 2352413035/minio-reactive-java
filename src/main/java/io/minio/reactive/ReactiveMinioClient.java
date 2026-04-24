@@ -13,10 +13,14 @@ import io.minio.reactive.messages.BucketVersioningConfiguration;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.DeleteObjectsResult;
+import io.minio.reactive.messages.ListMultipartUploadsResult;
 import io.minio.reactive.messages.ListObjectsResult;
+import io.minio.reactive.messages.ListObjectVersionsResult;
 import io.minio.reactive.messages.ListPartsResult;
 import io.minio.reactive.messages.MultipartUpload;
+import io.minio.reactive.messages.MultipartUploadInfo;
 import io.minio.reactive.messages.ObjectInfo;
+import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.PartInfo;
 import io.minio.reactive.signer.S3RequestSigner;
 import io.minio.reactive.util.S3Escaper;
@@ -164,6 +168,50 @@ public final class ReactiveMinioClient {
       builder.queryParameter("max-keys", Integer.toString(maxKeys));
     }
     return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseListObjectsV2);
+  }
+
+  public Flux<ObjectVersionInfo> listObjectVersions(String bucket) {
+    return listObjectVersions(bucket, null, true);
+  }
+
+  public Flux<ObjectVersionInfo> listObjectVersions(String bucket, String prefix, boolean recursive) {
+    String delimiter = recursive ? null : "/";
+    return listObjectVersionsPage(bucket, prefix, null, null, delimiter, 1000)
+        .expand(
+            page -> {
+              if (page.isTruncated() && !page.nextKeyMarker().isEmpty()) {
+                return listObjectVersionsPage(
+                    bucket, prefix, page.nextKeyMarker(), page.nextVersionIdMarker(), delimiter, 1000);
+              }
+              return Mono.empty();
+            })
+        .flatMapIterable(ListObjectVersionsResult::versions);
+  }
+
+  public Mono<ListObjectVersionsResult> listObjectVersionsPage(
+      String bucket,
+      String prefix,
+      String keyMarker,
+      String versionIdMarker,
+      String delimiter,
+      int maxKeys) {
+    S3Request.Builder builder = request(HttpMethod.GET, bucket, null).queryParameter("versions", null);
+    if (prefix != null && !prefix.isEmpty()) {
+      builder.queryParameter("prefix", prefix);
+    }
+    if (keyMarker != null && !keyMarker.isEmpty()) {
+      builder.queryParameter("key-marker", keyMarker);
+    }
+    if (versionIdMarker != null && !versionIdMarker.isEmpty()) {
+      builder.queryParameter("version-id-marker", versionIdMarker);
+    }
+    if (delimiter != null && !delimiter.isEmpty()) {
+      builder.queryParameter("delimiter", delimiter);
+    }
+    if (maxKeys > 0) {
+      builder.queryParameter("max-keys", Integer.toString(maxKeys));
+    }
+    return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseListObjectVersions);
   }
 
   public Flux<byte[]> getObject(String bucket, String object) {
@@ -383,6 +431,50 @@ public final class ReactiveMinioClient {
       builder.header("Content-Type", contentType);
     }
     return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseCreateMultipartUpload);
+  }
+
+  public Flux<MultipartUploadInfo> listMultipartUploads(String bucket) {
+    return listMultipartUploads(bucket, null, true);
+  }
+
+  public Flux<MultipartUploadInfo> listMultipartUploads(String bucket, String prefix, boolean recursive) {
+    String delimiter = recursive ? null : "/";
+    return listMultipartUploadsPage(bucket, prefix, null, null, delimiter, 1000)
+        .expand(
+            page -> {
+              if (page.isTruncated() && !page.nextKeyMarker().isEmpty()) {
+                return listMultipartUploadsPage(
+                    bucket, prefix, page.nextKeyMarker(), page.nextUploadIdMarker(), delimiter, 1000);
+              }
+              return Mono.empty();
+            })
+        .flatMapIterable(ListMultipartUploadsResult::uploads);
+  }
+
+  public Mono<ListMultipartUploadsResult> listMultipartUploadsPage(
+      String bucket,
+      String prefix,
+      String keyMarker,
+      String uploadIdMarker,
+      String delimiter,
+      int maxUploads) {
+    S3Request.Builder builder = request(HttpMethod.GET, bucket, null).queryParameter("uploads", null);
+    if (prefix != null && !prefix.isEmpty()) {
+      builder.queryParameter("prefix", prefix);
+    }
+    if (keyMarker != null && !keyMarker.isEmpty()) {
+      builder.queryParameter("key-marker", keyMarker);
+    }
+    if (uploadIdMarker != null && !uploadIdMarker.isEmpty()) {
+      builder.queryParameter("upload-id-marker", uploadIdMarker);
+    }
+    if (delimiter != null && !delimiter.isEmpty()) {
+      builder.queryParameter("delimiter", delimiter);
+    }
+    if (maxUploads > 0) {
+      builder.queryParameter("max-uploads", Integer.toString(maxUploads));
+    }
+    return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseListMultipartUploads);
   }
 
   public Mono<PartInfo> uploadPart(

@@ -21,6 +21,7 @@ import io.minio.reactive.messages.kms.KmsKeyList;
 import io.minio.reactive.messages.metrics.PrometheusMetricSample;
 import io.minio.reactive.messages.metrics.PrometheusMetrics;
 import io.minio.reactive.messages.sts.AssumeRoleResult;
+import io.minio.reactive.messages.sts.AssumeRoleRequest;
 import io.minio.reactive.messages.sts.AssumeRoleWithWebIdentityRequest;
 import io.minio.reactive.util.S3Xml;
 import io.minio.reactive.credentials.StsCredentialsProvider;
@@ -113,11 +114,18 @@ class StrongBusinessModelsTest {
   @Test
   void shouldCreateStsRequestAndProvider() {
     AssumeRoleWithWebIdentityRequest request = AssumeRoleWithWebIdentityRequest.of("token");
+    AssumeRoleRequest assumeRoleRequest =
+        AssumeRoleRequest.builder()
+            .durationSeconds(900)
+            .policy("{\"Version\":\"2012-10-17\"}")
+            .build();
     AssumeRoleResult result =
         new AssumeRoleResult(ReactiveCredentials.of("ak", "sk", "session"), "later", "<xml/>");
     StsCredentialsProvider provider = StsCredentialsProvider.from(Mono.just(result));
 
     Assertions.assertEquals("token", request.webIdentityToken());
+    Assertions.assertTrue(new String(assumeRoleRequest.toFormBytes(), java.nio.charset.StandardCharsets.UTF_8).contains("Action=AssumeRole"));
+    Assertions.assertTrue(new String(assumeRoleRequest.toFormBytes(), java.nio.charset.StandardCharsets.UTF_8).contains("DurationSeconds=900"));
     Assertions.assertEquals("session", provider.getCredentials().block().sessionToken());
   }
 

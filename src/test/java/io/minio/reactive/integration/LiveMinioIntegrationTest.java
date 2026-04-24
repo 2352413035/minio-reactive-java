@@ -21,6 +21,7 @@ import io.minio.reactive.messages.admin.ServiceAccountCreateResult;
 import io.minio.reactive.messages.admin.AdminUserInfo;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
+import io.minio.reactive.messages.ListMultipartUploadsResult;
 import io.minio.reactive.messages.MultipartUpload;
 import io.minio.reactive.messages.ObjectInfo;
 import io.minio.reactive.messages.PartInfo;
@@ -197,6 +198,9 @@ class LiveMinioIntegrationTest {
     byte[] secondPart = "tail".getBytes(StandardCharsets.UTF_8);
     MultipartUpload upload = client.createMultipartUpload(bucket, "multipart.bin", "application/octet-stream").block();
     PartInfo part1 = client.uploadPart(bucket, "multipart.bin", upload.uploadId(), 1, firstPart).block();
+    ListMultipartUploadsResult activeUploads =
+        client.listMultipartUploadsPage(bucket, "multipart", null, null, null, 1000).block();
+    Assertions.assertEquals(bucket, activeUploads.bucket());
     PartInfo part2 = client.uploadPart(bucket, "multipart.bin", upload.uploadId(), 2, secondPart).block();
     Assertions.assertEquals(2, client.listParts(bucket, "multipart.bin", upload.uploadId()).block().parts().size());
     CompletedMultipartUpload completed =

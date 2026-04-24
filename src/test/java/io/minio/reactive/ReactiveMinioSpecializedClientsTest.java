@@ -403,6 +403,11 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeS3VersioningBusinessMethods() {
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketVersioningConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "setBucketVersioningConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "listObjectVersionsPage");
+    assertMonoMethodExists(ReactiveMinioClient.class, "listMultipartUploadsPage");
+    assertFluxMethodExists(ReactiveMinioClient.class, "listObjectVersions");
+    assertFluxMethodExists(ReactiveMinioClient.class, "listMultipartUploads");
+    assertMonoMethodExists(ReactiveMinioStsClient.class, "assumeRoleCredentials");
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketVersioning");
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3PutBucketVersioning");
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectTagging");
@@ -522,6 +527,15 @@ class ReactiveMinioSpecializedClientsTest {
       }
     }
     Assertions.fail("缺少返回 Mono 的方法: " + type.getSimpleName() + "." + name);
+  }
+
+  private static void assertFluxMethodExists(Class<?> type, String name) {
+    for (Method method : type.getMethods()) {
+      if (method.getName().equals(name) && method.getReturnType().equals(reactor.core.publisher.Flux.class)) {
+        return;
+      }
+    }
+    Assertions.fail("缺少返回 Flux 的方法: " + type.getSimpleName() + "." + name);
   }
 
   private static int countDistinctMonoMethods(Class<?> type, String prefix) {
