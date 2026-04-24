@@ -16,7 +16,7 @@
 
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| s3 | 77 | 72 | 77 | 0 | 0 | 0 |
+| s3 | 77 | 76 | 77 | 0 | 0 | 0 |
 | admin | 128 | 43 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 4 | 7 | 0 | 0 | 0 |
@@ -162,7 +162,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - 新增 ACL Owner/Grant/Policy 模型和 object/bucket ACL typed 获取方法。
 - 新增 canned ACL 便捷写入方法，避免用户手写 `x-amz-acl` header。
 - 新增 SelectObjectContent 请求模型和响应边界对象，明确当前暂不承诺完整事件流 typed 解码。
-- S3 product-typed 从 67 / 77 提升到 72 / 77。
+- S3 product-typed 从 67 / 77 提升到 72 / 77，阶段 28 继续提升到 76 / 77。
+
+
+## 5.9 阶段 28 补充
+
+阶段 28 继续提升 S3 typed 成熟度：
+
+- 新增 bucket notification 目标模型和 get/set typed 方法。
+- 新增 replication metrics v1/v2 JSON 包装，保留 raw JSON 和 Map 以兼容字段漂移。
+- notification listen 仍保持事件流边界，不伪装成普通一次性响应。
+- S3 product-typed 从 72 / 77 提升到 76 / 77。
 
 ## 6. 验证命令
 

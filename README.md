@@ -51,7 +51,7 @@ minio.content=hello from reactive minio sdk
 - 对象和桶子资源：object/bucket tagging、bucket policy/lifecycle/versioning/notification/encryption/object-lock/replication 等 XML/JSON 入口，其中 bucket versioning 已提供 typed 配置对象。
 - 对象治理：object attributes、object retention、legal hold、restore 已提供 typed 请求/响应模型。
 - bucket 子资源治理：CORS、website、logging、policy status、accelerate、request payment 已提供 typed 或摘要模型。
-- ACL 与 S3 Select：对象/bucket ACL 已提供 Owner/Grant 模型和 canned ACL 便捷写入；SelectObjectContent 已提供请求模型和原始事件流边界。
+- ACL、notification 与 S3 Select：对象/bucket ACL 已提供 Owner/Grant 模型和 canned ACL 便捷写入；notification 配置已提供目标模型；SelectObjectContent 已提供请求模型和原始事件流边界。
 - 分片上传：create/uploadPart/listParts/complete/abort 基础流程，以及 `listMultipartUploads` / `listMultipartUploadsPage` typed 分页模型。
 - 版本能力：`listObjectVersions` / `listObjectVersionsPage` typed 分页模型。
 - Admin：server/storage/data-usage/account/config-help、pool/rebalance/tier/site-replication/top-locks/obd/health 等 L1 只读摘要模型，用户、用户组、策略、服务账号等 typed 或风险分层入口。
@@ -69,7 +69,7 @@ minio.content=hello from reactive minio sdk
 | --- | --- |
 | 路由对标 | 233 / 233，JDK8 与 JDK17+ 两个分支均无缺失、无额外 catalog。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有公开 catalog 路由至少有 typed 或 advanced 兼容入口。 |
-| 产品强类型成熟度 | S3 72 / 77、Admin 43 / 128、KMS 7 / 7、STS 4 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
+| 产品强类型成熟度 | S3 76 / 77、Admin 43 / 128、KMS 7 / 7、STS 4 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示路由是否能调用。 |
 | 风险边界 | Admin 仍有 9 个加密响应边界、29 个破坏性操作边界；这些能力不能在共享环境中伪装成“普通已完成”。 |
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
@@ -136,7 +136,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics/KMS 提供 Prometheus 文本包装和样本解析；STS 提供普通 AssumeRole / WebIdentity / ClientGrants / LDAP 临时凭证解析入口；KMS、Admin IAM、用户组、服务账号、Admin 只读状态摘要以及 S3 版本/分片列表、对象治理、bucket CORS/website/logging/policy status、ACL/Select 等子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
 
-阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。
+阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
@@ -168,6 +168,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/23-stage25-crypto-gate-review.md`
 - `docs/24-stage26-release-closeout.md`
 - `docs/25-stage27-s3-acl-select.md`
+- `docs/26-stage28-s3-notification-replication.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

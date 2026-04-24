@@ -33,7 +33,9 @@ TYPED_METHODS = {
         'getBucketLoggingConfiguration','getBucketPolicyStatus',
         'getBucketAccelerateConfiguration','getBucketRequestPaymentConfiguration',
         'getObjectAcl','setObjectCannedAcl','getBucketAcl','setBucketCannedAcl',
-        'selectObjectContent'
+        'selectObjectContent','getBucketNotificationConfiguration',
+        'setBucketNotificationConfiguration','getBucketReplicationMetrics',
+        'getBucketReplicationMetricsV2'
     },
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',

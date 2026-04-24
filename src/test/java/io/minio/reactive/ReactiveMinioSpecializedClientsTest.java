@@ -13,6 +13,9 @@ import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
 import io.minio.reactive.messages.admin.AddUserRequest;
 import io.minio.reactive.messages.BucketCorsConfiguration;
 import io.minio.reactive.messages.BucketCorsRule;
+import io.minio.reactive.messages.BucketNotificationConfiguration;
+import io.minio.reactive.messages.BucketNotificationTarget;
+import io.minio.reactive.messages.BucketReplicationMetrics;
 import io.minio.reactive.messages.CannedAcl;
 import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
@@ -84,7 +87,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 55, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 60, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 0, 0);
@@ -585,6 +588,18 @@ class ReactiveMinioSpecializedClientsTest {
     assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3SelectObjectContent");
   }
 
+  @Test
+  void shouldExposeS3NotificationAndReplicationMetricsMethods() {
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketNotificationConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setBucketNotificationConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketReplicationMetrics");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketReplicationMetricsV2");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketNotification");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutBucketNotification");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketReplicationMetrics");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketReplicationMetricsV2");
+  }
+
 
   @Test
   void shouldBuildS3BucketSubresourceRequests() {
@@ -682,6 +697,51 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(aclHeaders.contains("private"));
     Assertions.assertTrue(aclHeaders.contains("public-read"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> client.setBucketCannedAcl("bucket1", null));
+  }
+
+  @Test
+  void shouldBuildS3NotificationAndReplicationMetricsRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage28S3ResponseBody(request.url().getQuery()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    BucketNotificationConfiguration configuration =
+        BucketNotificationConfiguration.of(
+            java.util.Arrays.asList(
+                BucketNotificationTarget.queue(
+                    "arn:minio:sqs::1:webhook", java.util.Arrays.asList("s3:ObjectCreated:*"))));
+    client.setBucketNotificationConfiguration("bucket1", configuration).block();
+    Assertions.assertEquals(
+        "arn:minio:sqs::1:webhook",
+        client.getBucketNotificationConfiguration("bucket1").block().targets().get(0).arn());
+    BucketReplicationMetrics metrics = client.getBucketReplicationMetrics("bucket1").block();
+    BucketReplicationMetrics metricsV2 = client.getBucketReplicationMetricsV2("bucket1").block();
+
+    Assertions.assertEquals("v1", metrics.version());
+    Assertions.assertEquals("v2", metricsV2.version());
+    Assertions.assertEquals(123L, metricsV2.uptime());
+    Assertions.assertTrue(paths.contains("/bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "notification"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "replication-metrics"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "replication-metrics=2"));
   }
 
 
@@ -843,6 +903,19 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (query != null && query.contains("select")) {
       return "select-response";
+    }
+    return "";
+  }
+
+  private static String stage28S3ResponseBody(String query) {
+    if (query != null && query.contains("notification")) {
+      return "<NotificationConfiguration><QueueConfiguration><Id>queue-1</Id><Queue>arn:minio:sqs::1:webhook</Queue><Event>s3:ObjectCreated:*</Event></QueueConfiguration></NotificationConfiguration>";
+    }
+    if (query != null && query.contains("replication-metrics=2")) {
+      return "{\"uptime\":123,\"Stats\":{}}";
+    }
+    if (query != null && query.contains("replication-metrics")) {
+      return "{\"Stats\":{}}";
     }
     return "";
   }

@@ -13,8 +13,10 @@ import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.BucketAccelerateConfiguration;
 import io.minio.reactive.messages.BucketCorsConfiguration;
 import io.minio.reactive.messages.BucketLoggingConfiguration;
+import io.minio.reactive.messages.BucketNotificationConfiguration;
 import io.minio.reactive.messages.BucketPolicyStatus;
 import io.minio.reactive.messages.BucketRequestPaymentConfiguration;
+import io.minio.reactive.messages.BucketReplicationMetrics;
 import io.minio.reactive.messages.BucketVersioningConfiguration;
 import io.minio.reactive.messages.BucketWebsiteConfiguration;
 import io.minio.reactive.messages.CannedAcl;
@@ -585,6 +587,17 @@ public final class ReactiveMinioClient {
     return putBucketSubresource(bucket, "notification", notificationXml, "application/xml");
   }
 
+  /** 获取 bucket notification 配置，返回目标、事件和 filter 摘要。 */
+  public Mono<BucketNotificationConfiguration> getBucketNotificationConfiguration(String bucket) {
+    return getBucketNotification(bucket).map(S3Xml::parseBucketNotification);
+  }
+
+  /** 设置 bucket notification 配置。 */
+  public Mono<Void> setBucketNotificationConfiguration(
+      String bucket, BucketNotificationConfiguration configuration) {
+    return setBucketNotification(bucket, S3Xml.bucketNotificationXml(configuration));
+  }
+
   public Mono<String> getBucketEncryption(String bucket) {
     return getBucketSubresource(bucket, "encryption");
   }
@@ -615,6 +628,24 @@ public final class ReactiveMinioClient {
 
   public Mono<Void> deleteBucketReplication(String bucket) {
     return deleteBucketSubresource(bucket, "replication");
+  }
+
+  /** 获取旧版 bucket replication metrics JSON 包装。 */
+  public Mono<BucketReplicationMetrics> getBucketReplicationMetrics(String bucket) {
+    S3Request request =
+        request(HttpMethod.GET, bucket, null).queryParameter("replication-metrics", null).build();
+    return sign(request)
+        .flatMap(httpClient::exchangeToString)
+        .map(raw -> BucketReplicationMetrics.parse("v1", raw));
+  }
+
+  /** 获取新版 bucket replication metrics JSON 包装。 */
+  public Mono<BucketReplicationMetrics> getBucketReplicationMetricsV2(String bucket) {
+    S3Request request =
+        request(HttpMethod.GET, bucket, null).queryParameter("replication-metrics", "2").build();
+    return sign(request)
+        .flatMap(httpClient::exchangeToString)
+        .map(raw -> BucketReplicationMetrics.parse("v2", raw));
   }
 
   public Mono<URI> getPresignedObjectUrl(HttpMethod method, String bucket, String object, Duration expires) {
@@ -1211,6 +1242,7 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_BUCKET_NOTIFICATION`。 */
+  @Deprecated
   public Mono<String> s3GetBucketNotification(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_NOTIFICATION"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
@@ -1460,12 +1492,14 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_PUT_BUCKET_NOTIFICATION`。 */
+  @Deprecated
   public Mono<String> s3PutBucketNotification(String bucket, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_BUCKET_NOTIFICATION"), map("bucket", bucket), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_BUCKET_NOTIFICATION`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutBucketNotification(String bucket) {
     return s3PutBucketNotification(bucket, null, null);
   }
@@ -1576,12 +1610,14 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_BUCKET_REPLICATION_METRICS_V2`。 */
+  @Deprecated
   public Mono<String> s3GetBucketReplicationMetricsV2(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_REPLICATION_METRICS_V2"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_GET_BUCKET_REPLICATION_METRICS`。 */
+  @Deprecated
   public Mono<String> s3GetBucketReplicationMetrics(String bucket) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_BUCKET_REPLICATION_METRICS"), map("bucket", bucket), emptyMap(), emptyMap(), null, null);

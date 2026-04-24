@@ -4,6 +4,14 @@
 
 ## 0.1.0-SNAPSHOT 阶段 26 发布候选
 
+
+### 阶段 28 补充
+
+- `ReactiveMinioClient` 新增 bucket notification typed 配置模型和 get/set 方法。
+- 新增 `BucketNotificationTarget`、`BucketNotificationConfiguration`、`BucketReplicationMetrics`。
+- 新增 `getBucketReplicationMetrics(...)` / `getBucketReplicationMetricsV2(...)` JSON 包装入口。
+- S3 product-typed 口径从 72 / 77 提升到 76 / 77。
+
 ### 阶段 27 补充
 
 - `ReactiveMinioClient` 新增对象/bucket ACL typed 方法和 canned ACL 便捷写入。

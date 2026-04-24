@@ -8,6 +8,8 @@ import io.minio.reactive.messages.BucketCorsConfiguration;
 import io.minio.reactive.messages.BucketCorsRule;
 import io.minio.reactive.messages.BucketInfo;
 import io.minio.reactive.messages.BucketLoggingConfiguration;
+import io.minio.reactive.messages.BucketNotificationConfiguration;
+import io.minio.reactive.messages.BucketNotificationTarget;
 import io.minio.reactive.messages.BucketPolicyStatus;
 import io.minio.reactive.messages.BucketRequestPaymentConfiguration;
 import io.minio.reactive.messages.BucketVersioningConfiguration;
@@ -584,6 +586,42 @@ public final class S3Xml {
     return new BucketRequestPaymentConfiguration(text(root, "Payer"), xml);
   }
 
+  public static BucketNotificationConfiguration parseBucketNotification(String xml) {
+    if (isBlank(xml)) {
+      return BucketNotificationConfiguration.empty();
+    }
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    List<BucketNotificationTarget> targets = new ArrayList<BucketNotificationTarget>();
+    appendNotificationTargets(root, "QueueConfiguration", "Queue", "Queue", targets);
+    appendNotificationTargets(root, "TopicConfiguration", "Topic", "Topic", targets);
+    appendNotificationTargets(root, "CloudFunctionConfiguration", "CloudFunction", "CloudFunction", targets);
+    return new BucketNotificationConfiguration(targets, xml);
+  }
+
+  public static String bucketNotificationXml(BucketNotificationConfiguration configuration) {
+    BucketNotificationConfiguration safe =
+        configuration == null ? BucketNotificationConfiguration.empty() : configuration;
+    StringBuilder builder = new StringBuilder();
+    builder.append("<NotificationConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">");
+    for (BucketNotificationTarget target : safe.targets()) {
+      String elementName = notificationElementName(target.type());
+      String arnElementName = notificationArnElementName(target.type());
+      builder.append('<').append(elementName).append('>');
+      if (!isBlank(target.id())) {
+        builder.append("<Id>").append(escapeXml(target.id())).append("</Id>");
+      }
+      builder.append('<').append(arnElementName).append('>')
+          .append(escapeXml(target.arn()))
+          .append("</").append(arnElementName).append('>');
+      appendXmlValues(builder, "Event", target.events());
+      appendNotificationFilter(builder, target.filterPrefix(), target.filterSuffix());
+      builder.append("</").append(elementName).append('>');
+    }
+    builder.append("</NotificationConfiguration>");
+    return builder.toString();
+  }
+
   public static String completeMultipartXml(List<CompletePart> parts) {
     StringBuilder builder = new StringBuilder();
     builder.append("<CompleteMultipartUpload>");
@@ -684,6 +722,80 @@ public final class S3Xml {
       return xsiType;
     }
     return grantee.getAttribute("type");
+  }
+
+  private static void appendNotificationTargets(
+      Element root,
+      String configurationTag,
+      String arnTag,
+      String type,
+      List<BucketNotificationTarget> targets) {
+    NodeList nodes = root.getElementsByTagName(configurationTag);
+    for (int i = 0; i < nodes.getLength(); i++) {
+      Element element = (Element) nodes.item(i);
+      targets.add(
+          new BucketNotificationTarget(
+              type,
+              text(element, "Id"),
+              text(element, arnTag),
+              texts(element, "Event"),
+              filterRuleValue(element, "prefix"),
+              filterRuleValue(element, "suffix")));
+    }
+  }
+
+  private static String filterRuleValue(Element element, String name) {
+    NodeList rules = element.getElementsByTagName("FilterRule");
+    for (int i = 0; i < rules.getLength(); i++) {
+      Element rule = (Element) rules.item(i);
+      if (name.equalsIgnoreCase(text(rule, "Name"))) {
+        return text(rule, "Value");
+      }
+    }
+    return "";
+  }
+
+  private static String notificationElementName(String type) {
+    if ("Topic".equalsIgnoreCase(type)) {
+      return "TopicConfiguration";
+    }
+    if ("CloudFunction".equalsIgnoreCase(type)) {
+      return "CloudFunctionConfiguration";
+    }
+    return "QueueConfiguration";
+  }
+
+  private static String notificationArnElementName(String type) {
+    if ("Topic".equalsIgnoreCase(type)) {
+      return "Topic";
+    }
+    if ("CloudFunction".equalsIgnoreCase(type)) {
+      return "CloudFunction";
+    }
+    return "Queue";
+  }
+
+  private static void appendNotificationFilter(
+      StringBuilder builder, String filterPrefix, String filterSuffix) {
+    if (isBlank(filterPrefix) && isBlank(filterSuffix)) {
+      return;
+    }
+    builder.append("<Filter><S3Key>");
+    appendFilterRule(builder, "prefix", filterPrefix);
+    appendFilterRule(builder, "suffix", filterSuffix);
+    builder.append("</S3Key></Filter>");
+  }
+
+  private static void appendFilterRule(StringBuilder builder, String name, String value) {
+    if (isBlank(value)) {
+      return;
+    }
+    builder
+        .append("<FilterRule><Name>")
+        .append(name)
+        .append("</Name><Value>")
+        .append(escapeXml(value))
+        .append("</Value></FilterRule>");
   }
 
   private static List<String> texts(Element element, String tagName) {
