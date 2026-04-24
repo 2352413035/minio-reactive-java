@@ -108,6 +108,15 @@
 - Admin product-typed 从 75 / 128 提升到 78 / 128。
 - 新增 `docs/47-stage49-admin-kms-boundary.md` 记录 KMS 客户端选择边界。
 
+### 阶段 50 补充
+
+- `ReactiveMinioAdminClient` 新增 `importIamArchive(...)`、`importIamV2Archive(...)`、`importBucketMetadataArchive(...)`，返回 `AdminTextResult`。
+- 导入类接口被明确为独立 lab/维护窗口能力，不在共享 live 测试中真实执行。
+- 旧的 import IAM / import bucket metadata `Mono<String>` advanced 入口标记 `@Deprecated`，迁移到带 archive 命名的产品入口。
+- 单元测试验证专用入口、content type、空 archive 拦截和 raw 兜底路径。
+- Admin product-typed 从 78 / 128 提升到 81 / 128；破坏性边界不减少。
+- 新增 `docs/48-stage50-sensitive-import-lab-boundary.md` 记录导入恢复边界。
+
 
 ### 阶段 35 补充
 

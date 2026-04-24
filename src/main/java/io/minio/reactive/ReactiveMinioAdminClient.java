@@ -129,6 +129,56 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
                     "export-bucket-metadata", bytes));
   }
 
+  /**
+   * 导入 IAM 备份包。
+   *
+   * <p>这是破坏性恢复操作，必须只在独立可回滚 lab 或维护窗口中执行；SDK 只固定请求体
+   * 和响应文本边界，不记录备份包内容。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> importIamArchive(
+      byte[] archiveBytes, String contentType) {
+    requireBytes("archiveBytes", archiveBytes);
+    return importIam(archiveBytes, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("import-iam", text));
+  }
+
+  /** 导入 IAM 备份包，默认使用 application/octet-stream。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> importIamArchive(
+      byte[] archiveBytes) {
+    return importIamArchive(archiveBytes, "application/octet-stream");
+  }
+
+  /** 导入 IAM v2 备份包；同样只应在独立 lab 或维护窗口执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> importIamV2Archive(
+      byte[] archiveBytes, String contentType) {
+    requireBytes("archiveBytes", archiveBytes);
+    return importIamV2(archiveBytes, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("import-iam-v2", text));
+  }
+
+  /** 导入 IAM v2 备份包，默认使用 application/octet-stream。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> importIamV2Archive(
+      byte[] archiveBytes) {
+    return importIamV2Archive(archiveBytes, "application/octet-stream");
+  }
+
+  /** 导入 bucket metadata 备份包；该操作可能覆盖 bucket 策略、复制、通知等配置。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> importBucketMetadataArchive(
+      byte[] archiveBytes, String contentType) {
+    requireBytes("archiveBytes", archiveBytes);
+    return importBucketMetadata(archiveBytes, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "import-bucket-metadata", text));
+  }
+
+  /** 导入 bucket metadata 备份包，默认使用 application/octet-stream。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> importBucketMetadataArchive(
+      byte[] archiveBytes) {
+    return importBucketMetadataArchive(archiveBytes, "application/octet-stream");
+  }
+
   /** 获取后台 heal 状态，先以通用 JSON 结果保留全部字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getBackgroundHealStatus() {
     return backgroundHealStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
@@ -1229,22 +1279,26 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToString("ADMIN_EXPORT_IAM", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用 `ADMIN_IMPORT_IAM`。 */
+  /** 调用 `ADMIN_IMPORT_IAM`。推荐优先使用 `importIamArchive(...)`，并且只在独立 lab 或维护窗口执行。 */
+  @Deprecated
   public Mono<String> importIam(byte[] body, String contentType) {
     return executeToString("ADMIN_IMPORT_IAM", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }
 
-  /** 调用 `ADMIN_IMPORT_IAM`，不携带请求体。 */
+  /** 调用 `ADMIN_IMPORT_IAM`，不携带请求体。推荐优先使用 `importIamArchive(...)`。 */
+  @Deprecated
   public Mono<String> importIam() {
     return importIam(null, null);
   }
 
-  /** 调用 `ADMIN_IMPORT_IAM_V2`。 */
+  /** 调用 `ADMIN_IMPORT_IAM_V2`。推荐优先使用 `importIamV2Archive(...)`，并且只在独立 lab 或维护窗口执行。 */
+  @Deprecated
   public Mono<String> importIamV2(byte[] body, String contentType) {
     return executeToString("ADMIN_IMPORT_IAM_V2", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }
 
-  /** 调用 `ADMIN_IMPORT_IAM_V2`，不携带请求体。 */
+  /** 调用 `ADMIN_IMPORT_IAM_V2`，不携带请求体。推荐优先使用 `importIamV2Archive(...)`。 */
+  @Deprecated
   public Mono<String> importIamV2() {
     return importIamV2(null, null);
   }
@@ -1474,12 +1528,14 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToString("ADMIN_EXPORT_BUCKET_METADATA", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用 `ADMIN_IMPORT_BUCKET_METADATA`。 */
+  /** 调用 `ADMIN_IMPORT_BUCKET_METADATA`。推荐优先使用 `importBucketMetadataArchive(...)`，并且只在独立 lab 或维护窗口执行。 */
+  @Deprecated
   public Mono<String> importBucketMetadata(byte[] body, String contentType) {
     return executeToString("ADMIN_IMPORT_BUCKET_METADATA", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }
 
-  /** 调用 `ADMIN_IMPORT_BUCKET_METADATA`，不携带请求体。 */
+  /** 调用 `ADMIN_IMPORT_BUCKET_METADATA`，不携带请求体。推荐优先使用 `importBucketMetadataArchive(...)`。 */
+  @Deprecated
   public Mono<String> importBucketMetadata() {
     return importBucketMetadata(null, null);
   }
@@ -1863,6 +1919,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
    */
   private static java.util.Map<String, String> siteReplicationApiVersion() {
     return map("api-version", "1");
+  }
+
+  /** 校验导入备份包，避免误调用空恢复请求。 */
+  private static void requireBytes(String name, byte[] value) {
+    if (value == null || value.length == 0) {
+      throw new IllegalArgumentException(name + " 不能为空");
+    }
   }
 
 

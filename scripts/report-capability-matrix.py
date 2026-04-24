@@ -59,7 +59,8 @@ TYPED_METHODS = {
         'runSiteReplicationDevnull','runSiteReplicationNetperf',
         'runSpeedtest','runObjectSpeedtest','runDriveSpeedtest',
         'runNetworkSpeedtest','runSiteSpeedtest',
-        'getAdminKmsStatus','createAdminKmsKey','getAdminKmsKeyStatus'
+        'getAdminKmsStatus','createAdminKmsKey','getAdminKmsKeyStatus',
+        'importIamArchive','importIamV2Archive','importBucketMetadataArchive'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

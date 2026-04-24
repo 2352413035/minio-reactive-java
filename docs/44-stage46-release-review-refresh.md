@@ -8,7 +8,7 @@
 | --- | --- |
 | 路由对标 | JDK8 与 JDK17+ 双分支均为 233 / 233，catalog 缺失 0、额外 0。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有 catalog 路由至少有专用或 advanced 入口。 |
-| 产品 typed 成熟度 | 阶段 46 为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 47 后 Admin 提升到 66 / 128，阶段 48 后提升到 75 / 128，阶段 49 后提升到 78 / 128。 |
+| 产品 typed 成熟度 | 阶段 46 为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 47 后 Admin 提升到 66 / 128，阶段 48 后提升到 75 / 128，阶段 49 后提升到 78 / 128，阶段 50 后提升到 81 / 128。 |
 | Crypto Gate | 继续 Gate Fail；阶段 45 只完成放行准备清单，不引入依赖。 |
 | 破坏性 Admin | 仍为独立 lab 边界；阶段 43 已增强 typed/raw 步骤证据和 `mc` 核验提示。 |
 | 错误体验 | 阶段 44 已将协议异常与 raw 本地校验统一为中文诊断。 |
@@ -72,7 +72,11 @@ JDK17+ 分支还要执行 JDK17 全量测试、真实 MinIO smoke，以及 JDK21
 
 阶段 49 已收口 Admin KMS 与专用 KMS 客户端关系，Admin product-typed 提升到 78 / 128。完整说明见 `docs/47-stage49-admin-kms-boundary.md`。
 
-## 9. 下一阶段建议
+## 9. 阶段 50 后续刷新
+
+阶段 50 已补充 IAM、IAM v2 和 bucket metadata 导入 archive 产品入口，Admin product-typed 提升到 81 / 128，但 destructive-blocked 不减少。完整说明见 `docs/48-stage50-sensitive-import-lab-boundary.md`。
+
+## 10. 下一阶段建议
 
 阶段 46 之后，优先级仍然是：
 

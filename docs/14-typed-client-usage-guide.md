@@ -256,3 +256,14 @@ KmsKeyStatus key = admin.getAdminKmsKeyStatus("key-1").block();
 ```
 
 旧的 `kmsStatus()`、`kmsKeyCreate(...)`、`kmsKeyStatus()` 字符串入口已经标记为 `@Deprecated`，仅用于二进制兼容和低层排障。
+
+## 9.9 IAM 与 bucket metadata 导入
+
+阶段 50 起，导入类接口使用带 `Archive` 的方法名强调这是备份包恢复操作：
+
+```java
+byte[] archive = Files.readAllBytes(path);
+AdminTextResult result = admin.importBucketMetadataArchive(archive, "application/zip").block();
+```
+
+这些接口可能覆盖服务端配置，只能在独立可回滚 lab 或维护窗口执行。不要把 archive 内容、secret、token 或签名写入日志。旧的 `importIam(...)`、`importIamV2(...)`、`importBucketMetadata(...)` 字符串入口已经标记为 `@Deprecated`。
