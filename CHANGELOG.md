@@ -27,6 +27,12 @@
 - README 示例入口补齐对象存储、Admin typed、Raw 兜底、Metrics/Health、KMS/STS 五类正式示例。
 - 新增 `docs/36-stage38-examples-ux-closeout.md` 记录示例矩阵和错误解释原则。
 
+### 阶段 39 补充
+
+- 新增 `docs/37-stage39-release-candidate-review.md`，复审阶段 26 之后的持续增强和剩余边界。
+- 更新 `docs/17-release-readiness-report.md` 与 `docs/24-stage26-release-closeout.md`，把阶段 36-38 的 lab、示例和能力矩阵变化纳入发布口径。
+- 当前复审结论仍保持：双分支 route parity 233 / 233，`raw-fallback = 0`，Admin 剩余重点是 typed 成熟度、独立 lab 真实证据和 Crypto Gate Pass。
+
 
 ### 阶段 35 补充
 

@@ -241,6 +241,44 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - encrypted-blocked 的 access key / service account 接口继续只暴露 `EncryptedAdminResponse`。
 - Admin product-typed 从 53 / 128 提升到 55 / 128。
 
+## 5.17 阶段 36 补充
+
+阶段 36 深化破坏性实验写入夹具：
+
+- 新增 tier add/edit/remove 可回滚写入夹具。
+- 新增 remote target set/remove 可回滚写入夹具。
+- `verify-env.sh` 检测写入请求体或删除 ARN 时，必须要求 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true`。
+- 写入夹具同时覆盖 `ReactiveMinioAdminClient` 和 `ReactiveMinioRawClient`，报告只记录设置状态，不记录请求体或凭证。
+
+## 5.18 阶段 37 补充
+
+阶段 37 为更高风险的 Admin 能力建立实验矩阵：
+
+- batch job start/status/cancel 支持本机私有 YAML 请求体文件。
+- site replication add/edit/remove 支持本机私有 JSON 请求体文件。
+- 报告新增 batch/site replication 矩阵开关、请求体设置状态和恢复提示。
+- 新增 `scripts/minio-lab/templates/` 示例模板，但真实拓扑、endpoint 和凭证不得提交。
+
+## 5.19 阶段 38 补充
+
+阶段 38 收口用户示例体验：
+
+- 删除临时 `TestCreateBucket` 与 `TestGetBucketLocation` 示例类。
+- 新增 `ReactiveMinioSecurityExample`，覆盖 KMS 状态检查和 STS 临时凭证申请。
+- README 示例入口覆盖对象存储、Admin typed、Raw 兜底、Metrics/Health、KMS/STS 五条正式路径。
+- 新增 `docs/36-stage38-examples-ux-closeout.md` 记录示例矩阵和错误解释原则。
+
+## 5.20 阶段 39 复审结论
+
+阶段 39 重新复审当前发布候选：
+
+- 双分支 route parity 仍为 233 / 233，catalog 缺失 0、额外 0。
+- 能力矩阵仍为 S3 77 / 77、Admin 55 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。
+- `raw-fallback = 0`，说明所有 catalog 路由至少有专用 typed 或 advanced 兼容入口。
+- 剩余主要是 Admin typed 成熟度、独立 lab 真实执行证据和 Crypto Gate Pass 准备。
+
+详见 `docs/37-stage39-release-candidate-review.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
