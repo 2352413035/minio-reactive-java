@@ -179,6 +179,14 @@
 - Admin product-typed 从 108 / 128 提升到 113 / 128；`encrypted-blocked = 9` 与 `destructive-blocked = 29` 不减少。
 - 新增 `docs/56-stage58-crypto-lab-blocker-review.md` 记录为什么这是统计修正而不是 Crypto Gate Pass。
 
+### 阶段 59 补充
+
+- `ReactiveMinioAdminClient` 新增剩余 Admin 高风险/lab-only 产品入口，覆盖 IDP 配置、LDAP service account、bucket quota、remote target、replication diff、batch job、tier、site replication peer 和 force-unlock。
+- 这些入口与已有 typed 客户端平级，不依赖 raw 作为底层语义；raw 仍通过测试交叉佐证通用兜底能力。
+- Admin product-typed 从 113 / 128 提升到 128 / 128；`raw-fallback = 0` 保持不变。
+- `encrypted-blocked = 9` 与 `destructive-blocked = 29` 不减少，真实破坏性写入仍必须走独立 lab。
+- 新增 `docs/57-stage59-admin-lab-risk-boundaries.md` 记录边界、验证和后续深化方向。
+
 
 ### 阶段 35 补充
 
@@ -253,7 +261,7 @@
 
 - Admin `encrypted-blocked = 9`：Crypto Gate Pass 前不提供默认 madmin 加密响应的明文 typed 解析。
 - Admin `destructive-blocked = 29`：需要独立可回滚 lab，不能在共享 MinIO 环境默认执行。
-- Admin、STS、S3 中仍有一批 advanced-compatible 能力尚未升级为最终产品级 typed 模型。
+- 部分 Admin 高风险能力虽然已有产品边界，但仍需要独立 lab 或 Crypto Gate 证据后才能升级为更细的明文/结果模型。
 
 ### 阶段 26 验证
 

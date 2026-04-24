@@ -8,7 +8,7 @@
 | --- | --- |
 | 路由对标 | JDK8 与 JDK17+ 双分支均为 233 / 233，catalog 缺失 0、额外 0。 |
 | 可调用覆盖 | `raw-fallback = 0`，所有 catalog 路由至少有专用或 advanced 入口。 |
-| 产品 typed 成熟度 | 阶段 46 为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 47 后 Admin 提升到 66 / 128，阶段 48 后提升到 75 / 128，阶段 49 后提升到 78 / 128，阶段 50 后提升到 81 / 128；阶段 52 复审后确认当前仍为 81 / 128，阶段 53 后提升到 88 / 128，阶段 54 后提升到 94 / 128，阶段 55 后提升到 97 / 128，阶段 56 后提升到 103 / 128，阶段 57 后提升到 108 / 128，阶段 58 后提升到 113 / 128。 |
+| 产品 typed 成熟度 | 阶段 46 为 S3 77 / 77、Admin 64 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8；阶段 47 后 Admin 提升到 66 / 128，阶段 48 后提升到 75 / 128，阶段 49 后提升到 78 / 128，阶段 50 后提升到 81 / 128；阶段 52 复审后确认当前仍为 81 / 128，阶段 53 后提升到 88 / 128，阶段 54 后提升到 94 / 128，阶段 55 后提升到 97 / 128，阶段 56 后提升到 103 / 128，阶段 57 后提升到 108 / 128，阶段 58 后提升到 113 / 128，阶段 59 后达到 128 / 128。 |
 | Crypto Gate | 继续 Gate Fail；阶段 45 只完成放行准备清单，不引入依赖。 |
 | 破坏性 Admin | 仍为独立 lab 边界；阶段 43 已增强 typed/raw 步骤证据和 `mc` 核验提示。 |
 | 错误体验 | 阶段 44 已将协议异常与 raw 本地校验统一为中文诊断。 |
@@ -82,7 +82,7 @@ JDK17+ 分支还要执行 JDK17 全量测试、真实 MinIO smoke，以及 JDK21
 
 ## 11. 阶段 52 后续刷新
 
-阶段 52 已重新生成 route parity 和 capability matrix，确认双分支 route parity 233 / 233、Admin product-typed 81 / 128、`raw-fallback = 0`，并刷新版本管理口径。阶段 53 继续把 heal、decommission、rebalance 维护操作纳入产品边界，Admin product-typed 提升到 88 / 128；阶段 54 补充 replication MRF、tier verify 和 policy attach/detach 语义化入口，Admin product-typed 提升到 94 / 128；阶段 55 补充配置 KV 删除、配置历史清理/恢复高风险入口，Admin product-typed 提升到 97 / 128；阶段 56 补充站点复制 peer 写入类 lab-only 入口，Admin product-typed 提升到 103 / 128；阶段 57 补充服务控制、服务端升级和 token 吊销强破坏性入口，Admin product-typed 提升到 108 / 128；阶段 58 复核加密响应产品边界统计，Admin product-typed 提升到 113 / 128，但 Crypto Gate 与独立 lab blocked 计数不变。完整说明见 `docs/50-stage52-release-review-version-management.md`、`docs/51-stage53-admin-maintenance-boundary.md`、`docs/52-stage54-admin-policy-replication-boundary.md`、`docs/53-stage55-admin-config-risk-boundary.md`、`docs/54-stage56-site-replication-peer-lab-boundary.md`、`docs/55-stage57-service-update-token-boundary.md` 与 `docs/56-stage58-crypto-lab-blocker-review.md`。
+阶段 52 已重新生成 route parity 和 capability matrix，确认双分支 route parity 233 / 233、Admin product-typed 81 / 128、`raw-fallback = 0`，并刷新版本管理口径。阶段 53 继续把 heal、decommission、rebalance 维护操作纳入产品边界，Admin product-typed 提升到 88 / 128；阶段 54 补充 replication MRF、tier verify 和 policy attach/detach 语义化入口，Admin product-typed 提升到 94 / 128；阶段 55 补充配置 KV 删除、配置历史清理/恢复高风险入口，Admin product-typed 提升到 97 / 128；阶段 56 补充站点复制 peer 写入类 lab-only 入口，Admin product-typed 提升到 103 / 128；阶段 57 补充服务控制、服务端升级和 token 吊销强破坏性入口，Admin product-typed 提升到 108 / 128；阶段 58 复核加密响应产品边界统计，Admin product-typed 提升到 113 / 128；阶段 59 补齐剩余 Admin 高风险/lab-only 产品边界，Admin product-typed 达到 128 / 128，但 Crypto Gate 与独立 lab blocked 计数不变。完整说明见 `docs/50-stage52-release-review-version-management.md`、`docs/51-stage53-admin-maintenance-boundary.md`、`docs/52-stage54-admin-policy-replication-boundary.md`、`docs/53-stage55-admin-config-risk-boundary.md`、`docs/54-stage56-site-replication-peer-lab-boundary.md`、`docs/55-stage57-service-update-token-boundary.md`、`docs/56-stage58-crypto-lab-blocker-review.md` 与 `docs/57-stage59-admin-lab-risk-boundaries.md`。
 
 ## 12. 下一阶段建议
 

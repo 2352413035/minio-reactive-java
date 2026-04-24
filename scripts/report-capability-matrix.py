@@ -75,7 +75,14 @@ TYPED_METHODS = {
         'applySiteReplicationPeerIamItem','applySiteReplicationPeerBucketMetadata',
         'runSiteReplicationResyncOperation','editSiteReplicationState',
         'executeServiceControl','executeServiceControlV2',
-        'startServerUpdate','startServerUpdateV2','revokeUserProviderTokens'
+        'startServerUpdate','startServerUpdateV2','revokeUserProviderTokens',
+        'addIdpConfigEntry','updateIdpConfigEntry','deleteIdpConfigEntry',
+        'addLdapServiceAccountEntry','setBucketQuotaConfig',
+        'setRemoteTargetConfig','removeRemoteTargetConfig','runReplicationDiff',
+        'startBatchJobRequest','cancelBatchJobRequest',
+        'addTierConfig','editTierConfig','removeTierConfig',
+        'addSiteReplicationConfig','removeSiteReplicationConfig','editSiteReplicationConfig',
+        'editSiteReplicationPeer','removeSiteReplicationPeer','forceUnlockPaths'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

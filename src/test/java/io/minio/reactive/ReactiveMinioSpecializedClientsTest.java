@@ -707,6 +707,29 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage59RemainingAdminLabRiskBoundaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "addIdpConfigEntry");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "updateIdpConfigEntry");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "deleteIdpConfigEntry");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "addLdapServiceAccountEntry");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "setBucketQuotaConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "setRemoteTargetConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "removeRemoteTargetConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runReplicationDiff");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startBatchJobRequest");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "cancelBatchJobRequest");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "addTierConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "editTierConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "removeTierConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "addSiteReplicationConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "removeSiteReplicationConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "editSiteReplicationConfig");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "editSiteReplicationPeer");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "removeSiteReplicationPeer");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "forceUnlockPaths");
+  }
+
+  @Test
   void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -944,6 +967,119 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
+  }
+
+  @Test
+  void shouldBuildStage59RemainingAdminLabRiskBoundaryRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> methods = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  methods.add(request.method().name());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage59RemainingAdminLabRiskBody(request.url().getPath(), request.method().name()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    byte[] jsonBody = "{\"enabled\":true}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    byte[] yamlBody = "job: test".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+    AdminTextResult idpAdd = admin.addIdpConfigEntry("openid", "primary", jsonBody).block();
+    Assertions.assertEquals("idp-config-add", idpAdd.source());
+    Assertions.assertEquals("idp-config-add-ok", idpAdd.rawText());
+    Assertions.assertEquals(
+        "idp-config-update-ok",
+        admin.updateIdpConfigEntry("openid", "primary", jsonBody).block().rawText());
+    Assertions.assertEquals(
+        "idp-config-delete-ok", admin.deleteIdpConfigEntry("openid", "primary").block().rawText());
+    Assertions.assertEquals(
+        "ldap-service-account-add-ok", admin.addLdapServiceAccountEntry(jsonBody).block().rawText());
+    Assertions.assertEquals(
+        "bucket-quota-set-ok", admin.setBucketQuotaConfig("bucket1", jsonBody).block().rawText());
+    Assertions.assertEquals(
+        "remote-target-set-ok", admin.setRemoteTargetConfig("bucket1", jsonBody).block().rawText());
+    Assertions.assertEquals(
+        "remote-target-remove-ok",
+        admin.removeRemoteTargetConfig("bucket1", "arn1").block().rawText());
+    Assertions.assertEquals(
+        "replication-diff-ok", admin.runReplicationDiff("bucket1", jsonBody).block().rawText());
+    Assertions.assertEquals("batch-job-start-ok", admin.startBatchJobRequest(yamlBody).block().rawText());
+    Assertions.assertEquals("batch-job-cancel-ok", admin.cancelBatchJobRequest(yamlBody).block().rawText());
+    Assertions.assertEquals("tier-add-ok", admin.addTierConfig(jsonBody).block().rawText());
+    Assertions.assertEquals("tier-edit-ok", admin.editTierConfig("warm-tier", jsonBody).block().rawText());
+    Assertions.assertEquals("tier-remove-ok", admin.removeTierConfig("warm-tier").block().rawText());
+    Assertions.assertEquals(
+        "site-replication-add-ok", admin.addSiteReplicationConfig(jsonBody).block().rawText());
+    Assertions.assertEquals(
+        "site-replication-remove-ok", admin.removeSiteReplicationConfig(jsonBody).block().rawText());
+    Assertions.assertEquals(
+        "site-replication-edit-ok", admin.editSiteReplicationConfig(jsonBody).block().rawText());
+    Assertions.assertEquals("sr-peer-edit-ok", admin.editSiteReplicationPeer(jsonBody).block().rawText());
+    Assertions.assertEquals("sr-peer-remove-ok", admin.removeSiteReplicationPeer(jsonBody).block().rawText());
+    Assertions.assertEquals("force-unlock-ok", admin.forceUnlockPaths("bucket1/object1").block().rawText());
+    Assertions.assertEquals(
+        "tier-add-ok",
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_ADD_TIER"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.<String, String>emptyMap(),
+                jsonBody,
+                "application/json")
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp-config/openid/primary"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/ldap/add-service-account"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/set-bucket-quota"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/set-remote-target"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/remove-remote-target"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/replication/diff"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/start-job"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/cancel-job"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/tier"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/tier/warm-tier"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/add"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/remove"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/edit"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/edit"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/remove"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/force-unlock"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "arn=arn1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "paths=bucket1/object1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "api-version=1"));
+    Assertions.assertTrue(methods.contains("PUT"));
+    Assertions.assertTrue(methods.contains("POST"));
+    Assertions.assertTrue(methods.contains("DELETE"));
+    Assertions.assertTrue(contentTypes.contains("application/json"));
+    Assertions.assertTrue(contentTypes.contains("application/yaml"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.addIdpConfigEntry("openid", "primary", new byte[0]));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setBucketQuotaConfig(" ", jsonBody));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.editTierConfig("warm-tier", null));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.forceUnlockPaths(""));
   }
 
   @Test
@@ -1916,6 +2052,67 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"key-id\":\"dedicated-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
     }
     return "{}";
+  }
+
+  private static String stage59RemainingAdminLabRiskBody(String path, String method) {
+    if (path.equals("/minio/admin/v3/idp-config/openid/primary")) {
+      if ("DELETE".equals(method)) {
+        return "idp-config-delete-ok";
+      }
+      if ("POST".equals(method)) {
+        return "idp-config-update-ok";
+      }
+      return "idp-config-add-ok";
+    }
+    if (path.equals("/minio/admin/v3/idp/ldap/add-service-account")) {
+      return "ldap-service-account-add-ok";
+    }
+    if (path.equals("/minio/admin/v3/set-bucket-quota")) {
+      return "bucket-quota-set-ok";
+    }
+    if (path.equals("/minio/admin/v3/set-remote-target")) {
+      return "remote-target-set-ok";
+    }
+    if (path.equals("/minio/admin/v3/remove-remote-target")) {
+      return "remote-target-remove-ok";
+    }
+    if (path.equals("/minio/admin/v3/replication/diff")) {
+      return "replication-diff-ok";
+    }
+    if (path.equals("/minio/admin/v3/start-job")) {
+      return "batch-job-start-ok";
+    }
+    if (path.equals("/minio/admin/v3/cancel-job")) {
+      return "batch-job-cancel-ok";
+    }
+    if (path.equals("/minio/admin/v3/tier")) {
+      return "tier-add-ok";
+    }
+    if (path.equals("/minio/admin/v3/tier/warm-tier")) {
+      if ("DELETE".equals(method)) {
+        return "tier-remove-ok";
+      }
+      return "tier-edit-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/add")) {
+      return "site-replication-add-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/remove")) {
+      return "site-replication-remove-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/edit")) {
+      return "site-replication-edit-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/peer/edit")) {
+      return "sr-peer-edit-ok";
+    }
+    if (path.equals("/minio/admin/v3/site-replication/peer/remove")) {
+      return "sr-peer-remove-ok";
+    }
+    if (path.equals("/minio/admin/v3/force-unlock")) {
+      return "force-unlock-ok";
+    }
+    return "";
   }
 
   private static String stage57ServiceUpdateTokenBody(String path) {
