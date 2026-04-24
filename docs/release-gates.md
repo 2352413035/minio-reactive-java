@@ -95,3 +95,14 @@
 3. `docs/17-release-readiness-report.md` 记录当前完成度、风险边界、验证命令和下一阶段计划入口。
 4. README、`docs/09-minio-api-catalog.md`、`docs/13-admin-risk-levels.md`、`docs/14-typed-client-usage-guide.md`、`docs/16-crypto-boundary-map.md` 的口径一致。
 5. 示例类全部位于 `io.minio.reactive.examples` 包下，并通过 `mvn test` 的 main compile 阶段。
+
+## 阶段 26 发布候选检查清单
+
+阶段 26 之后，如果要对外说明当前 SDK 状态，必须同时引用：
+
+1. `CHANGELOG.md` 的 `0.1.0-SNAPSHOT 阶段 26 发布候选`。
+2. `docs/24-stage26-release-closeout.md` 的能力快照和剩余风险。
+3. 双分支 route parity 报告。
+4. 双分支 capability matrix。
+5. Crypto Gate Fail 仍被正确执行的证据。
+6. destructive lab 仍拒绝共享 MinIO 的证据。
