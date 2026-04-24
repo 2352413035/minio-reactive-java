@@ -1,16 +1,14 @@
 package io.minio.reactive.examples;
 
 import io.minio.reactive.ReactiveMinioAdminClient;
-import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
-import java.util.Collections;
 
 /**
- * typed Admin 客户端示例。
+ * 管理端 typed 客户端示例。
  *
- * <p>这个示例不建议直接在共享 MinIO 上执行，它主要展示：
- * 1. 用户组 typed 方法
- * 2. Access key typed 查询
- * 3. 服务账号 typed / 加密边界方法
+ * <p>这个示例只调用共享环境中相对安全的只读接口，重点展示三件事：
+ * 1. L1 只读接口优先返回业务摘要模型；
+ * 2. 配置帮助属于明文安全接口，可以直接解析成 typed 结果；
+ * 3. 配置、服务账号等默认加密响应只暴露加密边界，不伪装成明文模型。
  */
 public final class ReactiveMinioTypedAdminExample {
   private ReactiveMinioTypedAdminExample() {}
@@ -27,18 +25,29 @@ public final class ReactiveMinioTypedAdminExample {
             .credentials(accessKey, secretKey)
             .build();
 
-    admin.listGroupsTyped().doOnNext(groups -> System.out.println("groups = " + groups.groups())).block();
     admin
-        .updateGroupMembers(UpdateGroupMembersRequest.add("demo-group", Collections.singletonList("demo-user")))
-        .doOnSuccess(ignored -> System.out.println("group member update submitted"))
+        .listGroupsTyped()
+        .doOnNext(groups -> System.out.println("用户组列表 = " + groups.groups()))
         .block();
     admin
-        .getAccessKeyInfoTyped(accessKey)
-        .doOnNext(info -> System.out.println("access key owner = " + info.parentUser()))
+        .getStorageSummary()
+        .doOnNext(summary -> System.out.println("在线磁盘数 = " + summary.onlineDiskCount()))
+        .block();
+    admin
+        .getDataUsageSummary()
+        .doOnNext(summary -> System.out.println("对象数量 = " + summary.objectsCount()))
+        .block();
+    admin
+        .getConfigHelp("api")
+        .doOnNext(help -> System.out.println("api 配置帮助字段 = " + help.keys()))
+        .block();
+    admin
+        .getConfigEncrypted()
+        .doOnNext(body -> System.out.println("配置加密算法 = " + body.algorithmName()))
         .block();
     admin
         .listServiceAccountsEncrypted()
-        .doOnNext(body -> System.out.println("service account response encrypted = " + body.isEncrypted()))
+        .doOnNext(body -> System.out.println("服务账号响应是否加密 = " + body.isEncrypted()))
         .block();
   }
 }

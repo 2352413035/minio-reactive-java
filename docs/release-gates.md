@@ -11,6 +11,8 @@
 - `git diff --check`
 - secret scan
 
+阶段 19 发布收口还要求 main examples 可编译，因为示例是用户理解 SDK 分层的第一入口。
+
 ## 2. Go 互操作门禁
 
 如果当前里程碑涉及 madmin 加密兼容，必须额外通过：
@@ -54,7 +56,8 @@
 
 - README 必须明确 typed 优先、advanced 过渡、raw 兜底。
 - 中文文档必须明确当前 crypto 边界。
-- 示例必须覆盖至少一个对象存储主路径和一个 Admin / raw 兜底路径。
+- 示例必须覆盖至少一个对象存储主路径、一个 Admin typed 路径、一个 raw 兜底路径和一个运维入口路径。
+- 发布说明不得使用单一百分比宣称“完成 MinIO”，必须分 route parity、callability、typed maturity、live/destructive/crypto 边界说明。
 
 ## 6. 审查门禁
 
@@ -68,3 +71,13 @@
 破坏性 Admin 测试必须通过 `scripts/minio-lab/verify-env.sh`，并且只能由 `scripts/minio-lab/run-destructive-tests.sh` 在独立可回滚环境中启动。默认 `mvn test` 只会跳过 destructive 用例，不允许修改共享 MinIO。
 
 真实 config write + restore 需要额外提供 `MINIO_LAB_TEST_CONFIG_KV` 与 `MINIO_LAB_RESTORE_CONFIG_KV`。这两个变量缺失时，测试只验证环境门禁，不执行配置写入。
+
+## 阶段 19 发布就绪检查清单
+
+发布或里程碑说明至少要附上以下证据：
+
+1. `.omx/reports/route-parity-jdk8.md` 与 `.omx/reports/route-parity-jdk17.md` 均显示 catalog 缺失 0、额外 0。
+2. `.omx/reports/capability-matrix.md` 显示双分支能力矩阵一致。
+3. `docs/17-release-readiness-report.md` 记录当前完成度、风险边界、验证命令和下一阶段计划入口。
+4. README、`docs/09-minio-api-catalog.md`、`docs/13-admin-risk-levels.md`、`docs/14-typed-client-usage-guide.md`、`docs/16-crypto-boundary-map.md` 的口径一致。
+5. 示例类全部位于 `io.minio.reactive.examples` 包下，并通过 `mvn test` 的 main compile 阶段。
