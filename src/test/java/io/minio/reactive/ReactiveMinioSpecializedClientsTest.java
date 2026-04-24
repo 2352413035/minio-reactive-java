@@ -9,6 +9,7 @@ import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminConfigHelp;
 import io.minio.reactive.messages.admin.AdminDataUsageSummary;
 import io.minio.reactive.messages.admin.AdminStorageSummary;
+import io.minio.reactive.messages.admin.AdminTextResult;
 import io.minio.reactive.messages.admin.AdminIdpConfigList;
 import io.minio.reactive.messages.admin.AdminPolicyEntities;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
@@ -624,6 +625,19 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage48AdminDiagnosticProbeMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runClientDevnull");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runClientDevnullExtraTime");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runSiteReplicationDevnull");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runSiteReplicationNetperf");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runSpeedtest");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runObjectSpeedtest");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runDriveSpeedtest");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runNetworkSpeedtest");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "runSiteSpeedtest");
+  }
+
+  @Test
   void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -678,6 +692,65 @@ class ReactiveMinioSpecializedClientsTest {
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/export-iam"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/export-bucket-metadata"));
+  }
+
+  @Test
+  void shouldBuildStage48AdminDiagnosticProbeRequestsAsText() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage48AdminDiagnosticProbeBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    AdminTextResult clientDevnull = admin.runClientDevnull().block();
+    Assertions.assertEquals("client-devnull", clientDevnull.source());
+    Assertions.assertEquals("client-devnull-ok", clientDevnull.rawText());
+    Assertions.assertEquals(
+        "client-devnull-extra-time-ok", admin.runClientDevnullExtraTime().block().rawText());
+    Assertions.assertEquals(
+        "site-replication-devnull-ok", admin.runSiteReplicationDevnull().block().rawText());
+    Assertions.assertEquals(
+        "site-replication-netperf-ok", admin.runSiteReplicationNetperf().block().rawText());
+    Assertions.assertEquals("speedtest-ok", admin.runSpeedtest().block().rawText());
+    Assertions.assertEquals("speedtest-object-ok", admin.runObjectSpeedtest().block().rawText());
+    Assertions.assertEquals("speedtest-drive-ok", admin.runDriveSpeedtest().block().rawText());
+    Assertions.assertEquals("speedtest-net-ok", admin.runNetworkSpeedtest().block().rawText());
+    Assertions.assertEquals("speedtest-site-ok", admin.runSiteSpeedtest().block().rawText());
+    Assertions.assertEquals(
+        "speedtest-ok",
+        raw.executeToString(MinioApiCatalog.byName("ADMIN_SPEEDTEST"))
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/client/devnull"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/client/devnull/extratime"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/devnull"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/netperf"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/object"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
   }
 
   @Test
@@ -1299,6 +1372,37 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (path.endsWith("/export-bucket-metadata")) {
       return "bucket-metadata-bytes";
+    }
+    return "";
+  }
+
+  private static String stage48AdminDiagnosticProbeBody(String path) {
+    if (path.endsWith("/speedtest/client/devnull")) {
+      return "client-devnull-ok";
+    }
+    if (path.endsWith("/speedtest/client/devnull/extratime")) {
+      return "client-devnull-extra-time-ok";
+    }
+    if (path.endsWith("/site-replication/devnull")) {
+      return "site-replication-devnull-ok";
+    }
+    if (path.endsWith("/site-replication/netperf")) {
+      return "site-replication-netperf-ok";
+    }
+    if (path.endsWith("/speedtest/object")) {
+      return "speedtest-object-ok";
+    }
+    if (path.endsWith("/speedtest/drive")) {
+      return "speedtest-drive-ok";
+    }
+    if (path.endsWith("/speedtest/net")) {
+      return "speedtest-net-ok";
+    }
+    if (path.endsWith("/speedtest/site")) {
+      return "speedtest-site-ok";
+    }
+    if (path.endsWith("/speedtest")) {
+      return "speedtest-ok";
     }
     return "";
   }

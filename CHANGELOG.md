@@ -91,6 +91,14 @@
 - Admin product-typed 从 64 / 128 提升到 66 / 128；加密和破坏性边界不变。
 - 新增 `docs/45-stage47-admin-sensitive-export.md` 记录敏感导出使用边界。
 
+### 阶段 48 补充
+
+- `ReactiveMinioAdminClient` 新增 client devnull、site replication devnull/netperf 与 speedtest 系列 `AdminTextResult` 产品入口。
+- 这些入口只包装诊断文本，不在共享 live 测试中执行真实压测，并要求调用方自行控制维护窗口、超时和日志。
+- 单元测试同时验证专用入口和 raw `executeToString(...)` 路径。
+- Admin product-typed 从 66 / 128 提升到 75 / 128；加密和破坏性边界不变。
+- 新增 `docs/46-stage48-admin-diagnostic-probes.md` 记录诊断/压测/探测接口边界。
+
 
 ### 阶段 35 补充
 

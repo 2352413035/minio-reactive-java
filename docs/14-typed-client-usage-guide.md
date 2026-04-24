@@ -228,3 +228,13 @@ AdminBinaryResult metadata = admin.exportBucketMetadataData().block();
 ```
 
 不要把 `bytes()` 直接写入普通日志。需要排障或 SDK 尚未封装的新参数时，仍可用 `ReactiveMinioRawClient.executeToBytes(...)` 走 catalog 兜底。
+
+## 9.7 Admin 诊断/压测/探测
+
+阶段 48 起，client devnull、site replication devnull/netperf 和 speedtest 系列接口提供 `AdminTextResult` 产品入口。例如：
+
+```java
+AdminTextResult result = admin.runNetworkSpeedtest().block();
+```
+
+这些接口可能消耗集群资源，不能在共享 MinIO live 测试中默认执行。业务系统应在独立维护窗口中调用，并自行设置超时、取消策略和日志脱敏。

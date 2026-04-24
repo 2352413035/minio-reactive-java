@@ -255,6 +255,131 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return getProfileResult(null, null);
   }
 
+  /** 运行 client devnull 探测；该接口可能消耗集群资源，共享环境不应默认执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runClientDevnull(
+      byte[] body, String contentType) {
+    return clientDevnull(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("client-devnull", text));
+  }
+
+  /** 运行不带请求体的 client devnull 探测。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runClientDevnull() {
+    return runClientDevnull(null, null);
+  }
+
+  /** 运行 client devnull extra-time 探测；调用方应在独立诊断窗口中执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runClientDevnullExtraTime(
+      byte[] body, String contentType) {
+    return clientDevnullExtraTime(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "client-devnull-extra-time", text));
+  }
+
+  /** 运行不带请求体的 client devnull extra-time 探测。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runClientDevnullExtraTime() {
+    return runClientDevnullExtraTime(null, null);
+  }
+
+  /** 运行 site replication devnull 探测；只包装响应文本，不在共享 live 测试中真实执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteReplicationDevnull(
+      byte[] body, String contentType) {
+    return siteReplicationDevnull(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-devnull", text));
+  }
+
+  /** 运行不带请求体的 site replication devnull 探测。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteReplicationDevnull() {
+    return runSiteReplicationDevnull(null, null);
+  }
+
+  /** 运行 site replication netperf 探测；调用方应确认目标集群和负载窗口。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteReplicationNetperf(
+      byte[] body, String contentType) {
+    return siteReplicationNetperf(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "site-replication-netperf", text));
+  }
+
+  /** 运行不带请求体的 site replication netperf 探测。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteReplicationNetperf() {
+    return runSiteReplicationNetperf(null, null);
+  }
+
+  /** 运行集群 speedtest；这是高资源诊断接口，不能在共享环境默认执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSpeedtest(
+      byte[] body, String contentType) {
+    return speedtest(body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("speedtest", text));
+  }
+
+  /** 运行不带请求体的集群 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSpeedtest() {
+    return runSpeedtest(null, null);
+  }
+
+  /** 运行对象层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runObjectSpeedtest(
+      byte[] body, String contentType) {
+    return speedtestObject(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-object", text));
+  }
+
+  /** 运行不带请求体的对象层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runObjectSpeedtest() {
+    return runObjectSpeedtest(null, null);
+  }
+
+  /** 运行磁盘层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runDriveSpeedtest(
+      byte[] body, String contentType) {
+    return speedtestDrive(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-drive", text));
+  }
+
+  /** 运行不带请求体的磁盘层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runDriveSpeedtest() {
+    return runDriveSpeedtest(null, null);
+  }
+
+  /** 运行网络层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runNetworkSpeedtest(
+      byte[] body, String contentType) {
+    return speedtestNet(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-net", text));
+  }
+
+  /** 运行不带请求体的网络层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runNetworkSpeedtest() {
+    return runNetworkSpeedtest(null, null);
+  }
+
+  /** 运行站点层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteSpeedtest(
+      byte[] body, String contentType) {
+    return speedtestSite(body, contentType)
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-site", text));
+  }
+
+  /** 运行不带请求体的站点层 speedtest。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteSpeedtest() {
+    return runSiteSpeedtest(null, null);
+  }
+
   /**
    * 读取 Admin trace 输出流。
    *
