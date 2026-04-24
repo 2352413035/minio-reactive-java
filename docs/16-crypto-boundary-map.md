@@ -40,4 +40,4 @@ scripts/madmin-fixtures/check-crypto-gate.sh
 
 通过这个命令并不代表 Gate Pass；它代表当前 Gate Fail 边界仍然被正确执行。
 
-阶段 25 的依赖复核和拒绝理由详见 `docs/23-stage25-crypto-gate-review.md`。阶段 32 的独立复审和状态文件门禁详见 `docs/30-stage32-crypto-gate-independent-review.md`。未来若要 Gate Pass，必须先补齐候选版本、许可证、安全公告、JDK8/JDK17+ 测试矩阵、FIPS/Provider 影响和失败回退策略，并同步更新 `scripts/madmin-fixtures/crypto-gate-status.properties`。
+阶段 25 的依赖复核和拒绝理由详见 `docs/23-stage25-crypto-gate-review.md`。阶段 32 的独立复审和状态文件门禁详见 `docs/30-stage32-crypto-gate-independent-review.md`。未来若要 Gate Pass，必须先补齐候选版本、许可证、安全公告、JDK8/JDK17+ 测试矩阵、FIPS/Provider 影响和失败回退策略，并同步更新 `scripts/madmin-fixtures/crypto-gate-status.properties`。阶段 45 已把这些条件细化成可执行清单，详见 `docs/43-stage45-crypto-gate-pass-prep.md`；该清单不构成 Gate Pass。

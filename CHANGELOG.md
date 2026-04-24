@@ -69,6 +69,13 @@
 - `ReactiveMinioRawClientTest` 新增纯文本错误和本地校验中文断言，防止后续退回英文低上下文错误。
 - 新增 `docs/42-stage44-error-experience.md` 记录异常体验边界。
 
+### 阶段 45 补充
+
+- Crypto Gate Pass 继续只做准备，不修改 `pom.xml`，不新增 crypto/native/provider 依赖。
+- 新增 `docs/43-stage45-crypto-gate-pass-prep.md`，把候选依赖、三方批准材料、JDK8/JDK17/JDK21/JDK25 测试矩阵和失败回退语义写成后续放行清单。
+- `crypto-gate-status.properties` 继续保持 `fail`，owner/security/architect 批准状态仍为 `false`。
+- `encrypted-blocked = 9` 继续保留，默认 madmin 加密响应仍通过 `EncryptedAdminResponse` 暴露算法诊断边界。
+
 
 ### 阶段 35 补充
 
