@@ -30,6 +30,18 @@ class MadminEncryptionSupportTest {
   }
 
   @Test
+  void shouldExposeEncryptedAdminResponseAlgorithmForDiagnostics() {
+    byte[] payload = new byte[41];
+    payload[32] = MadminEncryptionAlgorithm.ARGON2ID_AES_GCM.id();
+    io.minio.reactive.messages.admin.EncryptedAdminResponse response =
+        new io.minio.reactive.messages.admin.EncryptedAdminResponse(payload);
+
+    Assertions.assertTrue(response.isEncrypted());
+    Assertions.assertEquals(MadminEncryptionAlgorithm.ARGON2ID_AES_GCM, response.algorithm());
+    Assertions.assertEquals("Argon2id + AES-GCM", response.algorithmName());
+  }
+
+  @Test
   void shouldRejectUnknownOrShortMadminEncryptedHeaderIds() {
     byte[] unknown = new byte[41];
     unknown[32] = 0x7F;
