@@ -17,7 +17,7 @@
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | s3 | 77 | 77 | 77 | 0 | 0 | 0 |
-| admin | 128 | 103 | 128 | 0 | 9 | 29 |
+| admin | 128 | 108 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -474,6 +474,18 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 - Admin product-typed 提升到 103 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
 
 详见 `docs/54-stage56-site-replication-peer-lab-boundary.md`。
+
+## 5.38 阶段 57 补充
+
+阶段 57 补充强破坏性服务类入口产品边界：
+
+- `executeServiceControl(...)` / `executeServiceControlV2(...)` 包装服务控制动作。
+- `startServerUpdate(...)` / `startServerUpdateV2(...)` 包装服务端升级动作。
+- `revokeUserProviderTokens(...)` 包装 token 吊销动作。
+- 这些方法只固定高风险语义和文本响应边界，不在共享 live 中真实执行。
+- Admin product-typed 提升到 108 / 128，`raw-fallback = 0`、Crypto Gate 与破坏性 lab 边界不变。
+
+详见 `docs/55-stage57-service-update-token-boundary.md`。
 
 ## 6. 验证命令
 

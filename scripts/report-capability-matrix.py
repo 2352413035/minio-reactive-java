@@ -70,7 +70,9 @@ TYPED_METHODS = {
         'deleteConfigKvEntry','clearConfigHistoryEntry','restoreConfigHistoryEntry',
         'joinSiteReplicationPeer','applySiteReplicationPeerBucketOperation',
         'applySiteReplicationPeerIamItem','applySiteReplicationPeerBucketMetadata',
-        'runSiteReplicationResyncOperation','editSiteReplicationState'
+        'runSiteReplicationResyncOperation','editSiteReplicationState',
+        'executeServiceControl','executeServiceControlV2',
+        'startServerUpdate','startServerUpdateV2','revokeUserProviderTokens'
     },
     'kms': {'getStatus','getApis','getVersion','listKeys','createKey','getKeyStatus','scrapeMetrics'},
     'sts': {

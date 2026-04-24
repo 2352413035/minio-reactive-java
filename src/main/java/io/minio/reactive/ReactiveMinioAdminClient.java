@@ -120,6 +120,66 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return restoreConfigHistoryEntry(restoreId, null, null);
   }
 
+  /**
+   * 执行服务控制动作。
+   *
+   * <p>该接口可能触发服务停止、重启或类似强破坏性动作，只应在维护窗口中执行。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> executeServiceControl(
+      String action, byte[] body, String contentType) {
+    requireText("action", action);
+    return service(action, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("service-control", text));
+  }
+
+  /** 执行不带请求体的服务控制动作。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> executeServiceControl(
+      String action) {
+    return executeServiceControl(action, null, null);
+  }
+
+  /** 执行 v2 服务控制动作；语义同样属于维护窗口能力。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> executeServiceControlV2(
+      String action, byte[] body, String contentType) {
+    requireText("action", action);
+    return serviceV2(action, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("service-control-v2", text));
+  }
+
+  /** 执行不带请求体的 v2 服务控制动作。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> executeServiceControlV2(
+      String action) {
+    return executeServiceControlV2(action, null, null);
+  }
+
+  /** 启动服务端升级；updateURL 必须由调用方显式确认。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startServerUpdate(
+      String updateURL, byte[] body, String contentType) {
+    requireText("updateURL", updateURL);
+    return serverUpdate(updateURL, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("server-update", text));
+  }
+
+  /** 启动不带请求体的服务端升级。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startServerUpdate(
+      String updateURL) {
+    return startServerUpdate(updateURL, null, null);
+  }
+
+  /** 启动 v2 服务端升级；不会在共享 live 中真实执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startServerUpdateV2(
+      String updateURL, byte[] body, String contentType) {
+    requireText("updateURL", updateURL);
+    return serverUpdateV2(updateURL, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("server-update-v2", text));
+  }
+
+  /** 启动不带请求体的 v2 服务端升级。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> startServerUpdateV2(
+      String updateURL) {
+    return startServerUpdateV2(updateURL, null, null);
+  }
+
   /** 获取服务端信息摘要，返回强类型稳定字段并保留原始 JSON。 */
   public Mono<io.minio.reactive.messages.admin.AdminServerInfo> getServerInfo() {
     return serverInfo().map(io.minio.reactive.messages.admin.AdminServerInfo::parse);
@@ -493,6 +553,20 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> editSiteReplicationState(
       byte[] body) {
     return editSiteReplicationState(body, "application/json");
+  }
+
+  /** 吊销指定用户提供方的 token；这是强影响面安全操作，只应在受控窗口执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> revokeUserProviderTokens(
+      String userProvider, byte[] body, String contentType) {
+    requireText("userProvider", userProvider);
+    return revokeTokens(userProvider, body, contentType)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("revoke-tokens", text));
+  }
+
+  /** 吊销指定用户提供方的 token，不携带请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> revokeUserProviderTokens(
+      String userProvider) {
+    return revokeUserProviderTokens(userProvider, null, null);
   }
 
   /** 获取锁热点信息，先以通用 JSON 结果保留全部字段。 */

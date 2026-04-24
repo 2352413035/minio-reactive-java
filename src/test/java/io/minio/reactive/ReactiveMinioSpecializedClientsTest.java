@@ -698,6 +698,15 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldExposeStage57ServiceUpdateTokenRiskBoundaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "executeServiceControl");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "executeServiceControlV2");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startServerUpdate");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startServerUpdateV2");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "revokeUserProviderTokens");
+  }
+
+  @Test
   void shouldBuildStage47AdminSensitiveExportRequestsAsBytes() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -935,6 +944,65 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
+  }
+
+  @Test
+  void shouldBuildStage57ServiceUpdateTokenRiskBoundaryRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage57ServiceUpdateTokenBody(request.url().getPath()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    ReactiveMinioRawClient raw =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertEquals("service-control-ok", admin.executeServiceControl("restart").block().rawText());
+    Assertions.assertEquals("service-control-v2", admin.executeServiceControlV2("restart").block().source());
+    Assertions.assertEquals("server-update-ok", admin.startServerUpdate("http://update.local/minio").block().rawText());
+    Assertions.assertEquals("server-update-v2", admin.startServerUpdateV2("http://update.local/minio").block().source());
+    Assertions.assertEquals("revoke-tokens-ok", admin.revokeUserProviderTokens("ldap").block().rawText());
+    Assertions.assertEquals(
+        "service-control-ok",
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_SERVICE"),
+                java.util.Collections.<String, String>emptyMap(),
+                java.util.Collections.singletonMap("action", "restart"),
+                java.util.Collections.<String, String>emptyMap(),
+                null,
+                null)
+            .block());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/service"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/update"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/revoke-tokens/ldap"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "action=restart"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "type=2", "action=restart"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "updateURL=http://update.local/minio"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "type=2", "updateURL=http://update.local/minio"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.executeServiceControl(" "));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.startServerUpdate(null));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.revokeUserProviderTokens(""));
   }
 
   @Test
@@ -1848,6 +1916,19 @@ class ReactiveMinioSpecializedClientsTest {
       return "{\"key-id\":\"dedicated-key\",\"encryptionErr\":\"\",\"decryptionErr\":\"\"}";
     }
     return "{}";
+  }
+
+  private static String stage57ServiceUpdateTokenBody(String path) {
+    if (path.equals("/minio/admin/v3/service")) {
+      return "service-control-ok";
+    }
+    if (path.equals("/minio/admin/v3/update")) {
+      return "server-update-ok";
+    }
+    if (path.equals("/minio/admin/v3/revoke-tokens/ldap")) {
+      return "revoke-tokens-ok";
+    }
+    return "";
   }
 
   private static String stage56SiteReplicationPeerBody(String path) {
