@@ -31,6 +31,7 @@ JDK8 分支：
 - `445818c`：阶段 53 Admin 维护操作产品边界检查点。
 - `cfbaad2`：阶段 54 Admin 策略与复制轻量边界检查点。
 - `454c17e`：阶段 55 Admin 配置高风险边界检查点。
+- `1ce711f`：阶段 56 站点复制 peer lab-only 边界检查点。
 
 JDK17+ 分支：
 
@@ -42,8 +43,9 @@ JDK17+ 分支：
 - `da12ef7`：阶段 53 Admin 维护操作产品边界检查点。
 - `7d66e88`：阶段 54 Admin 策略与复制轻量边界检查点。
 - `5aedc1f`：阶段 55 Admin 配置高风险边界检查点。
+- `fd5568b`：阶段 56 站点复制 peer lab-only 边界检查点。
 
-阶段 56 复审口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 103 / 128，`raw-fallback = 0`。
+阶段 57 复审口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag；route parity 233 / 233，Admin product-typed 108 / 128，`raw-fallback = 0`。
 
 ## 验证命令
 

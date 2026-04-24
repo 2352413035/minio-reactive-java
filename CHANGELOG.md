@@ -165,6 +165,13 @@
 - Admin product-typed 从 97 / 128 提升到 103 / 128；Crypto Gate 与破坏性 lab 边界不变。
 - 新增 `docs/54-stage56-site-replication-peer-lab-boundary.md` 记录站点复制 peer 写入边界。
 
+### 阶段 57 补充
+
+- `ReactiveMinioAdminClient` 新增服务控制、v2 服务控制、服务端升级、v2 服务端升级和 token 吊销的 `AdminTextResult` 产品入口。
+- 这些入口属于强破坏性维护能力，只做 mock/raw 交叉验证，不在共享 live 中真实执行。
+- Admin product-typed 从 103 / 128 提升到 108 / 128；Crypto Gate 与破坏性 lab 边界不变。
+- 新增 `docs/55-stage57-service-update-token-boundary.md` 记录服务类高风险边界。
+
 
 ### 阶段 35 补充
 
