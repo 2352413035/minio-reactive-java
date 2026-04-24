@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,6 +28,14 @@ import org.junit.jupiter.api.Test;
  */
 class DestructiveAdminIntegrationTest {
   private static Map<String, String> cachedLabConfig;
+
+  private interface LabRunnable {
+    void run() throws Exception;
+  }
+
+  private interface LabSupplier<T> {
+    T get() throws Exception;
+  }
 
   @Test
   void shouldRequireVerifiedLabEnvironmentBeforeDestructiveSuite() throws Exception {
@@ -50,12 +59,19 @@ class DestructiveAdminIntegrationTest {
     ReactiveMinioAdminClient admin = labAdminClient();
 
     try {
-      admin.setConfigKvText(testConfigKv).block();
-      Assertions.assertNotNull(admin.getConfigHelp(configSubSystem(testConfigKv)).block());
+      runLabStep("config", "typed setConfigKvText 测试值", () -> admin.setConfigKvText(testConfigKv).block());
+      labStepValue(
+          "config",
+          "typed getConfigHelp 测试值",
+          () -> admin.getConfigHelp(configSubSystem(testConfigKv)).block());
     } finally {
-      admin.setConfigKvText(restoreConfigKv).block();
+      runLabStep("config", "typed setConfigKvText 恢复值", () -> admin.setConfigKvText(restoreConfigKv).block());
     }
-    Assertions.assertNotNull(admin.getConfigHelp(configSubSystem(restoreConfigKv)).block());
+    Assertions.assertNotNull(
+        labStepValue(
+            "config",
+            "typed getConfigHelp 恢复后",
+            () -> admin.getConfigHelp(configSubSystem(restoreConfigKv)).block()));
   }
 
   @Test
@@ -71,12 +87,21 @@ class DestructiveAdminIntegrationTest {
 
     ReactiveMinioAdminClient admin = labAdminClient();
     try {
-      admin.setBucketQuota(bucket, bytes(testQuotaJson), "application/json").block();
-      Assertions.assertNotNull(admin.getBucketQuotaInfo(bucket).block());
+      runLabStep(
+          "bucket-quota",
+          "typed setBucketQuota 测试值",
+          () -> admin.setBucketQuota(bucket, bytes(testQuotaJson), "application/json").block());
+      labStepValue(
+          "bucket-quota", "typed getBucketQuotaInfo 测试值", () -> admin.getBucketQuotaInfo(bucket).block());
     } finally {
-      admin.setBucketQuota(bucket, bytes(restoreQuotaJson), "application/json").block();
+      runLabStep(
+          "bucket-quota",
+          "typed setBucketQuota 恢复值",
+          () -> admin.setBucketQuota(bucket, bytes(restoreQuotaJson), "application/json").block());
     }
-    Assertions.assertNotNull(admin.getBucketQuotaInfo(bucket).block());
+    Assertions.assertNotNull(
+        labStepValue(
+            "bucket-quota", "typed getBucketQuotaInfo 恢复后", () -> admin.getBucketQuotaInfo(bucket).block()));
   }
 
   @Test
@@ -96,8 +121,10 @@ class DestructiveAdminIntegrationTest {
     ReactiveMinioAdminClient admin = labAdminClient();
     ReactiveMinioRawClient raw = labRawClient();
     if (notBlank(tierName)) {
-      AdminTierList typedTiers = admin.listTiers().block();
-      String rawTiers = rawString(raw, "ADMIN_LIST_TIER");
+      AdminTierList typedTiers =
+          labStepValue("tier-probe", "typed listTiers", () -> admin.listTiers().block());
+      String rawTiers =
+          labStepValue("tier-probe", "raw ADMIN_LIST_TIER", () -> rawString(raw, "ADMIN_LIST_TIER"));
       Assertions.assertNotNull(typedTiers);
       Assertions.assertEquals(AdminTierList.parse(rawTiers).tierCount(), typedTiers.tierCount());
       if ("true".equalsIgnoreCase(labValue("MINIO_LAB_EXPECT_TIER_IN_LIST"))) {
@@ -105,13 +132,20 @@ class DestructiveAdminIntegrationTest {
             containsTierName(typedTiers, tierName),
             "MINIO_LAB_EXPECT_TIER_IN_LIST=true 时，listTiers() 必须能看到指定 tier: " + tierName);
       }
-      Assertions.assertNotNull(admin.verifyTier(tierName).block());
+      Assertions.assertNotNull(
+          labStepValue("tier-probe", "typed verifyTier", () -> admin.verifyTier(tierName).block()));
     }
     if (notBlank(bucket)) {
       AdminRemoteTargetList typedTargets =
-          admin.listRemoteTargetsInfo(bucket, remoteTargetType).block();
+          labStepValue(
+              "remote-target-probe",
+              "typed listRemoteTargetsInfo",
+              () -> admin.listRemoteTargetsInfo(bucket, remoteTargetType).block());
       String rawTargets =
-          rawString(raw, "ADMIN_LIST_REMOTE_TARGETS", map("bucket", bucket, "type", remoteTargetType));
+          labStepValue(
+              "remote-target-probe",
+              "raw ADMIN_LIST_REMOTE_TARGETS",
+              () -> rawString(raw, "ADMIN_LIST_REMOTE_TARGETS", map("bucket", bucket, "type", remoteTargetType)));
       Assertions.assertNotNull(typedTargets);
       Assertions.assertEquals(
           AdminRemoteTargetList.parse(rawTargets).targetCount(), typedTargets.targetCount());
@@ -122,18 +156,28 @@ class DestructiveAdminIntegrationTest {
       }
     }
     if (batchProbes) {
-      AdminBatchJobList typedJobs = admin.listBatchJobsInfo().block();
-      String rawJobs = rawString(raw, "ADMIN_LIST_BATCH_JOBS");
+      AdminBatchJobList typedJobs =
+          labStepValue("batch-probe", "typed listBatchJobsInfo", () -> admin.listBatchJobsInfo().block());
+      String rawJobs =
+          labStepValue("batch-probe", "raw ADMIN_LIST_BATCH_JOBS", () -> rawString(raw, "ADMIN_LIST_BATCH_JOBS"));
       Assertions.assertNotNull(typedJobs);
       Assertions.assertEquals(AdminBatchJobList.parse(rawJobs).jobCount(), typedJobs.jobCount());
 
-      AdminJsonResult typedStatus = admin.getBatchJobStatusInfo().block();
-      String rawStatus = rawString(raw, "ADMIN_BATCH_JOB_STATUS");
+      AdminJsonResult typedStatus =
+          labStepValue(
+              "batch-probe", "typed getBatchJobStatusInfo", () -> admin.getBatchJobStatusInfo().block());
+      String rawStatus =
+          labStepValue(
+              "batch-probe", "raw ADMIN_BATCH_JOB_STATUS", () -> rawString(raw, "ADMIN_BATCH_JOB_STATUS"));
       Assertions.assertNotNull(typedStatus);
       Assertions.assertEquals(AdminJsonResult.parse(rawStatus).rawJson(), typedStatus.rawJson());
 
-      AdminJsonResult typedDescription = admin.describeBatchJobInfo().block();
-      String rawDescription = rawString(raw, "ADMIN_DESCRIBE_BATCH_JOB");
+      AdminJsonResult typedDescription =
+          labStepValue(
+              "batch-probe", "typed describeBatchJobInfo", () -> admin.describeBatchJobInfo().block());
+      String rawDescription =
+          labStepValue(
+              "batch-probe", "raw ADMIN_DESCRIBE_BATCH_JOB", () -> rawString(raw, "ADMIN_DESCRIBE_BATCH_JOB"));
       Assertions.assertNotNull(typedDescription);
       Assertions.assertEquals(
           AdminJsonResult.parse(rawDescription).rawJson(), typedDescription.rawJson());
@@ -278,23 +322,41 @@ class DestructiveAdminIntegrationTest {
     try {
       // 先走专用 Admin 客户端，再走 raw catalog 同一路由，
       // 证明两条入口都能在独立 lab 中写入并恢复。
-      admin.addTier(bytes(addBody), contentType).block();
-      Assertions.assertNotNull(admin.listTiers().block());
-      rawString(raw, "ADMIN_REMOVE_TIER", map("tier", tier), emptyMap(), null, null);
-      rawString(raw, "ADMIN_ADD_TIER", emptyMap(), emptyMap(), bytes(addBody), contentType);
-      Assertions.assertNotNull(admin.listTiers().block());
+      runLabStep("tier-write", "typed addTier", () -> admin.addTier(bytes(addBody), contentType).block());
+      Assertions.assertNotNull(
+          labStepValue("tier-write", "typed listTiers after add", () -> admin.listTiers().block()));
+      labStepValue(
+          "tier-write",
+          "raw ADMIN_REMOVE_TIER",
+          () -> rawString(raw, "ADMIN_REMOVE_TIER", map("tier", tier), emptyMap(), null, null));
+      labStepValue(
+          "tier-write",
+          "raw ADMIN_ADD_TIER",
+          () -> rawString(raw, "ADMIN_ADD_TIER", emptyMap(), emptyMap(), bytes(addBody), contentType));
+      Assertions.assertNotNull(
+          labStepValue("tier-write", "typed listTiers after raw add", () -> admin.listTiers().block()));
       if (notBlank(editBody)) {
-        admin.editTier(tier, bytes(editBody), contentType).block();
-        rawString(
-            raw, "ADMIN_EDIT_TIER", map("tier", tier), emptyMap(), bytes(editBody), contentType);
-        Assertions.assertNotNull(admin.listTiers().block());
+        runLabStep(
+            "tier-write", "typed editTier", () -> admin.editTier(tier, bytes(editBody), contentType).block());
+        labStepValue(
+            "tier-write",
+            "raw ADMIN_EDIT_TIER",
+            () -> rawString(
+                raw, "ADMIN_EDIT_TIER", map("tier", tier), emptyMap(), bytes(editBody), contentType));
+        Assertions.assertNotNull(
+            labStepValue("tier-write", "typed listTiers after edit", () -> admin.listTiers().block()));
       }
     } finally {
-      admin.removeTier(tier)
-          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
-          .block();
+      runLabStep(
+          "tier-restore",
+          "typed removeTier finally",
+          () ->
+              admin.removeTier(tier)
+                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                  .block());
     }
-    Assertions.assertNotNull(admin.listTiers().block());
+    Assertions.assertNotNull(
+        labStepValue("tier-restore", "typed listTiers after restore", () -> admin.listTiers().block()));
   }
 
   private static void exerciseRemoteTargetWriteFixture(
@@ -308,29 +370,54 @@ class DestructiveAdminIntegrationTest {
         getenvOrDefault("MINIO_LAB_REMOTE_TARGET_WRITE_CONTENT_TYPE", "application/json");
     try {
       // remote target 夹具同样执行“专用客户端写入 + raw 兜底写入 + 专用客户端恢复”的闭环。
-      admin.setRemoteTarget(bucket, bytes(body), contentType).block();
-      Assertions.assertNotNull(admin.listRemoteTargetsInfo(bucket, type).block());
-      rawString(
-          raw,
-          "ADMIN_REMOVE_REMOTE_TARGET",
-          emptyMap(),
-          map("bucket", bucket, "arn", arn),
-          null,
-          null);
-      rawString(
-          raw,
-          "ADMIN_SET_REMOTE_TARGET",
-          emptyMap(),
-          map("bucket", bucket),
-          bytes(body),
-          contentType);
-      Assertions.assertNotNull(admin.listRemoteTargetsInfo(bucket, type).block());
+      runLabStep(
+          "remote-target-write",
+          "typed setRemoteTarget",
+          () -> admin.setRemoteTarget(bucket, bytes(body), contentType).block());
+      Assertions.assertNotNull(
+          labStepValue(
+              "remote-target-write",
+              "typed listRemoteTargetsInfo after set",
+              () -> admin.listRemoteTargetsInfo(bucket, type).block()));
+      labStepValue(
+          "remote-target-write",
+          "raw ADMIN_REMOVE_REMOTE_TARGET",
+          () -> rawString(
+              raw,
+              "ADMIN_REMOVE_REMOTE_TARGET",
+              emptyMap(),
+              map("bucket", bucket, "arn", arn),
+              null,
+              null));
+      labStepValue(
+          "remote-target-write",
+          "raw ADMIN_SET_REMOTE_TARGET",
+          () -> rawString(
+              raw,
+              "ADMIN_SET_REMOTE_TARGET",
+              emptyMap(),
+              map("bucket", bucket),
+              bytes(body),
+              contentType));
+      Assertions.assertNotNull(
+          labStepValue(
+              "remote-target-write",
+              "typed listRemoteTargetsInfo after raw set",
+              () -> admin.listRemoteTargetsInfo(bucket, type).block()));
     } finally {
-      admin.removeRemoteTarget(bucket, arn)
-          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
-          .block();
+      runLabStep(
+          "remote-target-restore",
+          "typed removeRemoteTarget finally",
+          () ->
+              admin.removeRemoteTarget(bucket, arn)
+                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                  .block());
     }
-    Assertions.assertNotNull(admin.listRemoteTargetsInfo(bucket, type).block());
+    Assertions.assertNotNull(
+        labStepValue(
+            "remote-target-restore",
+            "typed listRemoteTargetsInfo after restore",
+            () -> admin.listRemoteTargetsInfo(bucket, type).block()));
   }
 
   private static void exerciseBatchJobWriteMatrix(
@@ -342,16 +429,30 @@ class DestructiveAdminIntegrationTest {
     String contentType = getenvOrDefault("MINIO_LAB_BATCH_JOB_CONTENT_TYPE", "application/yaml");
     try {
       // batch job 只在独立 lab 中启动；取消动作同时覆盖 raw 兜底路径。
-      admin.startBatchJob(bytes(startBody), contentType).block();
-      Assertions.assertNotNull(admin.listBatchJobsInfo().block());
-      Assertions.assertNotNull(admin.getBatchJobStatusInfo().block());
-      rawString(raw, "ADMIN_CANCEL_BATCH_JOB", emptyMap(), emptyMap(), bytes(cancelBody), contentType);
+      runLabStep(
+          "batch-write",
+          "typed startBatchJob",
+          () -> admin.startBatchJob(bytes(startBody), contentType).block());
+      Assertions.assertNotNull(
+          labStepValue("batch-write", "typed listBatchJobsInfo", () -> admin.listBatchJobsInfo().block()));
+      Assertions.assertNotNull(
+          labStepValue(
+              "batch-write", "typed getBatchJobStatusInfo", () -> admin.getBatchJobStatusInfo().block()));
+      labStepValue(
+          "batch-write",
+          "raw ADMIN_CANCEL_BATCH_JOB",
+          () -> rawString(raw, "ADMIN_CANCEL_BATCH_JOB", emptyMap(), emptyMap(), bytes(cancelBody), contentType));
     } finally {
-      admin.cancelBatchJob(bytes(cancelBody), contentType)
-          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
-          .block();
+      runLabStep(
+          "batch-restore",
+          "typed cancelBatchJob finally",
+          () ->
+              admin.cancelBatchJob(bytes(cancelBody), contentType)
+                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                  .block());
     }
-    Assertions.assertNotNull(admin.listBatchJobsInfo().block());
+    Assertions.assertNotNull(
+        labStepValue("batch-restore", "typed listBatchJobsInfo after restore", () -> admin.listBatchJobsInfo().block()));
   }
 
   private static void exerciseSiteReplicationWriteMatrix(
@@ -369,30 +470,118 @@ class DestructiveAdminIntegrationTest {
         getenvOrDefault("MINIO_LAB_SITE_REPLICATION_CONTENT_TYPE", "application/json");
     try {
       // site replication 写入影响集群拓扑，必须由独立 lab 提供 add/remove 请求体。
-      admin.siteReplicationAdd(bytes(addBody), contentType).block();
-      Assertions.assertNotNull(admin.getSiteReplicationInfo().block());
+      runLabStep(
+          "site-replication-write",
+          "typed siteReplicationAdd",
+          () -> admin.siteReplicationAdd(bytes(addBody), contentType).block());
+      Assertions.assertNotNull(
+          labStepValue(
+              "site-replication-write",
+              "typed getSiteReplicationInfo after add",
+              () -> admin.getSiteReplicationInfo().block()));
       if (notBlank(editBody)) {
-        rawString(
-            raw,
-            "ADMIN_SITE_REPLICATION_EDIT",
-            emptyMap(),
-            emptyMap(),
-            bytes(editBody),
-            contentType);
+        labStepValue(
+            "site-replication-write",
+            "raw ADMIN_SITE_REPLICATION_EDIT",
+            () -> rawString(
+                raw,
+                "ADMIN_SITE_REPLICATION_EDIT",
+                emptyMap(),
+                map("api-version", "1"),
+                bytes(editBody),
+                contentType));
       }
-      rawString(
-          raw,
-          "ADMIN_SITE_REPLICATION_REMOVE",
-          emptyMap(),
-          emptyMap(),
-          bytes(removeBody),
-          contentType);
+      labStepValue(
+          "site-replication-write",
+          "raw ADMIN_SITE_REPLICATION_REMOVE",
+          () -> rawString(
+              raw,
+              "ADMIN_SITE_REPLICATION_REMOVE",
+              emptyMap(),
+              map("api-version", "1"),
+              bytes(removeBody),
+              contentType));
     } finally {
-      admin.siteReplicationRemove(bytes(removeBody), contentType)
-          .onErrorResume(error -> reactor.core.publisher.Mono.empty())
-          .block();
+      runLabStep(
+          "site-replication-restore",
+          "typed siteReplicationRemove finally",
+          () ->
+              admin.siteReplicationRemove(bytes(removeBody), contentType)
+                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                  .block());
     }
-    Assertions.assertNotNull(admin.getSiteReplicationStatus().block());
+    Assertions.assertNotNull(
+        labStepValue(
+            "site-replication-restore",
+            "typed getSiteReplicationStatus after restore",
+            () -> admin.getSiteReplicationStatus().block()));
+  }
+
+  private static void runLabStep(String scope, String step, LabRunnable action) {
+    labStepValue(
+        scope,
+        step,
+        new LabSupplier<Void>() {
+          @Override
+          public Void get() throws Exception {
+            action.run();
+            return null;
+          }
+        });
+  }
+
+  private static <T> T labStepValue(String scope, String step, LabSupplier<T> supplier) {
+    try {
+      T value = supplier.get();
+      recordLabStep(scope, step, "PASS", "");
+      return value;
+    } catch (Throwable failure) {
+      recordLabStep(scope, step, "FAIL", failure.getClass().getSimpleName());
+      if (failure instanceof RuntimeException) {
+        throw (RuntimeException) failure;
+      }
+      if (failure instanceof Error) {
+        throw (Error) failure;
+      }
+      throw new IllegalStateException("破坏性 lab 步骤执行失败: " + step, failure);
+    }
+  }
+
+  private static void recordLabStep(String scope, String step, String status, String detail) {
+    String file = labValue("MINIO_LAB_STEP_STATUS_FILE");
+    if (!notBlank(file)) {
+      return;
+    }
+    String line =
+        safeStepCell(scope)
+            + "|"
+            + safeStepCell(step)
+            + "|"
+            + safeStepCell(status)
+            + "|"
+            + safeStepCell(detail)
+            + "\n";
+    try {
+      Path path = Paths.get(file);
+      Path parent = path.getParent();
+      if (parent != null) {
+        Files.createDirectories(parent);
+      }
+      Files.write(
+          path,
+          line.getBytes(StandardCharsets.UTF_8),
+          StandardOpenOption.CREATE,
+          StandardOpenOption.APPEND);
+    } catch (Exception e) {
+      throw new IllegalStateException("无法写入 destructive lab 步骤状态文件: " + file, e);
+    }
+  }
+
+  private static String safeStepCell(String value) {
+    if (value == null) {
+      return "";
+    }
+    return value.replace('\n', ' ').replace('\r', ' ').replace('|', '／').trim();
   }
 
   private static Map<String, String> map(String... values) {

@@ -10,6 +10,12 @@ source "$SCRIPT_DIR/load-config.sh"
 source "$SCRIPT_DIR/write-report.sh"
 load_minio_lab_config
 
+export MINIO_LAB_RUN_ID="${MINIO_LAB_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
+export MINIO_LAB_REPORT_DIR="${MINIO_LAB_REPORT_DIR:-$REPO_ROOT/target/minio-lab-reports}"
+mkdir -p "$MINIO_LAB_REPORT_DIR"
+export MINIO_LAB_STEP_STATUS_FILE="${MINIO_LAB_STEP_STATUS_FILE:-$MINIO_LAB_REPORT_DIR/destructive-lab-$MINIO_LAB_RUN_ID.steps}"
+: > "$MINIO_LAB_STEP_STATUS_FILE"
+
 LAB_REPORT_DETAIL="测试尚未开始。"
 finish_minio_lab_report() {
   local exit_code=$?

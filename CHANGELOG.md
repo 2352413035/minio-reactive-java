@@ -55,6 +55,13 @@
 - Admin product-typed 口径从 63 / 128 提升到 64 / 128；加密和破坏性边界不变。
 - 新增 `docs/40-stage42-site-replication-peer-idp.md` 记录站点复制 peer 只读摘要边界。
 
+### 阶段 43 补充
+
+- 破坏性 lab 报告新增 typed/raw 步骤状态文件和执行明细表，能记录专用客户端步骤、raw 兜底步骤各自 PASS/FAIL。
+- `run-destructive-tests.sh` 自动生成 `MINIO_LAB_RUN_ID` 与 `MINIO_LAB_STEP_STATUS_FILE`，`DestructiveAdminIntegrationTest` 在关键 lab 步骤写入状态。
+- `write-report.sh` 新增 `mc` 恢复/核验提示，支持通过 `MINIO_LAB_MC_ALIAS` 显示本机私有 alias 命令；仍不保存凭证。
+- 新增 `docs/41-stage43-destructive-lab-evidence.md` 记录真实 lab 证据增强边界。
+
 
 ### 阶段 35 补充
 

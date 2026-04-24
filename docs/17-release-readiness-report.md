@@ -312,6 +312,17 @@ SDK 会返回 `EncryptedAdminResponse`，并通过 `algorithm()` / `algorithmNam
 
 详见 `docs/40-stage42-site-replication-peer-idp.md`。
 
+## 5.24 阶段 43 补充
+
+阶段 43 增强破坏性 lab 的真实证据产物：
+
+- `run-destructive-tests.sh` 自动生成 `MINIO_LAB_RUN_ID` 和 typed/raw 步骤状态文件。
+- `DestructiveAdminIntegrationTest` 在 config、bucket quota、tier、remote target、batch job、site replication 的关键 typed/raw 步骤写入 PASS/FAIL。
+- `write-report.sh` 在报告中渲染 typed/raw 执行明细，并增加 `mc` 只读恢复核验提示。
+- 报告仍不写入请求体、凭证、token、签名或完整异常堆栈。
+
+详见 `docs/41-stage43-destructive-lab-evidence.md`。
+
 ## 6. 验证命令
 
 阶段 19 发布就绪至少应重新执行以下命令，并把输出作为最终证据：
