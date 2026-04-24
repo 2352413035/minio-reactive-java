@@ -12,7 +12,7 @@
 
 阶段 26 不宣称“所有接口都已变成最终强类型模型”。它宣称的是：对标 MinIO 的路由、调用入口、文档口径、风险门禁和验证证据已经闭环，后续可以继续按产品 typed 成熟度迭代。
 
-阶段 27 和阶段 28 已在该候选口径之上补充 S3 ACL、Select、notification 与 replication metrics typed 边界，因此当前 S3 product-typed 数字已提升到 76 / 77；其余结论不变。
+阶段 27 到阶段 38 持续补充了 S3 typed、STS typed、Admin 只读摘要、破坏性实验矩阵、Crypto Gate 门禁和正式中文示例，因此当前 S3/KMS/STS/Metrics/Health 已达到产品 typed 满格；其余风险边界仍然按 Crypto 与独立 lab 管理。
 
 ## 2. 当前能力快照
 
@@ -20,8 +20,8 @@
 
 | family | route-catalog | product-typed | advanced-compatible | raw-fallback | encrypted-blocked | destructive-blocked |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| s3 | 77 | 76 | 77 | 0 | 0 | 0 |
-| admin | 128 | 50 | 128 | 0 | 9 | 29 |
+| s3 | 77 | 77 | 77 | 0 | 0 | 0 |
+| admin | 128 | 55 | 128 | 0 | 9 | 29 |
 | kms | 7 | 7 | 7 | 0 | 0 | 0 |
 | sts | 7 | 7 | 7 | 0 | 0 | 0 |
 | metrics | 6 | 6 | 6 | 0 | 0 | 0 |
@@ -48,7 +48,7 @@
 | route parity | 233 / 233，missing 0，extra 0 |
 | capability matrix | 双分支一致 |
 | Crypto Gate | Gate Fail 边界已验证并加固 |
-| 破坏性实验环境门禁 | 独立 lab 配置、共享环境拒绝逻辑、typed/raw 双路径报告模板已验证 |
+| 破坏性实验环境门禁 | 独立 lab 配置、共享环境拒绝逻辑、tier/remote target/batch/site replication typed/raw 矩阵和报告模板已验证 |
 | secret scan | 当前文件未写入用户提供的真实 MinIO 凭证 |
 | `git diff --check` | 通过 |
 
@@ -58,17 +58,16 @@
 2. 破坏性 Admin 只能在独立 lab 验证，共享 MinIO 环境不应执行。
 3. Admin product-typed 数量仍低于 route-catalog，因为很多接口需要环境、权限或长期字段稳定性确认。
 4. STS 高级身份源（SSO、自定义 token、证书）仍需要独立身份源环境验证。
-5. S3 advanced-compatible 中仍有部分低频子资源可以继续产品化。
+5. 示例已收口到正式中文入口，但 KMS/STS 示例是否能真实运行仍取决于用户环境是否开启相应服务。
 
 ## 6. 后续继续推进方式
 
 下一轮计划不应再重复 route catalog 工作，而应优先提升产品 typed 成熟度：
 
-1. S3 剩余高频能力：ACL、select、notification listen、object lambda/extract 等。
-2. Admin L1/L2：policy attachment、IDP/LDAP/OpenID 只读配置、batch job/remote target 查询摘要。
-3. STS：SSO、自定义 token、证书身份源测试环境与请求模型。
-4. 破坏性实验环境：在阶段 31 typed/raw 双路径和报告模板基础上，继续补 site replication、remote target 写入/移除、batch job 启停/取消等更重可回滚夹具。
-5. Crypto Gate：完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
+1. Admin L1/L2：继续把稳定只读响应升级为中文摘要模型。
+2. 独立 lab：执行 tier、remote target、batch job、site replication 写入矩阵并保存本机报告作为能力证明。
+3. Crypto Gate：完成依赖版本、许可证、安全公告、FIPS/Provider 与双分支测试矩阵审查。
+4. 发布说明：继续使用 route parity、callability、typed maturity、live/destructive/crypto 边界分层口径。
 
 ## 7. 文档入口
 
