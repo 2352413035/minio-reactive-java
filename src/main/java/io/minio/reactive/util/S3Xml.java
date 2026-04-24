@@ -680,7 +680,7 @@ public final class S3Xml {
           .newDocumentBuilder()
           .parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
     } catch (Exception e) {
-      throw new IllegalArgumentException("Unable to parse S3 XML", e);
+      throw new IllegalArgumentException("无法解析 S3 XML", e);
     }
   }
 

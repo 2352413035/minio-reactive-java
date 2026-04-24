@@ -236,7 +236,7 @@ public final class ReactiveMinioClient {
 
   public Flux<byte[]> getObjectRange(String bucket, String object, long startInclusive, long endInclusive) {
     if (startInclusive < 0 || endInclusive < startInclusive) {
-      throw new IllegalArgumentException("invalid byte range");
+      throw new IllegalArgumentException("byte range 无效");
     }
     S3Request request =
         request(HttpMethod.GET, bucket, object)
@@ -961,7 +961,7 @@ public final class ReactiveMinioClient {
       MessageDigest digest = MessageDigest.getInstance("MD5");
       return Base64.getEncoder().encodeToString(digest.digest(bytes));
     } catch (Exception e) {
-      throw new IllegalStateException("Unable to calculate MD5", e);
+      throw new IllegalStateException("无法计算 MD5", e);
     }
   }
 

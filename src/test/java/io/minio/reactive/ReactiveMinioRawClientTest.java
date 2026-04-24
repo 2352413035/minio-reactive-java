@@ -65,17 +65,20 @@ class ReactiveMinioRawClientTest {
     ReactiveMinioRawClient client =
         ReactiveMinioRawClient.builder().endpoint("http://localhost:9000").region("us-east-1").build();
 
-    Assertions.assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            client.requestFor(
-                MinioApiCatalog.byName("ADMIN_SET_USER_STATUS"),
-                Collections.<String, String>emptyMap(),
-                Collections.<String, String>emptyMap(),
-                Collections.<String, String>emptyMap(),
-                null,
-                null));
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                client.requestFor(
+                    MinioApiCatalog.byName("ADMIN_SET_USER_STATUS"),
+                    Collections.<String, String>emptyMap(),
+                    Collections.<String, String>emptyMap(),
+                    Collections.<String, String>emptyMap(),
+                    null,
+                    null));
+    Assertions.assertTrue(error.getMessage().contains("缺少必填 query 参数"));
   }
+
   @Test
   void shouldRejectCallerSuppliedSignerHeaders() {
     ReactiveMinioRawClient client =
@@ -83,16 +86,18 @@ class ReactiveMinioRawClientTest {
     Map<String, String> headers = new LinkedHashMap<String, String>();
     headers.put("Authorization", "malicious");
 
-    Assertions.assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            client.requestFor(
-                MinioApiCatalog.byName("S3_LIST_BUCKETS"),
-                Collections.<String, String>emptyMap(),
-                Collections.<String, String>emptyMap(),
-                headers,
-                null,
-                null));
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                client.requestFor(
+                    MinioApiCatalog.byName("S3_LIST_BUCKETS"),
+                    Collections.<String, String>emptyMap(),
+                    Collections.<String, String>emptyMap(),
+                    headers,
+                    null,
+                    null));
+    Assertions.assertTrue(error.getMessage().contains("签名器管理"));
   }
 
   @Test
@@ -102,16 +107,18 @@ class ReactiveMinioRawClientTest {
     Map<String, String> path = new LinkedHashMap<String, String>();
     path.put("bucket", "a/b");
 
-    Assertions.assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            client.requestFor(
-                MinioApiCatalog.byName("S3_HEAD_BUCKET"),
-                path,
-                Collections.<String, String>emptyMap(),
-                Collections.<String, String>emptyMap(),
-                null,
-                null));
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                client.requestFor(
+                    MinioApiCatalog.byName("S3_HEAD_BUCKET"),
+                    path,
+                    Collections.<String, String>emptyMap(),
+                    Collections.<String, String>emptyMap(),
+                    null,
+                    null));
+    Assertions.assertTrue(error.getMessage().contains("只能对应单段路径"));
   }
 
   @Test
@@ -138,16 +145,18 @@ class ReactiveMinioRawClientTest {
     Map<String, String> path = new LinkedHashMap<String, String>();
     path.put("tier", "..");
 
-    Assertions.assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            client.requestFor(
-                MinioApiCatalog.byName("ADMIN_VERIFY_TIER"),
-                path,
-                Collections.<String, String>emptyMap(),
-                Collections.<String, String>emptyMap(),
-                null,
-                null));
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                client.requestFor(
+                    MinioApiCatalog.byName("ADMIN_VERIFY_TIER"),
+                    path,
+                    Collections.<String, String>emptyMap(),
+                    Collections.<String, String>emptyMap(),
+                    null,
+                    null));
+    Assertions.assertTrue(error.getMessage().contains("不能是"));
   }
 
   @Test
@@ -203,8 +212,37 @@ class ReactiveMinioRawClientTest {
     Assertions.assertEquals("req-1", error.requestId());
     Assertions.assertEquals("ADMIN_SERVER_INFO", error.endpointName());
     Assertions.assertEquals("GET", error.method());
-    Assertions.assertTrue(error.getMessage().contains("endpoint=ADMIN_SERVER_INFO"));
+    Assertions.assertTrue(error.getMessage().contains("接口=ADMIN_SERVER_INFO"));
+    Assertions.assertTrue(error.getMessage().contains("诊断建议="));
     Assertions.assertFalse(error.diagnosticHint().isEmpty());
+  }
+
+  @Test
+  void shouldUseChineseBodySnippetWhenErrorIsPlainText() {
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request ->
+                    Mono.just(
+                        ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("plain admin failure")
+                            .build()))
+            .build();
+    ReactiveMinioRawClient client =
+        ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    ReactiveMinioAdminException error =
+        Assertions.assertThrows(
+            ReactiveMinioAdminException.class,
+            () -> client.executeToString(MinioApiCatalog.byName("ADMIN_SERVER_INFO")).block());
+
+    Assertions.assertTrue(error.getMessage().contains("MinIO admin 请求失败"));
+    Assertions.assertTrue(error.getMessage().contains("响应体片段=plain admin failure"));
   }
 
 }

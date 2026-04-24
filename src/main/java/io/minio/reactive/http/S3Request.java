@@ -30,7 +30,7 @@ public final class S3Request {
   private final MediaType contentType;
 
   private S3Request(Builder builder) {
-    this.method = Objects.requireNonNull(builder.method, "method must not be null");
+    this.method = Objects.requireNonNull(builder.method, "HTTP 方法不能为空");
     this.bucket = builder.bucket;
     this.object = builder.object;
     this.path = builder.path;

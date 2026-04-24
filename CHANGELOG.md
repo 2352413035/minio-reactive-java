@@ -62,6 +62,13 @@
 - `write-report.sh` 新增 `mc` 恢复/核验提示，支持通过 `MINIO_LAB_MC_ALIAS` 显示本机私有 alias 命令；仍不保存凭证。
 - 新增 `docs/41-stage43-destructive-lab-evidence.md` 记录真实 lab 证据增强边界。
 
+### 阶段 44 补充
+
+- `ReactiveMinioException` 的默认异常消息改为中文，继续保留协议、HTTP 状态、错误码、requestId、endpoint、method、path 和诊断建议字段。
+- raw 兜底请求构造的本地校验错误改为中文，包括缺少 query、危险 header、路径变量非法等场景。
+- `ReactiveMinioRawClientTest` 新增纯文本错误和本地校验中文断言，防止后续退回英文低上下文错误。
+- 新增 `docs/42-stage44-error-experience.md` 记录异常体验边界。
+
 
 ### 阶段 35 补充
 

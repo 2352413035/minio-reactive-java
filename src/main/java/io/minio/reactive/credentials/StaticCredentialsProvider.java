@@ -19,8 +19,8 @@ public final class StaticCredentialsProvider implements ReactiveCredentialsProvi
   public StaticCredentialsProvider(String accessKey, String secretKey, String sessionToken) {
     this.credentials =
         ReactiveCredentials.of(
-            Objects.requireNonNull(accessKey, "accessKey must not be null"),
-            Objects.requireNonNull(secretKey, "secretKey must not be null"),
+            Objects.requireNonNull(accessKey, "accessKey 不能为空"),
+            Objects.requireNonNull(secretKey, "secretKey 不能为空"),
             sessionToken);
   }
 

@@ -7,10 +7,10 @@ public final class CompletePart {
 
   public CompletePart(int partNumber, String etag) {
     if (partNumber < 1) {
-      throw new IllegalArgumentException("partNumber must be positive");
+      throw new IllegalArgumentException("partNumber 必须为正数");
     }
     if (etag == null || etag.trim().isEmpty()) {
-      throw new IllegalArgumentException("etag must not be empty");
+      throw new IllegalArgumentException("etag 不能为空");
     }
     this.partNumber = partNumber;
     this.etag = etag;

@@ -122,7 +122,7 @@ public final class S3RequestSigner {
     long expiresSeconds = expires == null ? 900L : expires.getSeconds();
     if (expiresSeconds < 1L || expiresSeconds > 604800L) {
       throw new IllegalArgumentException(
-          "presigned URL expiry must be between 1 and 604800 seconds");
+          "预签名 URL 过期时间必须在 1 到 604800 秒之间");
     }
 
     ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
@@ -250,7 +250,7 @@ public final class S3RequestSigner {
       mac.init(new SecretKeySpec(key, "HmacSHA256"));
       return mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
     } catch (Exception e) {
-      throw new IllegalStateException("Unable to calculate HMAC-SHA256", e);
+      throw new IllegalStateException("无法计算 HMAC-SHA256", e);
     }
   }
 
