@@ -123,6 +123,17 @@ AdminConfigHelp apiHelp = admin.getConfigHelp("api").block();
 
 这些方法不是 raw 的薄包装：模型会提取常用稳定字段，同时通过 `rawJson()` / `values()` 保留 MinIO 返回的完整内容，方便后续版本继续补字段。
 
+阶段 22 起，一批 Admin 只读状态接口先进入 `AdminJsonResult` typed 主路径：
+
+```java
+AdminJsonResult pools = admin.listPoolsInfo().block();
+AdminJsonResult poolStatus = admin.getPoolStatus("pool-0").block();
+AdminJsonResult rebalance = admin.getRebalanceStatus().block();
+AdminJsonResult health = admin.getHealthInfo().block();
+```
+
+这些接口不是 destructive 操作，只读取状态；启动/停止 rebalance、decommission、service restart/update 等仍必须走风险分级和 lab 门禁。
+
 部分 Admin 只读能力依赖特定环境或配置，默认不作为共享 live 门禁：
 
 ```java

@@ -36,6 +36,9 @@ TYPED_METHODS = {
     'admin': {
         'addUser','setConfigKvText','setConfigText','getServerInfo','getStorageInfo','getDataUsageInfo','getAccountInfo',
         'getStorageSummary','getDataUsageSummary','getAccountSummary','getConfigHelp',
+        'getBackgroundHealStatus','listPoolsInfo','getPoolStatus','getRebalanceStatus',
+        'getTierStats','getSiteReplicationInfo','getSiteReplicationStatus',
+        'getTopLocksInfo','getObdInfo','getHealthInfo',
         'getUserInfo','deleteUser','setUserEnabled','listPolicies','getPolicy','getPolicyV2','putPolicy','deletePolicy',
         'setUserPolicy','setGroupPolicy','listUsersEncrypted','listGroupsTyped','getGroupInfo','setGroupEnabled','updateGroupMembers',
         'createServiceAccount','getServiceAccountInfoEncrypted','listServiceAccountsEncrypted','deleteServiceAccountTyped','addServiceAccount',

@@ -102,6 +102,57 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return accountInfo().map(io.minio.reactive.messages.admin.AdminAccountSummary::parse);
   }
 
+  /** 获取后台 heal 状态，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getBackgroundHealStatus() {
+    return backgroundHealStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 列出 pool 信息，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> listPoolsInfo() {
+    return listPools().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取指定 pool 状态，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getPoolStatus(String pool) {
+    requireText("pool", pool);
+    return poolStatus(pool).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取 rebalance 状态，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getRebalanceStatus() {
+    return rebalanceStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取 tier 统计信息，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTierStats() {
+    return tierStats().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取站点复制信息，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getSiteReplicationInfo() {
+    return siteReplicationInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取站点复制状态，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getSiteReplicationStatus() {
+    return siteReplicationStatus().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取锁热点信息，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getTopLocksInfo() {
+    return topLocks().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取 OBD 诊断信息，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getObdInfo() {
+    return obdInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
+  /** 获取 Admin health info，先以通用 JSON 结果保留全部字段。 */
+  public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getHealthInfo() {
+    return healthInfo().map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
+  }
+
   /** 获取配置帮助信息；这是明文安全只读接口，不读取真实配置值。 */
   public Mono<io.minio.reactive.messages.admin.AdminConfigHelp> getConfigHelp(
       String subSys, String key) {

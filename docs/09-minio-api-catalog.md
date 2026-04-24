@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | route parity | 233 / 233，missing 0，extra 0 | SDK catalog 与本地 `minio` router 在 family/method/path/query/auth 语义上对齐。 |
 | callability | raw-fallback 0 | 每个公开 catalog 路由至少有 typed 或 advanced 兼容入口。 |
-| product typed | S3 67 / 77、Admin 33 / 128、KMS 6 / 7、STS 4 / 7、Metrics 5 / 6、Health 8 / 8 | 这是用户友好强类型成熟度，不代表剩余路由不能调用。 |
+| product typed | S3 67 / 77、Admin 43 / 128、KMS 6 / 7、STS 4 / 7、Metrics 5 / 6、Health 8 / 8 | 这是用户友好强类型成熟度，不代表剩余路由不能调用。 |
 | blocked risk | encrypted-blocked 9、destructive-blocked 29 | 这些接口受 madmin 加密响应或破坏性操作边界限制，不能在共享环境中伪装成普通 typed 完成。 |
 
 机器报告统一由 `scripts/report-route-parity.py` 和 `scripts/report-capability-matrix.py` 生成，当前结果见：
@@ -133,7 +133,7 @@ String xml = raw.executeToString(
 5. `ReactiveMinioMetricsClient`：监控指标接口。
 6. `ReactiveMinioHealthClient`：健康检查接口。
 
-这些专用客户端的方法名既保留 `MinioApiCatalog` 中的接口名以便对照，又逐步补充用户更容易理解的业务方法。当前已经为 Health、Metrics、STS、KMS、Admin 增加了第一批强业务入口，例如健康检查布尔结果、Prometheus 文本包装和样本解析、STS 临时凭证解析、KMS/Admin JSON 摘要模型；S3 已继续补充对象属性、对象保留策略、Legal Hold、归档恢复、bucket CORS、website、logging、policy status、accelerate、request payment 等模型。其它非对象存储接口仍可能先返回原始文本响应；后续会继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
+这些专用客户端的方法名既保留 `MinioApiCatalog` 中的接口名以便对照，又逐步补充用户更容易理解的业务方法。当前已经为 Health、Metrics、STS、KMS、Admin 增加了第一批强业务入口，例如健康检查布尔结果、Prometheus 文本包装和样本解析、STS 临时凭证解析、KMS/Admin JSON 摘要模型；Admin 继续补充 pool、rebalance、tier、site replication、top locks、OBD、health info 等只读 JSON typed 入口；S3 已继续补充对象属性、对象保留策略、Legal Hold、归档恢复、bucket CORS、website、logging、policy status、accelerate、request payment 等模型。其它非对象存储接口仍可能先返回原始文本响应；后续会继续补充更细的请求对象、响应对象、XML/JSON 解析和业务语义。
 
 强类型客户端不应只是把 `ReactiveMinioRawClient` 再包一层，而应像 `ReactiveMinioClient` 一样表达清楚请求对象、响应模型、错误语义和安全边界。它们可以复用 `MinioApiCatalog` 的路径、query、认证方式等元数据来避免重复维护，也可以复用底层签名和 HTTP 发送能力；`ReactiveMinioRawClient` 的定位是兜底调用器，用于 SDK 尚未产品化某个接口或用户需要直接访问新增 MinIO route 的场景。
 

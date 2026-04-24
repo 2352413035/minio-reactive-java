@@ -378,6 +378,16 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(admin.listAccessKeysEncrypted("all").block().encryptedData().length > 0);
     admin.getBucketQuotaInfo("bucket1").block();
     admin.listTiers().block();
+    admin.getBackgroundHealStatus().block();
+    admin.listPoolsInfo().block();
+    admin.getPoolStatus("pool-0").block();
+    admin.getRebalanceStatus().block();
+    admin.getTierStats().block();
+    admin.getSiteReplicationInfo().block();
+    admin.getSiteReplicationStatus().block();
+    admin.getTopLocksInfo().block();
+    admin.getObdInfo().block();
+    admin.getHealthInfo().block();
     Assertions.assertTrue(admin.getConfigKvEncrypted("api").block().encryptedData().length > 0);
     Assertions.assertTrue(admin.listConfigHistoryKvEncrypted(1).block().encryptedData().length > 0);
     Assertions.assertTrue(admin.getConfigEncrypted().block().encryptedData().length > 0);
@@ -392,6 +402,16 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/list-access-keys-bulk"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/get-bucket-quota"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/tier"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/background-heal/status"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/pools/list"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/pools/status"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/rebalance/status"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/tier-stats"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/info"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/status"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/top/locks"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/obdinfo"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/healthinfo"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/get-config-kv"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/list-config-history-kv"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/config"));
@@ -399,8 +419,27 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "listType=all"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "pool=pool-0"));
     Assertions.assertTrue(containsAllQueryParts(queries, "key=api"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listConfigHistoryKvEncrypted(-1));
+  }
+
+
+  @Test
+  void shouldExposeStage22AdminJsonSummaryMethods() {
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getBackgroundHealStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listPoolsInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getPoolStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getRebalanceStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTierStats");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getSiteReplicationStatus");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getTopLocksInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getObdInfo");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getHealthInfo");
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder().endpoint("http://localhost:9000").region("us-east-1").build();
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getPoolStatus(" "));
   }
 
 
@@ -664,6 +703,18 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (path.endsWith("/tier")) {
       return "[]";
+    }
+    if (path.endsWith("/background-heal/status")
+        || path.endsWith("/pools/list")
+        || path.endsWith("/pools/status")
+        || path.endsWith("/rebalance/status")
+        || path.endsWith("/tier-stats")
+        || path.endsWith("/site-replication/info")
+        || path.endsWith("/site-replication/status")
+        || path.endsWith("/top/locks")
+        || path.endsWith("/obdinfo")
+        || path.endsWith("/healthinfo")) {
+      return "{\"status\":\"ok\"}";
     }
     return "01234567890123456789012345678901234567890";
   }
