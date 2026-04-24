@@ -162,3 +162,7 @@ target/minio-lab-reports/destructive-lab-<UTC时间>.md
 ```
 
 也可以通过 `MINIO_LAB_REPORT_DIR` 覆盖目录。报告只记录端点指纹、夹具开关和恢复提示，不写入 access key、secret key 或请求签名。模板见 `scripts/minio-lab/report-template.md`。
+
+阶段 43 起，`run-destructive-tests.sh` 会为每次执行生成 typed/raw 步骤状态文件，并在报告中渲染“哪个专用客户端步骤通过、哪个 raw 兜底步骤通过或失败”。步骤文件只记录范围、步骤名、PASS/FAIL 和异常类型，不记录请求体、凭证、token 或签名。
+
+如果系统安装了 `mc`，报告还会给出只读恢复核验提示。推荐在本机预先配置一个只指向独立 lab 的 alias，并通过 `MINIO_LAB_MC_ALIAS` 提供 alias 名称；不要把 `mc alias set` 命令或任何凭证写入仓库。

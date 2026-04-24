@@ -45,6 +45,65 @@ minio_lab_fixture_enabled() {
   fi
 }
 
+minio_lab_safe_cell() {
+  local value="${1:-}"
+  value="${value//$'\r'/ }"
+  value="${value//$'\n'/ }"
+  value="${value//|/／}"
+  value="${value//\`/’}"
+  if [[ "${#value}" -gt 160 ]]; then
+    value="${value:0:160}…"
+  fi
+  printf '%s' "$value"
+}
+
+minio_lab_step_file() {
+  local repo_root="${REPO_ROOT:-$(pwd)}"
+  local report_dir="${MINIO_LAB_REPORT_DIR:-$repo_root/target/minio-lab-reports}"
+  local timestamp="${MINIO_LAB_RUN_ID:-}"
+  if [[ -n "${MINIO_LAB_STEP_STATUS_FILE:-}" ]]; then
+    printf '%s' "$MINIO_LAB_STEP_STATUS_FILE"
+  elif [[ -n "$timestamp" ]]; then
+    printf '%s/destructive-lab-%s.steps' "$report_dir" "$timestamp"
+  else
+    printf ''
+  fi
+}
+
+minio_lab_render_step_details() {
+  local step_file="$1"
+  if [[ -z "$step_file" || ! -s "$step_file" ]]; then
+    printf '未记录 typed/raw 步骤明细。通常表示测试在门禁前退出，或没有执行可选写入矩阵。\n'
+    return
+  fi
+
+  printf '| 范围 | 步骤 | 结果 | 说明 |\n'
+  printf '| --- | --- | --- | --- |\n'
+  local scope step status detail
+  while IFS='|' read -r scope step status detail || [[ -n "${scope:-}" ]]; do
+    [[ -z "${scope:-}" ]] && continue
+    printf '| %s | %s | %s | %s |\n' \
+      "$(minio_lab_safe_cell "$scope")" \
+      "$(minio_lab_safe_cell "$step")" \
+      "$(minio_lab_safe_cell "$status")" \
+      "$(minio_lab_safe_cell "$detail")"
+  done < "$step_file"
+}
+
+minio_lab_mc_hint() {
+  local alias_name="${MINIO_LAB_MC_ALIAS:-<你的独立-lab-alias>}"
+  if command -v mc >/dev/null 2>&1; then
+    printf -- '- 当前系统检测到 `mc` 命令，可用它做恢复前后只读核验。\n'
+  else
+    printf -- '- 当前系统未检测到 `mc` 命令；如需命令行恢复核验，请先安装 MinIO Client。\n'
+  fi
+  printf -- '- 推荐先执行：`mc alias list`，确认只使用独立 lab alias。\n'
+  printf -- '- 服务状态核验：`mc admin info %s`\n' "$alias_name"
+  printf -- '- tier 核验：`mc admin tier ls %s`\n' "$alias_name"
+  printf -- '- 配置核验：`mc admin config get %s <subsys>`\n' "$alias_name"
+  printf -- '- 不要在仓库文件中保存 `mc alias set` 命令、access key、secret key、token 或签名。\n'
+}
+
 write_minio_lab_report() {
   local result="${1:-未知}"
   local exit_code="${2:-}"
@@ -52,9 +111,11 @@ write_minio_lab_report() {
   local repo_root="${REPO_ROOT:-$(pwd)}"
   local report_dir="${MINIO_LAB_REPORT_DIR:-$repo_root/target/minio-lab-reports}"
   local timestamp
-  timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  timestamp="${MINIO_LAB_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)}"
   mkdir -p "$report_dir"
   local report_file="$report_dir/destructive-lab-$timestamp.md"
+  local step_file
+  step_file="$(minio_lab_step_file)"
 
   local config_enabled quota_enabled remote_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled
   config_enabled="false"
@@ -117,6 +178,7 @@ write_minio_lab_report() {
     printf -- '- Lab 端点：`%s`\n' "$(minio_lab_sanitize_endpoint "${MINIO_LAB_ENDPOINT:-}")"
     printf -- '- Java Home：`%s`\n' "${JAVA_HOME:-未显式设置}"
     printf -- '- Maven 测试：`DestructiveAdminIntegrationTest`\n\n'
+    printf -- '- 步骤状态文件：`%s`\n\n' "${step_file:-未启用}"
 
     printf '## 夹具开关\n\n'
     minio_lab_fixture_enabled 'config KV 写入 + 恢复' "$config_enabled"
@@ -149,6 +211,14 @@ write_minio_lab_report() {
     printf -- '- site replication remove 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE:-}")"
     printf -- '- 写入夹具总开关：`%s`\n' "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-false}"
     printf -- '- batch job 预期 ID：%s\n\n' "$(minio_lab_bool "${MINIO_LAB_BATCH_EXPECTED_JOB_ID:-}")"
+
+    printf '## typed/raw 执行明细\n\n'
+    minio_lab_render_step_details "$step_file"
+    printf '\n\n'
+
+    printf '## mc 恢复/核验提示\n\n'
+    minio_lab_mc_hint
+    printf '\n'
 
     printf '## 失败恢复提示\n\n'
     printf '1. 如果 config KV 用例失败，使用 `MINIO_LAB_RESTORE_CONFIG_KV` 对应值恢复服务配置。\n'

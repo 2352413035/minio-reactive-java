@@ -7,6 +7,7 @@
 - Lab 端点：`<只记录协议、主机和端口；不记录用户信息、路径、查询参数>`
 - Java Home：`<自动填充>`
 - Maven 测试：`DestructiveAdminIntegrationTest`
+- 步骤状态文件：`<自动填充；只记录 typed/raw 步骤名称与结果，不记录请求体或凭证>`
 
 ## 夹具开关
 
@@ -40,6 +41,20 @@
 - site replication remove 请求体：`<已设置|未设置>`
 - 写入夹具总开关：`<true|false>`
 - batch job 预期 ID：`<已设置|未设置>`
+
+## typed/raw 执行明细
+
+| 范围 | 步骤 | 结果 | 说明 |
+| --- | --- | --- | --- |
+| `<自动填充>` | `<typed 或 raw 步骤名>` | `<PASS|FAIL>` | `<不含凭证的说明>` |
+
+如果测试在门禁前退出，或没有执行可选写入矩阵，此处会写“未记录”。
+
+## mc 恢复/核验提示
+
+- 如果系统安装了 `mc`，优先使用本机私有 `MINIO_LAB_MC_ALIAS` 做只读核验。
+- 推荐命令包括 `mc alias list`、`mc admin info <alias>`、`mc admin tier ls <alias>`、`mc admin config get <alias> <subsys>`。
+- 不要把 `mc alias set` 命令、access key、secret key、token 或签名写入仓库。
 
 ## 失败恢复提示
 

@@ -137,7 +137,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 
 当前已开始补充强业务方法：Health 提供 `isLive()` / `isReady()` 等布尔检查；Metrics/KMS 提供 Prometheus 文本包装和样本解析；STS 提供普通 AssumeRole / WebIdentity / ClientGrants / LDAP / SSO / 证书 / 自定义 token 临时凭证解析入口；KMS、Admin IAM、用户组、服务账号、Admin 只读状态摘要、策略绑定实体、IDP 配置、remote target、batch job 摘要以及 S3 版本/分片列表、对象治理、bucket CORS/website/logging/policy status、ACL/Select 等子资源提供 typed 模型。其它大量高级管理接口仍保留兼容入口和 raw 兜底，后续按高价值子集逐步增强。
 
-阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。阶段 31 把破坏性实验环境升级为 typed/raw 双路径校验：tier、remote target、batch job 夹具会先验证专用客户端摘要，再用 raw catalog 调用交叉佐证，同时生成本机执行报告。阶段 33 新增 S3 通知监听流式入口，避免把长连接事件流误包装成一次性字符串。阶段 34 继续补 Admin 站点复制元信息和 trace/log 流式诊断入口。阶段 35 补充 bucket 用户和临时账号只读摘要，同时继续保持 access key/service account 加密边界。阶段 36 新增 tier 与 remote target 的可回滚写入夹具，要求 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true` 才能执行，并同时验证专用 Admin 客户端与 raw 兜底调用。阶段 37 新增 batch job 与 site replication 实验矩阵，用本机私有请求体模板证明 start/cancel、add/remove 的恢复路径。阶段 38 删除临时 Test 示例类，补齐 KMS/STS 中文示例，并把 README 示例入口收口为正式用户路径。阶段 40 补充 Admin metrics、inspect-data、profiling/profile 的文本或二进制诊断包装。阶段 41 补充 LDAP/OpenID access key 只读摘要，并明确不保留 secret/token 原始响应。阶段 42 补充站点复制 peer IDP 设置安全摘要，并按 madmin-go 在专用客户端调用中补齐 site replication 的 api-version 查询参数。
+阶段 27 起，S3 ACL 与 SelectObjectContent 也进入 typed 主路径：ACL 返回 Owner/Grant 模型，canned ACL 通过便捷方法写入；Select 先提供请求模型和原始事件流边界，后续再升级完整事件解码。阶段 28 继续补充 notification 配置模型和 replication metrics JSON 包装。阶段 31 把破坏性实验环境升级为 typed/raw 双路径校验：tier、remote target、batch job 夹具会先验证专用客户端摘要，再用 raw catalog 调用交叉佐证，同时生成本机执行报告。阶段 33 新增 S3 通知监听流式入口，避免把长连接事件流误包装成一次性字符串。阶段 34 继续补 Admin 站点复制元信息和 trace/log 流式诊断入口。阶段 35 补充 bucket 用户和临时账号只读摘要，同时继续保持 access key/service account 加密边界。阶段 36 新增 tier 与 remote target 的可回滚写入夹具，要求 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true` 才能执行，并同时验证专用 Admin 客户端与 raw 兜底调用。阶段 37 新增 batch job 与 site replication 实验矩阵，用本机私有请求体模板证明 start/cancel、add/remove 的恢复路径。阶段 38 删除临时 Test 示例类，补齐 KMS/STS 中文示例，并把 README 示例入口收口为正式用户路径。阶段 40 补充 Admin metrics、inspect-data、profiling/profile 的文本或二进制诊断包装。阶段 41 补充 LDAP/OpenID access key 只读摘要，并明确不保留 secret/token 原始响应。阶段 42 补充站点复制 peer IDP 设置安全摘要，并按 madmin-go 在专用客户端调用中补齐 site replication 的 api-version 查询参数。阶段 43 增强破坏性 lab 报告，记录 typed/raw 步骤 PASS/FAIL，并加入 `mc` 只读恢复核验提示。
 
 详见 `docs/04-minio-reactive-java-design.md` 和 `docs/09-minio-api-catalog.md`。
 
@@ -184,6 +184,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/38-stage40-admin-diagnostics-typed-wrappers.md`
 - `docs/39-stage41-admin-iam-idp-readonly.md`
 - `docs/40-stage42-site-replication-peer-idp.md`
+- `docs/41-stage43-destructive-lab-evidence.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`
