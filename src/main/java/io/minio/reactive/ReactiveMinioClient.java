@@ -19,9 +19,13 @@ import io.minio.reactive.messages.ListObjectVersionsResult;
 import io.minio.reactive.messages.ListPartsResult;
 import io.minio.reactive.messages.MultipartUpload;
 import io.minio.reactive.messages.MultipartUploadInfo;
+import io.minio.reactive.messages.ObjectAttributes;
 import io.minio.reactive.messages.ObjectInfo;
+import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
+import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.PartInfo;
+import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.signer.S3RequestSigner;
 import io.minio.reactive.util.S3Escaper;
 import io.minio.reactive.util.S3Xml;
@@ -292,6 +296,26 @@ public final class ReactiveMinioClient {
     return sign(request(HttpMethod.HEAD, bucket, object).build()).flatMap(httpClient::exchangeToHeaders);
   }
 
+  /**
+   * 获取对象属性摘要。
+   *
+   * <p>默认请求 ETag、对象大小、存储类型、校验和与分片数量。不同服务端版本可能只返回其中一部分字段，
+   * 因此 `ObjectAttributes` 会同时保留原始 XML。
+   */
+  public Mono<ObjectAttributes> getObjectAttributes(String bucket, String object) {
+    return getObjectAttributes(bucket, object, "ETag", "ObjectSize", "StorageClass", "Checksum", "ObjectParts");
+  }
+
+  /** 按调用方指定的属性名获取对象属性摘要。 */
+  public Mono<ObjectAttributes> getObjectAttributes(String bucket, String object, String... attributes) {
+    S3Request.Builder builder = request(HttpMethod.GET, bucket, object).queryParameter("attributes", null);
+    String headerValue = joinNonBlank(attributes);
+    if (!headerValue.isEmpty()) {
+      builder.header("X-Amz-Object-Attributes", headerValue);
+    }
+    return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseObjectAttributes);
+  }
+
   public Mono<Map<String, String>> getObjectTags(String bucket, String object) {
     S3Request request = request(HttpMethod.GET, bucket, object).queryParameter("tagging", null).build();
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseTagging);
@@ -304,6 +328,82 @@ public final class ReactiveMinioClient {
   public Mono<Void> deleteObjectTags(String bucket, String object) {
     S3Request request = request(HttpMethod.DELETE, bucket, object).queryParameter("tagging", null).build();
     return sign(request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 获取对象保留策略配置；bucket 未启用 object lock 时，服务端会返回明确的 S3 错误。 */
+  public Mono<ObjectRetentionConfiguration> getObjectRetention(String bucket, String object) {
+    return getObjectRetention(bucket, object, null);
+  }
+
+  /** 获取指定版本对象的保留策略配置。 */
+  public Mono<ObjectRetentionConfiguration> getObjectRetention(
+      String bucket, String object, String versionId) {
+    S3Request.Builder builder = request(HttpMethod.GET, bucket, object).queryParameter("retention", null);
+    addOptionalQuery(builder, "versionId", versionId);
+    return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseObjectRetention);
+  }
+
+  /** 设置对象保留策略配置。 */
+  public Mono<Void> setObjectRetention(
+      String bucket, String object, ObjectRetentionConfiguration configuration) {
+    return setObjectRetention(bucket, object, null, configuration);
+  }
+
+  /** 设置指定版本对象的保留策略配置。 */
+  public Mono<Void> setObjectRetention(
+      String bucket, String object, String versionId, ObjectRetentionConfiguration configuration) {
+    return putObjectSubresource(
+        bucket, object, "retention", versionId, S3Xml.objectRetentionXml(configuration), "application/xml");
+  }
+
+  /** 获取对象 Legal Hold 配置。 */
+  public Mono<ObjectLegalHoldConfiguration> getObjectLegalHold(String bucket, String object) {
+    return getObjectLegalHold(bucket, object, null);
+  }
+
+  /** 获取指定版本对象的 Legal Hold 配置。 */
+  public Mono<ObjectLegalHoldConfiguration> getObjectLegalHold(
+      String bucket, String object, String versionId) {
+    S3Request.Builder builder = request(HttpMethod.GET, bucket, object).queryParameter("legal-hold", null);
+    addOptionalQuery(builder, "versionId", versionId);
+    return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseObjectLegalHold);
+  }
+
+  /** 设置对象 Legal Hold 配置。 */
+  public Mono<Void> setObjectLegalHold(
+      String bucket, String object, ObjectLegalHoldConfiguration configuration) {
+    return setObjectLegalHold(bucket, object, null, configuration);
+  }
+
+  /** 设置指定版本对象的 Legal Hold 配置。 */
+  public Mono<Void> setObjectLegalHold(
+      String bucket, String object, String versionId, ObjectLegalHoldConfiguration configuration) {
+    return putObjectSubresource(
+        bucket, object, "legal-hold", versionId, S3Xml.objectLegalHoldXml(configuration), "application/xml");
+  }
+
+  /** 发起归档对象恢复请求。 */
+  public Mono<Void> restoreObject(String bucket, String object, RestoreObjectRequest request) {
+    return restoreObject(bucket, object, null, request);
+  }
+
+  /** 发起指定版本归档对象的恢复请求。 */
+  public Mono<Void> restoreObject(
+      String bucket, String object, String versionId, RestoreObjectRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("对象恢复请求不能为空");
+    }
+    S3Request.Builder builder = request(HttpMethod.POST, bucket, object).queryParameter("restore", null);
+    addOptionalQuery(builder, "versionId", versionId);
+    String xml = S3Xml.restoreObjectXml(request);
+    byte[] bytes = xml.getBytes(StandardCharsets.UTF_8);
+    S3Request s3Request =
+        builder
+            .contentType("application/xml")
+            .header("Content-Length", Integer.toString(bytes.length))
+            .body(bytes)
+            .build();
+    return sign(s3Request).flatMap(httpClient::exchangeToVoid);
   }
 
   public Mono<Map<String, String>> getBucketTags(String bucket) {
@@ -588,6 +688,47 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToVoid);
   }
 
+  private Mono<Void> putObjectSubresource(
+      String bucket,
+      String object,
+      String subresource,
+      String versionId,
+      String payload,
+      String contentType) {
+    byte[] bytes = payload == null ? new byte[0] : payload.getBytes(StandardCharsets.UTF_8);
+    S3Request.Builder builder =
+        request(HttpMethod.PUT, bucket, object)
+            .queryParameter(subresource, null)
+            .contentType(contentType)
+            .header("Content-Length", Integer.toString(bytes.length))
+            .body(bytes);
+    addOptionalQuery(builder, "versionId", versionId);
+    return sign(builder.build()).flatMap(httpClient::exchangeToVoid);
+  }
+
+  private static void addOptionalQuery(S3Request.Builder builder, String key, String value) {
+    if (value != null && !value.trim().isEmpty()) {
+      builder.queryParameter(key, value);
+    }
+  }
+
+  private static String joinNonBlank(String... values) {
+    if (values == null || values.length == 0) {
+      return "";
+    }
+    StringBuilder builder = new StringBuilder();
+    for (String value : values) {
+      if (value == null || value.trim().isEmpty()) {
+        continue;
+      }
+      if (builder.length() > 0) {
+        builder.append(',');
+      }
+      builder.append(value.trim());
+    }
+    return builder.toString();
+  }
+
   /** 目录型方法内部复用的空 Map。 */
   private static Map<String, String> emptyMap() {
     return Collections.<String, String>emptyMap();
@@ -656,6 +797,7 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_OBJECT_ATTRIBUTES`。 */
+  @Deprecated
   public Mono<String> s3GetObjectAttributes(String bucket, String object) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_OBJECT_ATTRIBUTES"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
@@ -792,12 +934,14 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_GET_OBJECT_RETENTION`。 */
+  @Deprecated
   public Mono<String> s3GetObjectRetention(String bucket, String object) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_OBJECT_RETENTION"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
   }
 
   /** 调用 `S3_GET_OBJECT_LEGAL_HOLD`。 */
+  @Deprecated
   public Mono<String> s3GetObjectLegalHold(String bucket, String object) {
     return endpointExecutor()
         .executeToString(endpoint("S3_GET_OBJECT_LEGAL_HOLD"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), null, null);
@@ -828,23 +972,27 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_PUT_OBJECT_RETENTION`。 */
+  @Deprecated
   public Mono<String> s3PutObjectRetention(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_OBJECT_RETENTION"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_OBJECT_RETENTION`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutObjectRetention(String bucket, String object) {
     return s3PutObjectRetention(bucket, object, null, null);
   }
 
   /** 调用 `S3_PUT_OBJECT_LEGAL_HOLD`。 */
+  @Deprecated
   public Mono<String> s3PutObjectLegalHold(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_PUT_OBJECT_LEGAL_HOLD"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_PUT_OBJECT_LEGAL_HOLD`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PutObjectLegalHold(String bucket, String object) {
     return s3PutObjectLegalHold(bucket, object, null, null);
   }
@@ -887,12 +1035,14 @@ public final class ReactiveMinioClient {
   }
 
   /** 调用 `S3_POST_RESTORE_OBJECT`。 */
+  @Deprecated
   public Mono<String> s3PostRestoreObject(String bucket, String object, byte[] body, String contentType) {
     return endpointExecutor()
         .executeToString(endpoint("S3_POST_RESTORE_OBJECT"), map("bucket", bucket, "object", object), emptyMap(), emptyMap(), body, contentType);
   }
 
   /** 调用 `S3_POST_RESTORE_OBJECT`，不携带请求体。 */
+  @Deprecated
   public Mono<String> s3PostRestoreObject(String bucket, String object) {
     return s3PostRestoreObject(bucket, object, null, null);
   }

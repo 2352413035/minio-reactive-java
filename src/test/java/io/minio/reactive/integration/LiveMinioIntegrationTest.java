@@ -23,6 +23,7 @@ import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.ListMultipartUploadsResult;
 import io.minio.reactive.messages.MultipartUpload;
+import io.minio.reactive.messages.ObjectAttributes;
 import io.minio.reactive.messages.ObjectInfo;
 import io.minio.reactive.messages.PartInfo;
 import java.io.ByteArrayOutputStream;
@@ -172,6 +173,7 @@ class LiveMinioIntegrationTest {
     Assertions.assertEquals(2, listed.size());
     Assertions.assertEquals("alpha", client.getObjectAsString(bucket, "folder/a.txt").block());
     Assertions.assertFalse(client.statObject(bucket, "folder/a.txt").block().isEmpty());
+    assertObjectAttributesIfServerSupportsIt();
     ReactiveS3Exception missingObject =
         Assertions.assertThrows(
             ReactiveS3Exception.class, () -> client.getObjectAsBytes(bucket, "missing-object.txt").block());
@@ -286,6 +288,18 @@ class LiveMinioIntegrationTest {
       Assertions.assertEquals("kms", error.protocol());
       Assertions.assertTrue(error.statusCode() >= 400);
       Assertions.assertNotNull(error.rawBody());
+    }
+  }
+
+  private void assertObjectAttributesIfServerSupportsIt() {
+    try {
+      ObjectAttributes attributes = client.getObjectAttributes(bucket, "folder/a.txt").block();
+      Assertions.assertNotNull(attributes.rawXml());
+      Assertions.assertTrue(attributes.objectSize() >= 0);
+    } catch (ReactiveS3Exception error) {
+      Assertions.assertTrue(
+          error.statusCode() == 400 || error.statusCode() == 501,
+          "GetObjectAttributes 如果失败，应是服务端能力或参数边界，而不是 SDK 请求链路错误: " + error.responseBody());
     }
   }
 

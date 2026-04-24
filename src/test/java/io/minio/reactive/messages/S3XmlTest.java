@@ -89,6 +89,43 @@ class S3XmlTest {
   }
 
   @Test
+  void shouldBuildAndParseObjectGovernanceXml() {
+    ObjectRetentionConfiguration retention =
+        S3Xml.parseObjectRetention(
+            S3Xml.objectRetentionXml(
+                ObjectRetentionConfiguration.governance("2030-01-01T00:00:00Z")));
+    Assertions.assertEquals(ObjectRetentionConfiguration.GOVERNANCE, retention.mode());
+    Assertions.assertEquals("2030-01-01T00:00:00Z", retention.retainUntilDate());
+
+    ObjectLegalHoldConfiguration legalHold =
+        S3Xml.parseObjectLegalHold(S3Xml.objectLegalHoldXml(ObjectLegalHoldConfiguration.enabled()));
+    Assertions.assertTrue(legalHold.enabledValue());
+
+    String restoreXml = S3Xml.restoreObjectXml(RestoreObjectRequest.of(7, "Standard"));
+    Assertions.assertTrue(restoreXml.contains("<Days>7</Days>"));
+    Assertions.assertTrue(restoreXml.contains("<Tier>Standard</Tier>"));
+  }
+
+  @Test
+  void shouldParseObjectAttributes() {
+    ObjectAttributes attributes =
+        S3Xml.parseObjectAttributes(
+            "<GetObjectAttributesOutput>"
+                + "<ETag>\"etag\"</ETag><ObjectSize>42</ObjectSize><StorageClass>STANDARD</StorageClass>"
+                + "<Checksum><ChecksumCRC32>crc32</ChecksumCRC32><ChecksumSHA256>sha256</ChecksumSHA256></Checksum>"
+                + "<ObjectParts><TotalPartsCount>3</TotalPartsCount></ObjectParts>"
+                + "</GetObjectAttributesOutput>");
+
+    Assertions.assertEquals("\"etag\"", attributes.etag());
+    Assertions.assertEquals(42L, attributes.objectSize());
+    Assertions.assertEquals("STANDARD", attributes.storageClass());
+    Assertions.assertEquals("crc32", attributes.checksumCrc32());
+    Assertions.assertEquals("sha256", attributes.checksumSha256());
+    Assertions.assertEquals(3, attributes.totalPartsCount());
+    Assertions.assertTrue(attributes.rawXml().contains("GetObjectAttributesOutput"));
+  }
+
+  @Test
   void shouldBuildCompleteMultipartXml() {
     String xml = S3Xml.completeMultipartXml(Arrays.asList(new CompletePart(1, "\"etag\"")));
 
