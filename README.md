@@ -160,6 +160,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/20-stage22-admin-readonly-summaries.md`
 - `docs/21-stage23-kms-metrics-typed-gap.md`
 - `docs/22-stage24-destructive-lab-expansion.md`
+- `docs/23-stage25-crypto-gate-review.md`
 - `docs/release-gates.md`
 - `scripts/madmin-fixtures/`
 - `scripts/minio-lab/`

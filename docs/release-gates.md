@@ -18,9 +18,12 @@
 如果当前里程碑涉及 madmin 加密兼容，必须额外通过：
 
 - `scripts/madmin-fixtures/verify-fixtures.sh`
+- `scripts/madmin-fixtures/check-crypto-gate.sh`
 - 固定 `go version`
 - 固定 `madmin-go` 版本
 - fixture metadata 与文档一致
+
+`check-crypto-gate.sh` 的通过含义是：当前 Gate Fail 边界仍被正确执行。它会确认 fixture 可用，并检查 `pom.xml` 与源码 import 没有引入未批准 crypto/native 依赖。它不代表默认 madmin 加密响应已经可以明文 typed 解析。
 
 ## 3. destructive Admin 门禁
 

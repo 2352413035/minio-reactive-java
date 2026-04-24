@@ -55,6 +55,8 @@ MinIO Admin API 覆盖用户、策略、配置、站点复制、tier、批处理
 
 因此能力矩阵里的 `encrypted-blocked` 当前为 9。SDK 只提供 `EncryptedAdminResponse` 边界方法（例如 `getConfigEncrypted()`、`getConfigKvEncrypted(...)`、`listConfigHistoryKvEncrypted(...)`、`getAccessKeyInfoEncrypted(...)`、`listAccessKeysEncrypted(...)`），不会在 Crypto Gate Pass 前伪装成已解密 typed 结果。
 
+阶段 25 已再次复核 Crypto Gate：当前仍不引入 Bouncy Castle、argon2-jvm、Tink、libsodium、JNA 等第三方 crypto/native 依赖。`scripts/madmin-fixtures/check-crypto-gate.sh` 会同时检查 `pom.xml` 和源码 import，确保 encrypted-blocked 边界没有被绕过。
+
 ## 使用建议
 
 - 业务项目优先使用 L1/L2 typed 方法。
