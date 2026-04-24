@@ -13,9 +13,11 @@ import io.minio.reactive.messages.admin.UpdateGroupMembersRequest;
 import io.minio.reactive.messages.admin.AddUserRequest;
 import io.minio.reactive.messages.BucketCorsConfiguration;
 import io.minio.reactive.messages.BucketCorsRule;
+import io.minio.reactive.messages.CannedAcl;
 import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.RestoreObjectRequest;
+import io.minio.reactive.messages.SelectObjectContentRequest;
 import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -82,7 +84,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 47, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 55, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 201, 0, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 0, 0);
@@ -569,6 +571,20 @@ class ReactiveMinioSpecializedClientsTest {
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketRequestPayment");
   }
 
+  @Test
+  void shouldExposeS3AclAndSelectBusinessMethods() {
+    assertMonoMethodExists(ReactiveMinioClient.class, "getObjectAcl");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setObjectCannedAcl");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketAcl");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setBucketCannedAcl");
+    assertMonoMethodExists(ReactiveMinioClient.class, "selectObjectContent");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectAcl");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutObjectAcl");
+    assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetBucketAcl");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3PutBucketAcl");
+    assertAllPublicOverloadsDeprecated(ReactiveMinioClient.class, "s3SelectObjectContent");
+  }
+
 
   @Test
   void shouldBuildS3BucketSubresourceRequests() {
@@ -620,6 +636,52 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "policyStatus"));
     Assertions.assertTrue(containsAllQueryParts(queries, "accelerate"));
     Assertions.assertTrue(containsAllQueryParts(queries, "requestPayment"));
+  }
+
+  @Test
+  void shouldBuildS3AclAndSelectRequests() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> aclHeaders = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  aclHeaders.add(request.headers().getFirst("x-amz-acl"));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(stage27S3ResponseBody(request.url().getQuery()))
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertEquals("owner-id", client.getObjectAcl("bucket1", "a.csv").block().owner().id());
+    client.setObjectCannedAcl("bucket1", "a.csv", CannedAcl.PRIVATE).block();
+    Assertions.assertTrue(client.getBucketAcl("bucket1").block().hasGrant("FULL_CONTROL"));
+    client.setBucketCannedAcl("bucket1", CannedAcl.PUBLIC_READ).block();
+    Assertions.assertEquals(
+        "select-response",
+        client
+            .selectObjectContent("bucket1", "a.csv", SelectObjectContentRequest.csv("select * from s3object"))
+            .block()
+            .rawResponse());
+
+    Assertions.assertTrue(paths.contains("/bucket1/a.csv"));
+    Assertions.assertTrue(paths.contains("/bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "acl"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "select", "select-type=2"));
+    Assertions.assertTrue(aclHeaders.contains("private"));
+    Assertions.assertTrue(aclHeaders.contains("public-read"));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> client.setBucketCannedAcl("bucket1", null));
   }
 
 
@@ -768,6 +830,19 @@ class ReactiveMinioSpecializedClientsTest {
     }
     if (query != null && query.contains("requestPayment")) {
       return "<RequestPaymentConfiguration><Payer>Requester</Payer></RequestPaymentConfiguration>";
+    }
+    return "";
+  }
+
+  private static String stage27S3ResponseBody(String query) {
+    if (query != null && query.contains("acl")) {
+      return "<AccessControlPolicy>"
+          + "<Owner><ID>owner-id</ID><DisplayName>root</DisplayName></Owner>"
+          + "<AccessControlList><Grant><Grantee xsi:type=\"CanonicalUser\"><ID>owner-id</ID><DisplayName>root</DisplayName></Grantee><Permission>FULL_CONTROL</Permission></Grant></AccessControlList>"
+          + "</AccessControlPolicy>";
+    }
+    if (query != null && query.contains("select")) {
+      return "select-response";
     }
     return "";
   }
