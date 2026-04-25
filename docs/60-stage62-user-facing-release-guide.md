@@ -88,7 +88,7 @@ String body = raw.executeToString(
 | route parity | 233 / 233，缺失 0，额外 0。 |
 | product-typed | S3 77 / 77、Admin 128 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。 |
 | raw fallback | 0。 |
-| Crypto Gate | Fail，`encrypted-blocked = 9`。 |
+| Crypto Gate | Fail，`encrypted-blocked = 11`。 |
 | 破坏性 lab | 未配置，`destructive-blocked = 29`。 |
 | 版本 | 继续使用 `0.1.0-SNAPSHOT`，暂不打 1.0。 |
 
