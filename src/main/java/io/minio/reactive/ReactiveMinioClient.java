@@ -620,6 +620,54 @@ public final class ReactiveMinioClient {
     return sign(s3Request).flatMap(httpClient::exchangeToVoid);
   }
 
+  /**
+   * 使用对象内容作为上下文向 MinIO PromptObject 扩展发起推理请求。
+   *
+   * <p>该接口对齐 minio-java 的 promptObject：请求通过 POST 发送到目标对象，
+   * `lambdaArn` 放在 query 中，body 是包含 prompt 与自定义参数的 JSON。响应可能是流式内容，
+   * 因此这里返回 Flux<byte[]> 而不是一次性字符串。
+   */
+  public Flux<byte[]> promptObject(
+      String bucket,
+      String object,
+      String lambdaArn,
+      String prompt,
+      Map<String, Object> promptArgs) {
+    return promptObject(bucket, object, null, lambdaArn, prompt, promptArgs, emptyMap());
+  }
+
+  /** 使用最小参数调用 PromptObject。 */
+  public Flux<byte[]> promptObject(String bucket, String object, String lambdaArn, String prompt) {
+    return promptObject(bucket, object, lambdaArn, prompt, Collections.<String, Object>emptyMap());
+  }
+
+  /** 带 versionId 与自定义请求头的 PromptObject 完整入口。 */
+  public Flux<byte[]> promptObject(
+      String bucket,
+      String object,
+      String versionId,
+      String lambdaArn,
+      String prompt,
+      Map<String, Object> promptArgs,
+      Map<String, String> headers) {
+    byte[] body = promptObjectJson(prompt, promptArgs).getBytes(StandardCharsets.UTF_8);
+    S3Request.Builder builder =
+        request(HttpMethod.POST, bucket, object)
+            .queryParameter("lambdaArn", requireNonBlank(lambdaArn, "lambdaArn 不能为空"))
+            .contentType("application/json")
+            .header("Content-Length", Integer.toString(body.length))
+            .body(body);
+    addOptionalQuery(builder, "versionId", versionId);
+    if (headers != null) {
+      for (Map.Entry<String, String> entry : headers.entrySet()) {
+        if (entry.getKey() != null && entry.getValue() != null) {
+          builder.header(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+    return sign(builder.build()).flatMapMany(httpClient::exchangeToBody);
+  }
+
   public Mono<Map<String, String>> getBucketTags(String bucket) {
     S3Request request = request(HttpMethod.GET, bucket, null).queryParameter("tagging", null).build();
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseTagging);
@@ -1188,6 +1236,95 @@ public final class ReactiveMinioClient {
         builder.append(',');
       }
       builder.append(value.trim());
+    }
+    return builder.toString();
+  }
+
+  private static String promptObjectJson(String prompt, Map<String, Object> promptArgs) {
+    String safePrompt = requireNonBlank(prompt, "prompt 不能为空");
+    Map<String, Object> values = new LinkedHashMap<String, Object>();
+    if (promptArgs != null) {
+      values.putAll(promptArgs);
+    }
+    values.put("prompt", safePrompt);
+    StringBuilder builder = new StringBuilder();
+    builder.append('{');
+    int index = 0;
+    for (Map.Entry<String, Object> entry : values.entrySet()) {
+      if (entry.getKey() == null) {
+        continue;
+      }
+      if (index++ > 0) {
+        builder.append(',');
+      }
+      builder.append('"').append(escapeJson(entry.getKey())).append("\":");
+      appendJsonValue(builder, entry.getValue());
+    }
+    builder.append('}');
+    return builder.toString();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void appendJsonValue(StringBuilder builder, Object value) {
+    if (value == null) {
+      builder.append("null");
+    } else if (value instanceof Number || value instanceof Boolean) {
+      builder.append(value);
+    } else if (value instanceof Map) {
+      builder.append('{');
+      int index = 0;
+      for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
+        if (entry.getKey() == null) {
+          continue;
+        }
+        if (index++ > 0) {
+          builder.append(',');
+        }
+        builder.append('"').append(escapeJson(String.valueOf(entry.getKey()))).append("\":");
+        appendJsonValue(builder, entry.getValue());
+      }
+      builder.append('}');
+    } else if (value instanceof Iterable) {
+      builder.append('[');
+      int index = 0;
+      for (Object item : (Iterable<?>) value) {
+        if (index++ > 0) {
+          builder.append(',');
+        }
+        appendJsonValue(builder, item);
+      }
+      builder.append(']');
+    } else {
+      builder.append('"').append(escapeJson(String.valueOf(value))).append('"');
+    }
+  }
+
+  private static String escapeJson(String value) {
+    if (value == null) {
+      return "";
+    }
+    StringBuilder builder = new StringBuilder(value.length());
+    for (int i = 0; i < value.length(); i++) {
+      char ch = value.charAt(i);
+      switch (ch) {
+        case '"':
+          builder.append("\\\"");
+          break;
+        case '\\':
+          builder.append("\\\\");
+          break;
+        case '\n':
+          builder.append("\\n");
+          break;
+        case '\r':
+          builder.append("\\r");
+          break;
+        case '\t':
+          builder.append("\\t");
+          break;
+        default:
+          builder.append(ch);
+      }
     }
     return builder.toString();
   }

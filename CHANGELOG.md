@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 90 promptObject 推理请求入口
+
+- `ReactiveMinioClient` 新增 `promptObject` 多个强类型重载，按 POST + `lambdaArn` query + JSON body 调用 MinIO PromptObject 扩展。
+- 响应返回 `Flux<byte[]>`，保留推理/对象 Lambda 场景可能出现的流式响应边界。
+- 新增 `docs/88-stage90-prompt-object-parity.md`，记录 promptObject 请求流程、边界和 live/lab 待补证项。
+- 重新生成 minio-java 对标报告后，对象存储核心 API 精确同名从 56 / 59 提升到 57 / 59，剩余缺口为 `putObjectFanOut`、`uploadSnowballObjects`。
+
 ## 阶段 89 appendObject 追加写入入口
 
 - 新增 `ObjectWriteResult`，提取写入响应中的 ETag、versionId 并保留完整响应头。
