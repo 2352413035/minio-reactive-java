@@ -2,6 +2,15 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 96 credentials provider 类名覆盖收口
+
+- 新增 minio-java 同名 credentials provider 迁移层，覆盖 `Credentials`、`Provider`、静态、链式、环境变量、AWS/MinIO 配置文件、JWT、STS identity provider 和 IAM 边界类。
+- `ReactiveCredentialsProvider.from(Provider)` 支持把 minio-java 风格 provider 桥接到响应式客户端 builder。
+- `Credentials.toString()` 默认脱敏，配置文件测试只使用临时假凭证，不输出 secret。
+- `IamAwsProvider` 暂不自动访问元数据服务，先提供中文安全失败边界，避免隐式网络访问。
+- 新增 `docs/94-stage96-credentials-provider-parity.md` 与 `ReactiveCredentialsProvidersTest`。
+- 重新生成 minio-java 对标报告后，credentials provider 按类名缺失为 0；对象、Admin、Args 继续保持满格。
+
 ## 阶段 95 剩余对象与分片 Args builder 收口
 
 - 新增剩余 38 个 `*Args` 类，覆盖对象治理、分片上传、PromptObject、SelectObjectContent、通知监听和 minio-java 基础继承体系名称。

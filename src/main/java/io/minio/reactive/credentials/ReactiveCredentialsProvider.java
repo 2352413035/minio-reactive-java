@@ -16,4 +16,12 @@ public interface ReactiveCredentialsProvider {
   static ReactiveCredentialsProvider anonymous() {
     return Mono::empty;
   }
+
+  /** 把 minio-java 风格 Provider 桥接到响应式客户端使用的 provider。 */
+  static ReactiveCredentialsProvider from(Provider provider) {
+    if (provider == null) {
+      throw new IllegalArgumentException("provider 不能为空");
+    }
+    return provider.asReactiveProvider();
+  }
 }
