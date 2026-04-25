@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 89 appendObject 追加写入入口
+
+- 新增 `ObjectWriteResult`，提取写入响应中的 ETag、versionId 并保留完整响应头。
+- `ReactiveMinioClient` 新增 `appendObject` 字节、字符串和 Path 重载，先 HEAD 获取对象当前长度，再 PUT 携带 `x-amz-write-offset-bytes` 追加内容。
+- 新增 `docs/87-stage89-append-object-parity.md`，记录追加写入流程、边界和后续 chunk/checksum 差距。
+- 重新生成 minio-java 对标报告后，对象存储核心 API 精确同名从 55 / 59 提升到 56 / 59，剩余缺口为 `promptObject`、`putObjectFanOut`、`uploadSnowballObjects`。
+
 ## 阶段 88 getPresignedPostFormData 表单上传入口
 
 - 新增 `PostPolicy`，支持 equals、starts-with、content-length-range 条件和保留字段保护。
