@@ -7,6 +7,7 @@
 - 不要在仓库内填写真实凭证、token、签名或生产端点。
 - 不要把填写后的请求体提交到 git。
 - 模板中的资源名只是占位，执行前必须改成只属于本次 lab 的资源；tier 名称必须大写；remote target 的 `endpoint` 按 madmin 语义填写源 MinIO 服务端视角可访问的 `host:port`，不要带 `http://` 或 `https://`；Docker 端口映射场景下通常不是宿主机映射端口。
+- site replication add 请求体按 madmin-go 语义是 `PeerSite[]` 数组，字段名是 `endpoints`；remove 最小恢复体可使用 `{"all": true}` 清理本次 lab 拓扑。
 - 未在独立 lab 执行并恢复前，不能把对应 `destructive-blocked` 计数移除。
 
 ## 模板对应关系
@@ -18,9 +19,9 @@
 | `remote-target-set-replication.json.example` | `MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE` | 新增 bucket replication target | 请求体内必须有 `arn`；删除优先使用 set 响应 ARN，必要时提供 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` |
 | `batch-start-job.yaml.example` | `MINIO_LAB_BATCH_START_BODY_FILE` | 启动 batch job | 必须设置 `MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true`，取消时使用 start 响应 jobId |
 | `batch-cancel-job.yaml.example` | `MINIO_LAB_BATCH_CANCEL_BODY_FILE` | 旧式/手工取消说明 | 当前 SDK 不再要求；保留用于人工排错说明 |
-| `site-replication-add.json.example` | `MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE` | 新增站点复制配置 | 必须提供 remove 请求体 |
-| `site-replication-edit.json.example` | `MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE` | 可选：编辑站点复制配置 | 最终仍通过 remove 请求体恢复 |
-| `site-replication-remove.json.example` | `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE` | 移除刚新增的站点复制配置 | `MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true` |
+| `site-replication-add.json.example` | `MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE` | 新增站点复制配置；请求体是 `PeerSite[]` 数组 | 必须提供 remove 请求体，推荐本次 lab 使用 `all=true` |
+| `site-replication-edit.json.example` | `MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE` | 可选：编辑站点复制配置；通常需要真实 deploymentID | 最终仍通过 remove 请求体恢复 |
+| `site-replication-remove.json.example` | `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE` | 移除刚新增的站点复制配置；最小 lab 可用 `all=true` | `MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true` |
 
 ## 推荐流程
 

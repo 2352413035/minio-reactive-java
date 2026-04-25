@@ -584,6 +584,16 @@ class DestructiveAdminIntegrationTest {
               "site-replication-write",
               "typed getSiteReplicationInfo after add",
               () -> admin.getSiteReplicationInfo().block()));
+      Assertions.assertNotNull(
+          labStepValue(
+              "site-replication-write",
+              "typed getSiteReplicationStatus after add",
+              () -> admin.getSiteReplicationStatus().block()));
+      Assertions.assertNotNull(
+          labStepValue(
+              "site-replication-write",
+              "typed getSiteReplicationMetainfo after add",
+              () -> admin.getSiteReplicationMetainfo().block()));
       if (notBlank(editBody)) {
         labStepValue(
             "site-replication-write",
@@ -607,6 +617,21 @@ class DestructiveAdminIntegrationTest {
               map("api-version", "1"),
               bytes(removeBody),
               contentType));
+      labStepValue(
+          "site-replication-write",
+          "raw ADMIN_SITE_REPLICATION_ADD after remove",
+          () -> rawString(
+              raw,
+              "ADMIN_SITE_REPLICATION_ADD",
+              emptyMap(),
+              map("api-version", "1"),
+              encryptedLabBody(addBody),
+              "application/octet-stream"));
+      Assertions.assertNotNull(
+          labStepValue(
+              "site-replication-write",
+              "typed getSiteReplicationInfo after raw add",
+              () -> admin.getSiteReplicationInfo().block()));
     } finally {
       runLabStep(
           "site-replication-restore",

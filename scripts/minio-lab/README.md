@@ -202,9 +202,11 @@ MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE=/secure/path/site-replication-remove
 MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true
 ```
 
-测试会使用专用 Admin 客户端新增站点复制配置，必要时使用 raw catalog 执行 edit，最后用 raw remove 和 finally 专用 remove 双重恢复。请求模板见 `scripts/minio-lab/templates/site-replication-*.json.example`。
+测试会使用专用 Admin 客户端新增站点复制配置，读取 info/status/metainfo 做 typed 复核，然后用 raw catalog 执行 remove；阶段 109 起还会在 raw remove 后再次用 raw add 复建一次拓扑，最后用专用客户端 remove 兜底恢复。请求模板见 `scripts/minio-lab/templates/site-replication-*.json.example`。
 
-site replication 通常需要至少两个彼此隔离、可删除的 lab 站点；单节点临时容器通常只能准备模板，不能证明完整复制矩阵。
+site replication add 请求体必须对齐 madmin-go 的 `PeerSite[]` 数组，字段名是 `endpoints`；两个站点都必须使用源 MinIO 服务端可访问的 endpoint。Docker 场景下通常使用同一 Docker 网络里的容器名，例如 `http://lab-site-b-minio:9000`，而不是宿主机映射端口。remove 的最小 lab 恢复体可使用 `{"all": true}`。
+
+site replication 通常需要至少两个彼此隔离、可删除的 lab 站点；单节点临时容器只能准备模板，不能证明完整复制矩阵。
 
 ## 执行报告
 

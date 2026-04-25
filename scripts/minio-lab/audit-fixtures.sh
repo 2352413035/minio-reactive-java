@@ -193,9 +193,9 @@ body_ready MINIO_LAB_SITE_REPLICATION_ADD_BODY MINIO_LAB_SITE_REPLICATION_ADD_BO
 body_ready MINIO_LAB_SITE_REPLICATION_REMOVE_BODY MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE || append_missing site_missing '缺 site replication remove 请求体'
 is_true "${MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST:-false}" || append_missing site_missing '缺 MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true'
 if [[ -z "$site_missing" ]]; then
-  print_row 'site replication add/edit/remove' '可执行' '写入总开关 + add JSON + remove JSON；edit JSON 可选' 'MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true' 'templates/site-replication-*.json.example'
+  print_row 'site replication add/edit/remove' '可执行' '写入总开关 + PeerSite[] add JSON + remove JSON；edit JSON 可选且通常需要 deploymentID' 'MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true；推荐 remove 使用 all=true 清理 lab 拓扑' 'templates/site-replication-*.json.example'
 else
-  print_row 'site replication add/edit/remove' "未就绪：$site_missing" '写入总开关 + add JSON + remove JSON；edit JSON 可选' 'MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true' 'templates/site-replication-*.json.example'
+  print_row 'site replication add/edit/remove' "未就绪：$site_missing" '写入总开关 + PeerSite[] add JSON + remove JSON；edit JSON 可选且通常需要 deploymentID' 'MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true；推荐 remove 使用 all=true 清理 lab 拓扑' 'templates/site-replication-*.json.example'
 fi
 
 printf '\n使用建议\n'

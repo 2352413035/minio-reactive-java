@@ -63,9 +63,9 @@ minio.content=你好，来自 reactive minio sdk
 
 ## 主对标口径
 
-阶段 85 起，本项目的 SDK 主对标项目明确为同目录 `minio-java`：对象存储 API、Admin API、`*Args` builder、credentials provider、Admin Crypto 和用户体验优先参考官方 Java SDK。`minio` 服务端源码仍用于确认真实 HTTP 路由和 MinIO 扩展协议，但不能再用服务端 route catalog 覆盖替代 Java SDK 对标完成度。阶段 108 已继续围绕剩余高风险 lab 矩阵补齐 batch job start/status/cancel typed/raw 证据，不改变 minio-java API 对标完成口径。
+阶段 85 起，本项目的 SDK 主对标项目明确为同目录 `minio-java`：对象存储 API、Admin API、`*Args` builder、credentials provider、Admin Crypto 和用户体验优先参考官方 Java SDK。`minio` 服务端源码仍用于确认真实 HTTP 路由和 MinIO 扩展协议，但不能再用服务端 route catalog 覆盖替代 Java SDK 对标完成度。阶段 109 已继续围绕剩余高风险 lab 矩阵补齐 site replication 多站点 typed/raw 证据，不改变 minio-java API 对标完成口径。
 
-当前可用 `scripts/report-minio-java-parity.py` 生成机器报告。阶段 98 报告显示：对象存储核心 API 59 个中 59 个已经精确同名，剩余 0 个缺失；Admin 核心 API 24 个中 24 个已经精确同名，别名或部分覆盖项为 0；`*Args` builder 已达到 86 / 86 同名收口；credentials provider 类名缺失 0 个；identity provider 已能显式桥接 `ReactiveMinioStsClient`；AWS 环境变量空字符串和 JWT JSON 字段名继续贴近 minio-java 行为；签名级报告显示对象 API 与 Admin API 没有缺失或重载较少项，且 `PutObjectAPIArgs` 已被明确归类为响应式内部上传边界。阶段 102 判定：SDK 功能覆盖层面已经完成 minio-java 主体 API 对标；正式发布仍阻塞于 Crypto Gate、破坏性 lab 全矩阵和发布工程材料。阶段 103 已提供 PBKDF2 + AES-GCM 加密响应的显式 secretKey 解密路径，但 MinIO 默认 Argon2id 系列仍未放行，因此 Crypto Gate 回归仍保持 Admin `encrypted-blocked = 11`、`destructive-blocked = 29`。阶段 104 已把独立 Docker lab 的 config KV、bucket quota 写入恢复和 remote target typed/raw 只读探测固化为可重复证据；阶段 108 又补齐 batch job start/status/cancel 的独立 Docker typed/raw 证据。
+当前可用 `scripts/report-minio-java-parity.py` 生成机器报告。阶段 98 报告显示：对象存储核心 API 59 个中 59 个已经精确同名，剩余 0 个缺失；Admin 核心 API 24 个中 24 个已经精确同名，别名或部分覆盖项为 0；`*Args` builder 已达到 86 / 86 同名收口；credentials provider 类名缺失 0 个；identity provider 已能显式桥接 `ReactiveMinioStsClient`；AWS 环境变量空字符串和 JWT JSON 字段名继续贴近 minio-java 行为；签名级报告显示对象 API 与 Admin API 没有缺失或重载较少项，且 `PutObjectAPIArgs` 已被明确归类为响应式内部上传边界。阶段 102 判定：SDK 功能覆盖层面已经完成 minio-java 主体 API 对标；正式发布仍阻塞于 Crypto Gate、破坏性 lab 全矩阵和发布工程材料。阶段 103 已提供 PBKDF2 + AES-GCM 加密响应的显式 secretKey 解密路径，但 MinIO 默认 Argon2id 系列仍未放行，因此 Crypto Gate 回归仍保持 Admin `encrypted-blocked = 11`、`destructive-blocked = 29`。阶段 104 已把独立 Docker lab 的 config KV、bucket quota 写入恢复和 remote target typed/raw 只读探测固化为可重复证据；阶段 108 补齐 batch job start/status/cancel 的独立 Docker typed/raw 证据；阶段 109 继续补齐 site replication add/remove 的双容器 typed/raw 证据。
 
 ## 当前完成度口径
 
@@ -78,7 +78,7 @@ minio.content=你好，来自 reactive minio sdk
 | 产品强类型成熟度 | S3 77 / 77、Admin 128 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示风险接口已经可以在共享环境中真实执行。 |
 | 风险边界 | Admin 仍有 11 个加密响应边界、29 个破坏性操作边界；破坏性写入只允许在独立 lab 通过显式写入夹具证明，不能在共享环境中伪装成“普通已完成”。 |
 
-阶段 84 已按独立 Docker lab 口径补充真实破坏性证据：JDK8 与 JDK17+ 分支均通过 `DestructiveAdminIntegrationTest`，覆盖 config KV 与 bucket quota 的 typed/raw 写入、读取和恢复，以及 remote target 的 typed/raw 只读探测；阶段 105 已补齐 tier、remote target、batch job、site replication 的模板与夹具审计脚本；阶段 106 已把 tier、remote target set、site replication add/edit 的专用客户端请求体切换为 madmin 加密语义，并在双分支一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵；阶段 107 又在双分支双容器 Docker lab 通过 tier add/remove typed/raw 写入恢复矩阵；阶段 108 继续在双分支双容器 Docker lab 通过 batch job start/status/cancel typed/raw 矩阵。但 tier edit、site replication 仍需要额外私有夹具和真实恢复证据，因此破坏性边界不能直接清零。
+阶段 84 已按独立 Docker lab 口径补充真实破坏性证据：JDK8 与 JDK17+ 分支均通过 `DestructiveAdminIntegrationTest`，覆盖 config KV 与 bucket quota 的 typed/raw 写入、读取和恢复，以及 remote target 的 typed/raw 只读探测；阶段 105 已补齐 tier、remote target、batch job、site replication 的模板与夹具审计脚本；阶段 106 已把 tier、remote target set、site replication add/edit 的专用客户端请求体切换为 madmin 加密语义，并在双分支一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵；阶段 107 又在双分支双容器 Docker lab 通过 tier add/remove typed/raw 写入恢复矩阵；阶段 108 继续在双分支双容器 Docker lab 通过 batch job start/status/cancel typed/raw 矩阵；阶段 109 补齐 site replication add/remove typed/raw 矩阵。但 tier edit 等更细变体仍需要额外私有夹具和真实恢复证据，因此破坏性边界不能直接清零。
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
 
@@ -258,6 +258,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/104-stage106-madmin-encrypted-write-alignment.md`
 - `docs/105-stage107-tier-lab-matrix.md`
 - `docs/106-stage108-batch-job-lab-matrix.md`
+- `docs/107-stage109-site-replication-lab-matrix.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

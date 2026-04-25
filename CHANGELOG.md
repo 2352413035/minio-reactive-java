@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 109 site replication 多站点 lab 矩阵补证
+
+- 修正 site replication add 模板：请求体对齐 madmin-go 的 `PeerSite[]` 数组，字段名使用 `endpoints`，不再使用旧式 `{"sites": [...]}` 包装。
+- 修正 site replication remove 模板：独立 lab 最小恢复体使用 `{"all": true}`，用于清理本次多站点拓扑。
+- `DestructiveAdminIntegrationTest` 的 site replication 矩阵扩展为 typed add + typed info/status/metainfo + raw remove + raw add + finally typed remove。
+- JDK8/JDK17+ 均在双容器 Docker lab 中通过 site replication typed/raw add/remove 恢复矩阵，并确认没有 lab 容器残留。
+- site replication 仍是高风险 Admin 操作，不能在共享环境执行；`destructive-blocked` 风险分类口径不在本阶段清零。
+
 ## 阶段 108 batch job 独立 lab 矩阵补证
 
 - 新增 `AdminBatchJobStartResult`，强类型解析 `start-job` 返回的 `jobId`、类型、用户和启动时间。

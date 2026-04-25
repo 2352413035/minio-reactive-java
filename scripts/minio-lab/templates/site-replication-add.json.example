@@ -1,10 +1,14 @@
-{
-  "sites": [
-    {
-      "name": "lab-peer-a",
-      "endpoint": "https://lab-peer-a.example.invalid",
-      "accessKey": "<仅本机私有>",
-      "secretKey": "<仅本机私有>"
-    }
-  ]
-}
+[
+  {
+    "name": "lab-site-a",
+    "endpoints": "http://lab-site-a-minio:9000",
+    "accessKey": "<仅本机私有-site-a>",
+    "secretKey": "<仅本机私有-site-a>"
+  },
+  {
+    "name": "lab-site-b",
+    "endpoints": "http://lab-site-b-minio:9000",
+    "accessKey": "<仅本机私有-site-b>",
+    "secretKey": "<仅本机私有-site-b>"
+  }
+]
