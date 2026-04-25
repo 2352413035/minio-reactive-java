@@ -42,9 +42,14 @@ import io.minio.reactive.signer.S3RequestSigner;
 import io.minio.reactive.util.S3Escaper;
 import io.minio.reactive.util.S3Xml;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -58,6 +63,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * 响应式 MinIO 客户端入口。
@@ -257,6 +263,46 @@ public final class ReactiveMinioClient {
     return getObjectAsString(bucket, object, StandardCharsets.UTF_8);
   }
 
+  /**
+   * 下载对象到本地文件，默认不覆盖已有文件。
+   *
+   * <p>这里对齐 minio-java 的 `downloadObject` 语义：先 HEAD 取对象长度/ETag，
+   * 再 GET 对象内容，写入同目录临时文件并校验长度，最后原子移动到目标文件。
+   */
+  public Mono<Void> downloadObject(String bucket, String object, Path filename) {
+    return downloadObject(bucket, object, filename, false);
+  }
+
+  /** 下载对象到本地文件，可显式控制是否覆盖已有目标文件。 */
+  public Mono<Void> downloadObject(String bucket, String object, Path filename, boolean overwrite) {
+    final Path target = requireFilePath(filename, "filename");
+    if (!overwrite && Files.exists(target)) {
+      throw new IllegalArgumentException("下载目标文件已存在: " + target);
+    }
+    return Mono.zip(statObject(bucket, object), getObjectAsBytes(bucket, object))
+        .flatMap(
+            tuple ->
+                Mono.<Void>fromRunnable(
+                        () ->
+                            writeDownloadedObject(
+                                target,
+                                overwrite,
+                                contentLength(tuple.getT1()),
+                                firstHeader(tuple.getT1(), "ETag"),
+                                tuple.getT2()))
+                    .subscribeOn(Schedulers.boundedElastic()));
+  }
+
+  /** 使用字符串文件名下载对象，便于从 minio-java 迁移。 */
+  public Mono<Void> downloadObject(String bucket, String object, String filename) {
+    return downloadObject(bucket, object, filename, false);
+  }
+
+  /** 使用字符串文件名下载对象，并可显式覆盖已有文件。 */
+  public Mono<Void> downloadObject(String bucket, String object, String filename, boolean overwrite) {
+    return downloadObject(bucket, object, requireFilePath(filename, "filename"), overwrite);
+  }
+
   public Mono<Void> putObject(String bucket, String object, byte[] content, String contentType) {
     byte[] actualContent = content == null ? new byte[0] : content;
     S3Request request =
@@ -276,6 +322,34 @@ public final class ReactiveMinioClient {
   public Mono<Void> putObject(
       String bucket, String object, Publisher<byte[]> content, String contentType) {
     return Flux.from(content).collectList().map(ReactiveMinioClient::concat).flatMap(bytes -> putObject(bucket, object, bytes, contentType));
+  }
+
+  /** 上传本地文件，对齐 minio-java 的 `uploadObject` 方法名。 */
+  public Mono<Void> uploadObject(String bucket, String object, Path filename) {
+    return uploadObject(bucket, object, filename, null);
+  }
+
+  /**
+   * 上传本地文件。
+   *
+   * <p>当前底层 `putObject` 仍以 byte[] 作为请求体，所以这里先在 boundedElastic 线程读取文件。
+   * 后续补齐分片/大文件能力时，此方法会继续保留同名入口并升级内部传输方式。
+   */
+  public Mono<Void> uploadObject(String bucket, String object, Path filename, String contentType) {
+    final Path source = requireFilePath(filename, "filename");
+    return Mono.fromCallable(() -> readRegularFile(source))
+        .subscribeOn(Schedulers.boundedElastic())
+        .flatMap(bytes -> putObject(bucket, object, bytes, effectiveContentType(source, contentType)));
+  }
+
+  /** 使用字符串文件名上传本地文件，便于从 minio-java 迁移。 */
+  public Mono<Void> uploadObject(String bucket, String object, String filename) {
+    return uploadObject(bucket, object, requireFilePath(filename, "filename"), null);
+  }
+
+  /** 使用字符串文件名和显式 contentType 上传本地文件。 */
+  public Mono<Void> uploadObject(String bucket, String object, String filename, String contentType) {
+    return uploadObject(bucket, object, requireFilePath(filename, "filename"), contentType);
   }
 
   public Mono<Map<String, List<String>>> copyObject(
@@ -1027,6 +1101,94 @@ public final class ReactiveMinioClient {
       }
     }
     return "";
+  }
+
+  private static Path requireFilePath(String filename, String fieldName) {
+    if (filename == null || filename.trim().isEmpty()) {
+      throw new IllegalArgumentException(fieldName + " 不能为空");
+    }
+    return requireFilePath(Paths.get(filename), fieldName);
+  }
+
+  private static Path requireFilePath(Path path, String fieldName) {
+    if (path == null) {
+      throw new IllegalArgumentException(fieldName + " 不能为空");
+    }
+    return path.toAbsolutePath().normalize();
+  }
+
+  private static byte[] readRegularFile(Path source) {
+    if (!Files.isRegularFile(source)) {
+      throw new IllegalArgumentException("上传对象文件不存在或不是普通文件: " + source);
+    }
+    try {
+      return Files.readAllBytes(source);
+    } catch (IOException e) {
+      throw new IllegalStateException("读取上传对象文件失败: " + source, e);
+    }
+  }
+
+  private static String effectiveContentType(Path source, String contentType) {
+    if (contentType != null && !contentType.trim().isEmpty()) {
+      return contentType;
+    }
+    try {
+      String detected = Files.probeContentType(source);
+      if (detected != null && !detected.trim().isEmpty()) {
+        return detected;
+      }
+    } catch (IOException e) {
+      throw new IllegalStateException("探测上传对象 contentType 失败: " + source, e);
+    }
+    return "application/octet-stream";
+  }
+
+  private static long contentLength(Map<String, List<String>> headers) {
+    String value = firstHeader(headers, "Content-Length");
+    if (value == null || value.trim().isEmpty()) {
+      return -1L;
+    }
+    try {
+      return Long.parseLong(value.trim());
+    } catch (NumberFormatException e) {
+      throw new IllegalStateException("对象 Content-Length 不是合法数字: " + value, e);
+    }
+  }
+
+  private static void writeDownloadedObject(
+      Path target, boolean overwrite, long expectedLength, String etag, byte[] bytes) {
+    byte[] actualBytes = bytes == null ? new byte[0] : bytes;
+    if (expectedLength >= 0 && expectedLength != actualBytes.length) {
+      throw new IllegalStateException(
+          "下载对象长度校验失败: 期望 " + expectedLength + " 字节，实际 " + actualBytes.length + " 字节");
+    }
+    try {
+      Path parent = target.getParent();
+      if (parent != null) {
+        Files.createDirectories(parent);
+      }
+      if (!overwrite && Files.exists(target)) {
+        throw new IllegalArgumentException("下载目标文件已存在: " + target);
+      }
+      Path temp = temporaryDownloadPath(target, etag);
+      Files.deleteIfExists(temp);
+      Files.write(temp, actualBytes);
+      if (overwrite) {
+        Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
+      } else {
+        Files.move(temp, target);
+      }
+    } catch (IOException e) {
+      throw new IllegalStateException("写入下载对象文件失败: " + target, e);
+    }
+  }
+
+  private static Path temporaryDownloadPath(Path target, String etag) {
+    String token = etag == null || etag.trim().isEmpty() ? "no-etag" : etag.trim();
+    token = token.replace("\"", "").replaceAll("[^A-Za-z0-9._-]", "_");
+    String tempName = target.getFileName().toString() + "." + token + ".part.minio";
+    Path parent = target.getParent();
+    return parent == null ? Paths.get(tempName).toAbsolutePath().normalize() : parent.resolve(tempName);
   }
 
   private static String md5Base64(byte[] bytes) {

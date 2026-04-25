@@ -82,6 +82,8 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeRepresentativeCatalogMethodsOnSpecializedClients() {
     assertMonoMethodExists(ReactiveMinioClient.class, "s3ListBuckets");
     assertMonoMethodExists(ReactiveMinioClient.class, "s3GetObject");
+    assertMonoMethodExists(ReactiveMinioClient.class, "downloadObject");
+    assertMonoMethodExists(ReactiveMinioClient.class, "uploadObject");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "serverInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "addUser");
     assertMonoMethodExists(ReactiveMinioKmsClient.class, "keyStatus");
@@ -165,6 +167,65 @@ class ReactiveMinioSpecializedClientsTest {
 
     Assertions.assertEquals(Boolean.FALSE, client.isReady().block());
     Assertions.assertEquals(503, client.checkReadiness().block().statusCode());
+  }
+
+  @Test
+  void shouldUploadAndDownloadObjectFilesLikeMinioJava() throws Exception {
+    java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("reactive-minio-file-api-");
+    java.nio.file.Path uploadFile = tempDir.resolve("upload.txt");
+    java.nio.file.Path downloadFile = tempDir.resolve("nested").resolve("download.txt");
+    java.nio.file.Files.write(
+        uploadFile, "中文上传内容".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    final String downloadedText = "中文下载内容";
+    final byte[] downloadedBytes = downloadedText.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    java.util.List<org.springframework.http.HttpMethod> methods =
+        new java.util.ArrayList<org.springframework.http.HttpMethod>();
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  methods.add(request.method());
+                  paths.add(request.url().getPath());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  if (request.method().equals(org.springframework.http.HttpMethod.HEAD)) {
+                    return Mono.just(
+                        ClientResponse.create(HttpStatus.OK)
+                            .header("Content-Length", Integer.toString(downloadedBytes.length))
+                            .header("ETag", "\"file-etag\"")
+                            .build());
+                  }
+                  if (request.method().equals(org.springframework.http.HttpMethod.GET)) {
+                    return Mono.just(ClientResponse.create(HttpStatus.OK).body(downloadedText).build());
+                  }
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    client.uploadObject("bucket1", "from-file.txt", uploadFile, "text/plain").block();
+    client.downloadObject("bucket1", "to-file.txt", downloadFile).block();
+
+    Assertions.assertEquals(
+        downloadedText,
+        new String(
+            java.nio.file.Files.readAllBytes(downloadFile), java.nio.charset.StandardCharsets.UTF_8));
+    Assertions.assertTrue(methods.contains(org.springframework.http.HttpMethod.PUT));
+    Assertions.assertTrue(methods.contains(org.springframework.http.HttpMethod.HEAD));
+    Assertions.assertTrue(methods.contains(org.springframework.http.HttpMethod.GET));
+    Assertions.assertTrue(paths.contains("/bucket1/from-file.txt"));
+    Assertions.assertTrue(paths.contains("/bucket1/to-file.txt"));
+    Assertions.assertTrue(contentTypes.contains("text/plain"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> client.downloadObject("bucket1", "to-file.txt", downloadFile));
   }
 
 

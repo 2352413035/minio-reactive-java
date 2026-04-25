@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 86 minio-java 文件上传下载同名入口
+
+- `ReactiveMinioClient` 新增 `downloadObject` / `uploadObject` 的 Path 与字符串文件名重载，默认语义对齐 minio-java：下载先 HEAD 再 GET、校验长度、写临时文件后移动，且默认不覆盖已有目标文件。
+- 上传本地文件时会在 `boundedElastic` 线程读取普通文件，并在未显式传入 contentType 时尝试探测文件类型。
+- 新增 `docs/84-stage86-upload-download-parity.md`，记录同名入口、minio-java 对齐点和剩余对象 API 缺口。
+- 重新生成 minio-java 对标报告后，对象存储核心 API 精确同名从 51 / 59 提升到 53 / 59，剩余缺口为 `appendObject`、`composeObject`、`getPresignedPostFormData`、`promptObject`、`putObjectFanOut`、`uploadSnowballObjects`。
+
 ## 阶段 85 minio-java 主对标基线重建
 
 - 新增 `scripts/report-minio-java-parity.py`，从同目录 `minio-java` 生成对象存储、Admin、`*Args`、credentials provider 对标报告。
