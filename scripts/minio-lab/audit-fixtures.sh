@@ -115,6 +115,8 @@ printf -- '- IDP config add：%s\n' "$(body_presence MINIO_LAB_ADD_IDP_CONFIG_BO
 printf -- '- IDP config update：%s（可选；没有 update 请求体时只执行 add/delete 闭环）\n' "$(body_presence MINIO_LAB_UPDATE_IDP_CONFIG_BODY MINIO_LAB_UPDATE_IDP_CONFIG_BODY_FILE)"
 printf -- '- speedtest bounded probes：开关 `%s`；object size `%s`；duration `%s` 秒；concurrency `%s`\n' "${MINIO_LAB_ENABLE_SPEEDTEST_PROBES:-false}" "${MINIO_LAB_SPEEDTEST_OBJECT_SIZE:-未设置}" "${MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS:-未设置}" "${MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY:-未设置}"
 printf -- '- drive speedtest bounded probe：开关 `%s`；block size `%s`；file size `%s`\n' "${MINIO_LAB_ENABLE_DRIVE_SPEEDTEST_PROBE:-false}" "${MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE:-未设置}" "${MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE:-未设置}"
+printf -- '- net speedtest probe：开关 `%s`；duration `%s` 秒；预期失败 `%s`；关键字 `%s`\n' "${MINIO_LAB_ENABLE_NET_SPEEDTEST_PROBE:-false}" "${MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS:-未设置}" "${MINIO_LAB_EXPECT_NET_SPEEDTEST_FAILURE:-false}" "$(presence "${MINIO_LAB_NET_SPEEDTEST_EXPECTED_ERROR:-}")"
+printf -- '- site speedtest probe：开关 `%s`；duration `%s` 秒；预期失败 `%s`；关键字 `%s`\n' "${MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE:-false}" "${MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS:-未设置}" "${MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE:-false}" "$(presence "${MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR:-}")"
 printf -- '- remote target 删除 ARN：%s（set 响应可解析 ARN 时可不预填）\n' "$(presence "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}")"
 
 printf '\n矩阵准备度\n'
@@ -220,6 +222,36 @@ if [[ -z "$drive_speedtest_missing" ]]; then
   print_row 'drive speedtest bounded typed/raw 探测' '可执行' '独立 lab + 显式 drive speedtest 开关 + 小 blocksize/filesize' '不在共享环境执行；仅代表本次独立 lab 磁盘窗口' '无需额外模板'
 else
   print_row 'drive speedtest bounded typed/raw 探测' "未就绪：$drive_speedtest_missing" '独立 lab + 显式 drive speedtest 开关 + 小 blocksize/filesize' '不在共享环境执行；失败不降低边界' '无需额外模板'
+fi
+
+net_speedtest_missing=""
+is_true "${MINIO_LAB_ENABLE_NET_SPEEDTEST_PROBE:-false}" || append_missing net_speedtest_missing '缺 MINIO_LAB_ENABLE_NET_SPEEDTEST_PROBE=true'
+[[ "${MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS:-0}" =~ ^[0-9]+$ ]] || append_missing net_speedtest_missing 'MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS 必须是数字'
+if [[ "${MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS:-0}" =~ ^[0-9]+$ && "${MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS:-0}" -le 0 ]]; then
+  append_missing net_speedtest_missing 'MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS 必须大于 0'
+fi
+if [[ "${MINIO_LAB_EXPECT_NET_SPEEDTEST_FAILURE:-false}" == "true" && -z "${MINIO_LAB_NET_SPEEDTEST_EXPECTED_ERROR:-}" ]]; then
+  append_missing net_speedtest_missing 'MINIO_LAB_EXPECT_NET_SPEEDTEST_FAILURE=true 时建议设置 MINIO_LAB_NET_SPEEDTEST_EXPECTED_ERROR'
+fi
+if [[ -z "$net_speedtest_missing" ]]; then
+  print_row 'net speedtest typed/raw 探测' '可执行' '独立 lab + net 开关 + duration>0；可选预期失败关键字' '预期失败模式下不降低边界，仅记录服务端前置条件证据' '无需额外模板'
+else
+  print_row 'net speedtest typed/raw 探测' "未就绪：$net_speedtest_missing" '独立 lab + net 开关 + duration>0；可选预期失败关键字' '预期失败模式下不降低边界，仅记录服务端前置条件证据' '无需额外模板'
+fi
+
+site_speedtest_missing=""
+is_true "${MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE:-false}" || append_missing site_speedtest_missing '缺 MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE=true'
+[[ "${MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS:-0}" =~ ^[0-9]+$ ]] || append_missing site_speedtest_missing 'MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS 必须是数字'
+if [[ "${MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS:-0}" =~ ^[0-9]+$ && "${MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS:-0}" -le 0 ]]; then
+  append_missing site_speedtest_missing 'MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS 必须大于 0'
+fi
+if [[ "${MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE:-false}" == "true" && -z "${MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR:-}" ]]; then
+  append_missing site_speedtest_missing 'MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE=true 时建议设置 MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR'
+fi
+if [[ -z "$site_speedtest_missing" ]]; then
+  print_row 'site speedtest typed/raw 探测' '可执行' '独立 lab + site 开关 + duration>0；通常还需要 site replication 拓扑' '预期失败模式下不降低边界，仅记录拓扑前置条件证据' '无需额外模板'
+else
+  print_row 'site speedtest typed/raw 探测' "未就绪：$site_speedtest_missing" '独立 lab + site 开关 + duration>0；通常还需要 site replication 拓扑' '预期失败模式下不降低边界，仅记录拓扑前置条件证据' '无需额外模板'
 fi
 
 if is_true "${MINIO_LAB_ENABLE_BATCH_JOB_PROBES:-false}"; then
