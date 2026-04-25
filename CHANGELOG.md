@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 107 tier 独立 lab 写入恢复补证
+
+- 修正 tier MinIO 请求体模板：tier 名称必须大写，bucket 保持小写，endpoint 必须从源 MinIO 服务端进程视角填写可访问 URL。
+- JDK8/JDK17+ 均在双容器 Docker lab 中通过 tier add/remove typed/raw 写入恢复矩阵。
+- raw 路径继续显式传入 madmin 加密 body，专用 Admin 客户端继续自动加密。
+- tier edit、batch job、site replication 仍待私有夹具和真实恢复证据；`destructive-blocked` 仍为 `29`。
+
 ## 阶段 106 高风险 Admin 写入加密语义对齐
 
 - `ReactiveMinioAdminClient` 的 tier add/edit、remote target set、site replication add/edit 现在按 MinIO madmin 语义自动加密请求体，并使用 `application/octet-stream` 发送。
