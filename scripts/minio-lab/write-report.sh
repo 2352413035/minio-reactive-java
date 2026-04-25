@@ -117,7 +117,7 @@ write_minio_lab_report() {
   local step_file
   step_file="$(minio_lab_step_file)"
 
-  local config_enabled full_config_enabled quota_enabled remote_enabled replication_diff_enabled speedtest_enabled drive_speedtest_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled
+  local config_enabled full_config_enabled quota_enabled remote_enabled replication_diff_enabled speedtest_enabled drive_speedtest_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled idp_write_enabled
   config_enabled="false"
   full_config_enabled="false"
   quota_enabled="false"
@@ -131,6 +131,7 @@ write_minio_lab_report() {
   remote_write_enabled="false"
   batch_write_enabled="false"
   site_write_enabled="false"
+  idp_write_enabled="false"
 
   if [[ -n "${MINIO_LAB_TEST_CONFIG_KV:-}" && -n "${MINIO_LAB_RESTORE_CONFIG_KV:-}" ]]; then
     config_enabled="true"
@@ -182,6 +183,11 @@ write_minio_lab_report() {
     && "${MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST:-}" == "true" ]]; then
     site_write_enabled="true"
   fi
+  if [[ "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-}" == "true" \
+    && ( -n "${MINIO_LAB_ADD_IDP_CONFIG_BODY:-}" || -n "${MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE:-}" ) \
+    && "${MINIO_LAB_DELETE_IDP_AFTER_TEST:-}" == "true" ]]; then
+    idp_write_enabled="true"
+  fi
 
   {
     printf '# MinIO 破坏性实验环境执行报告\n\n'
@@ -208,6 +214,7 @@ write_minio_lab_report() {
     minio_lab_fixture_enabled 'remote target set/remove 写入 + 恢复' "$remote_write_enabled"
     minio_lab_fixture_enabled 'batch job start/status/cancel 实验矩阵' "$batch_write_enabled"
     minio_lab_fixture_enabled 'site replication add/edit/remove 实验矩阵' "$site_write_enabled"
+    minio_lab_fixture_enabled 'IDP 配置 add/update/delete 实验矩阵' "$idp_write_enabled"
     printf '\n'
 
     printf '## 夹具指纹（不含凭证）\n\n'
@@ -232,6 +239,8 @@ write_minio_lab_report() {
     printf -- '- site replication add 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_ADD_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE:-}")"
     printf -- '- site replication edit 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_EDIT_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE:-}")"
     printf -- '- site replication remove 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE:-}")"
+    printf -- '- IDP 类型：`%s`；名称：`%s`；配置变更后重启：`%s`\n' "${MINIO_LAB_IDP_TYPE:-openid}" "${MINIO_LAB_IDP_NAME:-_}" "${MINIO_LAB_RESTART_IDP_AFTER_CONFIG_CHANGE:-false}"
+    printf -- '- IDP add 请求体：%s；update 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_ADD_IDP_CONFIG_BODY:-}" "${MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE:-}")" "$(minio_lab_bool_any "${MINIO_LAB_UPDATE_IDP_CONFIG_BODY:-}" "${MINIO_LAB_UPDATE_IDP_CONFIG_BODY_FILE:-}")"
     printf -- '- full config 原样写回开关：`%s`\n' "${MINIO_LAB_ALLOW_FULL_CONFIG_WRITE:-false}"
     printf -- '- 写入夹具总开关：`%s`\n' "${MINIO_LAB_ALLOW_WRITE_FIXTURES:-false}"
     printf -- '- batch job 预期 ID：%s\n\n' "$(minio_lab_bool "${MINIO_LAB_BATCH_EXPECTED_JOB_ID:-}")"
@@ -252,8 +261,9 @@ write_minio_lab_report() {
     printf '5. 如果 remote target 写入夹具失败，优先使用 set 响应返回的 ARN 删除刚写入的 target；响应不可解析时再使用 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` 兜底。\n'
     printf '6. 如果 batch job 实验矩阵失败，优先使用 start 响应中的 jobId 执行 `cancelBatchJob(jobId)` 或 `ADMIN_CANCEL_BATCH_JOB?id=<jobId>`；旧式 cancel 请求体仅作人工排错参考。\n'
     printf '7. 如果 site replication 实验矩阵失败，优先使用 `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY` 或对应文件移除刚新增的站点复制配置。\n'
-    printf '8. 如果 remote target、tier、batch job、replication diff 或 speedtest 探测失败，先查看 MinIO 管理日志，再确认 bucket、复制规则、远端 target 和资源参数是否属于本次 lab。\n'
-    printf '9. 不要把本报告复制到仓库；报告可能包含 lab 端点和资源名称，但不会包含凭证。\n'
+    printf '8. 如果 IDP 配置实验矩阵失败，先确认 OIDC discovery/JWKS 可从 MinIO 容器访问；add/update/delete 后通常要重启独立 lab 才能刷新身份源索引。\n'
+    printf '9. 如果 remote target、tier、batch job、replication diff 或 speedtest 探测失败，先查看 MinIO 管理日志，再确认 bucket、复制规则、远端 target 和资源参数是否属于本次 lab。\n'
+    printf '10. 不要把本报告复制到仓库；报告可能包含 lab 端点和资源名称，但不会包含凭证。\n'
   } > "$report_file"
 
   printf 'MinIO 破坏性实验环境报告已生成：%s\n' "$report_file"

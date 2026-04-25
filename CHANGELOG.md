@@ -1,8 +1,13 @@
 # 变更日志
 
+## 阶段 123 IDP 配置独立 lab 补证
+
+- 新增 `scripts/minio-lab/run-idp-config-lab.sh`，自动启动一次性 Docker MinIO 与临时 OIDC discovery/JWKS 夹具。
+- `DestructiveAdminIntegrationTest` 支持 IDP 配置变更后的 Docker lab 重启，按 MinIO 非动态身份源配置语义验证 add/update/delete。
+- `ADMIN_ADD_IDP_CONFIG`、`ADMIN_UPDATE_IDP_CONFIG`、`ADMIN_DELETE_IDP_CONFIG` 从“拓扑或身份提供方”移动到“已有独立 lab 证据”；破坏性 Admin 剩余证据从 13 降到 10。
+- JDK8/JDK17 均保留 typed/raw 步骤级报告；真实凭证和 dummy IDP 配置只存在于 `/tmp` lab 目录。
+
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
-
-
 
 ## 阶段 122 replication diff 双 MinIO 拓扑补证
 

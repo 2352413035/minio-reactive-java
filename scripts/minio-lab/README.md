@@ -255,3 +255,17 @@ target/minio-lab-reports/destructive-lab-<UTC时间>.md
 阶段 43 起，`run-destructive-tests.sh` 会为每次执行生成 typed/raw 步骤状态文件，并在报告中渲染“哪个专用客户端步骤通过、哪个 raw 兜底步骤通过或失败”。步骤文件只记录范围、步骤名、PASS/FAIL 和异常类型，不记录请求体、凭证、token 或签名。
 
 如果系统安装了 `mc`，报告还会给出只读恢复核验提示。推荐在本机预先配置一个只指向独立 lab 的 alias，并通过 `MINIO_LAB_MC_ALIAS` 提供 alias 名称；不要把 `mc alias set` 命令或任何凭证写入仓库。
+
+### IDP 配置 add/update/delete lab
+
+IDP 配置是非动态身份源配置，MinIO 在 add/update/delete 成功后通常需要重启才能刷新内存索引。推荐直接使用：
+
+```bash
+MINIO_LAB_DOCKER_NAME=minio-reactive-idp-config-lab \
+MINIO_LAB_DOCKER_API_PORT=19340 \
+MINIO_LAB_DOCKER_CONSOLE_PORT=19341 \
+MINIO_LAB_OIDC_PORT=19580 \
+scripts/minio-lab/run-idp-config-lab.sh
+```
+
+脚本会生成 `/tmp` 私有 OpenID discovery/JWKS 夹具和 IDP add/update 请求体，并设置 `MINIO_LAB_RESTART_IDP_AFTER_CONFIG_CHANGE=true`。如果 MinIO 容器无法访问自动选择的 OIDC 主机地址，可设置 `MINIO_LAB_OIDC_HOST=<容器可访问的主机地址>`。
