@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 85 minio-java 主对标基线重建
+
+- 新增 `scripts/report-minio-java-parity.py`，从同目录 `minio-java` 生成对象存储、Admin、`*Args`、credentials provider 对标报告。
+- `ReactiveMinioClient` 补充 minio-java 同名包装方法，当前对象存储核心 API 从 41 个精确同名提升到 51 个，剩余 8 个明确缺口。
+- 新增 `docs/83-stage85-minio-java-rebaseline.md`，明确 `minio-java` 是 SDK 主对标，服务端 `minio` 只作为协议真相来源。
+- 本阶段不降低 Crypto/lab/release 外部门禁；后续转向 `*Args`、缺失对象 API、credentials provider 与 Admin Crypto 自动解密。
+
 ## 阶段 84 Crypto Gate 解释与 Docker 独立 lab 证据
 
 - 新增 `docs/82-stage84-crypto-gate-docker-lab.md`，把 Crypto Gate 涉及接口、MinIO madmin 加密处理、解密条件和“不是一定可解密”的边界说明清楚。

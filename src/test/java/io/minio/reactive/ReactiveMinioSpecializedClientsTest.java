@@ -113,7 +113,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 129, 60, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 130, 60, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 203, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
@@ -1775,6 +1775,9 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioClient.class, "setObjectRetention");
     assertMonoMethodExists(ReactiveMinioClient.class, "getObjectLegalHold");
     assertMonoMethodExists(ReactiveMinioClient.class, "setObjectLegalHold");
+    assertMonoMethodExists(ReactiveMinioClient.class, "enableObjectLegalHold");
+    assertMonoMethodExists(ReactiveMinioClient.class, "disableObjectLegalHold");
+    assertMonoMethodExists(ReactiveMinioClient.class, "isObjectLegalHoldEnabled");
     assertMonoMethodExists(ReactiveMinioClient.class, "restoreObject");
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectAttributes");
     assertDeprecatedMethodExists(ReactiveMinioClient.class, "s3GetObjectRetention");
@@ -1840,6 +1843,12 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketCorsConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "setBucketCorsConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "deleteBucketCorsConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getBucketCors");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setBucketCors");
+    assertMonoMethodExists(ReactiveMinioClient.class, "deleteBucketCors");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getObjectLockConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "setObjectLockConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "deleteObjectLockConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketWebsiteConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "deleteBucketWebsiteConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketLoggingConfiguration");
@@ -1875,6 +1884,7 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeS3NotificationAndReplicationMetricsMethods() {
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketNotificationConfiguration");
     assertMonoMethodExists(ReactiveMinioClient.class, "setBucketNotificationConfiguration");
+    assertMonoMethodExists(ReactiveMinioClient.class, "deleteBucketNotification");
     assertFluxMethodExists(ReactiveMinioClient.class, "listenBucketNotification");
     assertFluxMethodExists(ReactiveMinioClient.class, "listenRootNotification");
     assertMonoMethodExists(ReactiveMinioClient.class, "getBucketReplicationMetrics");

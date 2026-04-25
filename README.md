@@ -61,6 +61,12 @@ minio.content=你好，来自 reactive minio sdk
 
 这些能力已经通过 JDK8 单元测试以及真实 MinIO 集成测试进行了验证。
 
+## 主对标口径
+
+阶段 85 起，本项目的 SDK 主对标项目明确为同目录 `minio-java`：对象存储 API、Admin API、`*Args` builder、credentials provider、Admin Crypto 和用户体验优先参考官方 Java SDK。`minio` 服务端源码仍用于确认真实 HTTP 路由和 MinIO 扩展协议，但不能再用服务端 route catalog 覆盖替代 Java SDK 对标完成度。
+
+当前可用 `scripts/report-minio-java-parity.py` 生成机器报告。阶段 85 报告显示：对象存储核心 API 59 个中 51 个已经精确同名，剩余 8 个缺失；Admin API 暂无完全缺失项，但还有 8 个别名或部分覆盖项；`*Args` 和 credentials provider 体系仍是后续重点。
+
 ## 当前完成度口径
 
 阶段 19 之后，项目不再用单一百分比宣称“完成 MinIO”。当前使用四个口径说明进度：
@@ -228,6 +234,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/80-stage82-mc-readonly-evidence-refresh.md`
 - `docs/81-stage83-final-boundary.md`
 - `docs/82-stage84-crypto-gate-docker-lab.md`
+- `docs/83-stage85-minio-java-rebaseline.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`
@@ -235,3 +242,4 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `scripts/report-route-parity.py`
 - `scripts/report-capability-matrix.py`
 - `scripts/report-pom-release-metadata.py`
+- `scripts/report-minio-java-parity.py`
