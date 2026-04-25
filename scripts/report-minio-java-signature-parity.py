@@ -66,6 +66,12 @@ ADMIN_METHOD_EXCLUDES = set(
 
 INTENTIONAL_REACTIVE_BOUNDARY_TYPES = ["OkHttpClient", "HttpUrl", "Response", "Request"]
 
+# 这些 Args 在 minio-java 中是公开类，但在响应式 SDK 中被保留为内部组合边界。
+# 用户应优先使用更高层的 Args；报告需要把它们从“未解释缺口”中排除。
+INTENTIONAL_ARG_BOUNDARIES = {
+    "PutObjectAPIArgs": "响应式 SDK 通过 PutObjectArgs、UploadObjectArgs、AppendObjectArgs 和 UploadSnowballObjectsArgs 暴露上传入口；PutObjectAPIArgs 只保留为内部上传参数边界。"
+}
+
 
 def read_text(path):
     try:
@@ -292,13 +298,24 @@ def args_report(minio_java_root, worktree):
     for ref_file in sorted((Path(minio_java_root) / "api/src/main/java/io/minio").glob("*Args.java")):
         name = ref_file.stem
         actual = args_path(worktree, name)
+        minio_entries = entry_methods(ref_file)
+        reactive_entries = entry_methods(actual) if actual else []
+        status = "缺失"
+        rationale = None
+        if actual:
+            if name in INTENTIONAL_ARG_BOUNDARIES and minio_entries and not reactive_entries:
+                status = "响应式内部边界"
+                rationale = INTENTIONAL_ARG_BOUNDARIES[name]
+            else:
+                status = "存在"
         result.append(
             {
                 "name": name,
                 "reactivePath": str(actual) if actual else None,
-                "minioJavaEntryMethods": entry_methods(ref_file),
-                "reactiveEntryMethods": entry_methods(actual) if actual else [],
-                "status": "存在" if actual else "缺失",
+                "minioJavaEntryMethods": minio_entries,
+                "reactiveEntryMethods": reactive_entries,
+                "status": status,
+                "rationale": rationale,
             }
         )
     return result
@@ -401,7 +418,8 @@ def markdown(report):
     lines.append("")
     lines.append("## Args builder 入口")
     lines.append("")
-    missing_args = [item for item in report["args"] if item["status"] != "存在"]
+    missing_args = [item for item in report["args"] if item["status"] == "缺失"]
+    intentional_args = [item for item in report["args"] if item["status"] == "响应式内部边界"]
     no_entries = [
         item
         for item in report["args"]
@@ -409,6 +427,13 @@ def markdown(report):
     ]
     lines.append("- Args 类缺失：%s" % ("无" if not missing_args else "、".join("`%s`" % item["name"] for item in missing_args)))
     lines.append("- 已存在但未扫描到 `builder/of/create` 入口的 Args：%s" % ("无" if not no_entries else "、".join("`%s`" % item["name"] for item in no_entries)))
+    lines.append("- 响应式 SDK 有意保留为内部边界的 Args：%s" % ("无" if not intentional_args else "、".join("`%s`" % item["name"] for item in intentional_args)))
+    if intentional_args:
+        lines.append("")
+        lines.append("### Args 内部边界说明")
+        lines.append("")
+        for item in intentional_args:
+            lines.append("- `%s`：%s" % (item["name"], item.get("rationale") or "已记录为响应式内部边界。"))
     lines.append("")
     lines.append("## 结论")
     lines.append("")
