@@ -56,6 +56,7 @@
 - `raw-fallback`
 - `encrypted-blocked`
 - `destructive-blocked`
+- `scripts/report-destructive-boundary.py` 生成的破坏性边界分类报告
 
 ## 5. 文档门禁
 
@@ -178,6 +179,8 @@
 阶段 80 起，发布负责人还应运行 `scripts/report-pom-release-metadata.py` 生成 POM 发布元数据报告。该报告为预检报告，只能说明哪些字段或插件缺失，不代表 Maven 发布已经放行。许可证、SCM、developers、distributionManagement、签名和 SBOM 策略必须由负责人确认后才能写入 POM。
 
 ## 阶段 113 当前发布状态
+
+阶段 114 起，发布复审还必须运行 `scripts/report-destructive-boundary.py`，用机器报告解释 `destructive-blocked` 的每一项分类。
 
 阶段 113 后，当前发布候选状态更新为：
 
