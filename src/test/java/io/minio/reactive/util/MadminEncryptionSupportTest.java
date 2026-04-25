@@ -40,9 +40,9 @@ class MadminEncryptionSupportTest {
     Assertions.assertEquals(MadminEncryptionAlgorithm.ARGON2ID_AES_GCM, response.algorithm());
     Assertions.assertEquals("Argon2id + AES-GCM", response.algorithmName());
     Assertions.assertEquals(41, response.encryptedSize());
-    Assertions.assertFalse(response.decryptSupported());
-    Assertions.assertTrue(response.requiresCryptoGate());
-    Assertions.assertTrue(response.diagnosticMessage().contains("Crypto Gate"));
+    Assertions.assertTrue(response.decryptSupported());
+    Assertions.assertFalse(response.requiresCryptoGate());
+    Assertions.assertTrue(response.diagnosticMessage().contains("当前支持"));
   }
 
   @Test
@@ -67,10 +67,9 @@ class MadminEncryptionSupportTest {
   }
 
   @Test
-  void shouldExposeOnlyPbkdf2AesGcmAsDecryptSupportedBeforeCryptoGatePass() {
-    Assertions.assertFalse(MadminEncryptionAlgorithm.ARGON2ID_AES_GCM.decryptSupported());
-    Assertions.assertFalse(
-        MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305.decryptSupported());
+  void shouldExposeAllKnownMadminAlgorithmsAsDecryptSupportedAfterCryptoGatePass() {
+    Assertions.assertTrue(MadminEncryptionAlgorithm.ARGON2ID_AES_GCM.decryptSupported());
+    Assertions.assertTrue(MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305.decryptSupported());
     Assertions.assertTrue(MadminEncryptionAlgorithm.PBKDF2_AES_GCM.decryptSupported());
   }
 
@@ -135,73 +134,73 @@ class MadminEncryptionSupportTest {
   }
 
   @Test
-  void shouldKeepDefaultArgon2idResponseAsEncryptedBoundaryWhenDecryptFails() {
+  void shouldDecryptDefaultArgon2idAesGcmResponseAfterCryptoGatePass() {
     byte[] fixture = readFixture("argon2id-aesgcm-go-default.base64");
     io.minio.reactive.messages.admin.EncryptedAdminResponse response =
         new io.minio.reactive.messages.admin.EncryptedAdminResponse(fixture);
 
-    IllegalArgumentException error =
-        Assertions.assertThrows(
-            IllegalArgumentException.class, () -> response.decryptAsUtf8("fixture-secret"));
-
     Assertions.assertTrue(response.isEncrypted());
-    Assertions.assertFalse(response.decryptSupported());
+    Assertions.assertTrue(response.decryptSupported());
     Assertions.assertTrue(response.requiresSecretKey());
-    Assertions.assertTrue(response.requiresCryptoGate());
-    Assertions.assertTrue(error.getMessage().contains("Argon2id + AES-GCM"));
-    Assertions.assertTrue(response.diagnosticMessage().contains("Crypto Gate"));
+    Assertions.assertFalse(response.requiresCryptoGate());
+    Assertions.assertEquals("madmin fixture payload", response.decryptAsUtf8("fixture-secret"));
+    Assertions.assertTrue(response.diagnosticMessage().contains("当前支持"));
   }
 
   @Test
-  void shouldDiagnoseUnsupportedDefaultArgon2idAesGcmFixture() {
+  void shouldDecryptDefaultArgon2idAesGcmFixture() {
     byte[] fixture = readFixture("argon2id-aesgcm-go-default.base64");
 
-    IllegalArgumentException error =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> MadminEncryptionSupport.decryptData("fixture-secret", fixture));
+    byte[] decrypted = MadminEncryptionSupport.decryptData("fixture-secret", fixture);
 
     Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(fixture));
     Assertions.assertEquals(
         MadminEncryptionAlgorithm.ARGON2ID_AES_GCM, MadminEncryptionSupport.algorithmOf(fixture));
-    Assertions.assertTrue(error.getMessage().contains("当前只支持 PBKDF2 AES-GCM"));
-    Assertions.assertTrue(error.getMessage().contains("Argon2id + AES-GCM"));
+    Assertions.assertEquals("madmin fixture payload", new String(decrypted, StandardCharsets.UTF_8));
   }
 
   @Test
-  void shouldDiagnoseUnsupportedArgon2idChaCha20Header() {
-    byte[] fixture = new byte[32 + 1 + 8 + 16];
-    fixture[32] = MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305.id();
+  void shouldRoundTripArgon2idChaCha20Payload() {
+    byte[] plain = "madmin chacha payload".getBytes(StandardCharsets.UTF_8);
 
-    IllegalArgumentException error =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> MadminEncryptionSupport.decryptData("fixture-secret", fixture));
+    byte[] fixture =
+        MadminEncryptionSupport.encryptData(
+            "fixture-secret", plain, MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305);
+    byte[] decrypted = MadminEncryptionSupport.decryptData("fixture-secret", fixture);
 
     Assertions.assertTrue(MadminEncryptionSupport.isEncrypted(fixture));
     Assertions.assertEquals(
         MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305,
         MadminEncryptionSupport.algorithmOf(fixture));
-    Assertions.assertTrue(error.getMessage().contains("ChaCha20-Poly1305"));
+    Assertions.assertArrayEquals(plain, decrypted);
+  }
+
+  @Test
+  void shouldDecryptForcedArgon2idChaChaGoFixture() {
+    byte[] fixture = readFixture("argon2id-chacha20-go-forced.base64");
+
+    byte[] decrypted = MadminEncryptionSupport.decryptData("fixture-secret", fixture);
+
+    Assertions.assertEquals(
+        MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305,
+        MadminEncryptionSupport.algorithmOf(fixture));
+    Assertions.assertEquals("madmin fixture payload", new String(decrypted, StandardCharsets.UTF_8));
   }
 
 
   @Test
-  void shouldDiagnoseUnsupportedDefaultArgon2idChaChaFixtureWhenPresent() {
+  void shouldDecryptDefaultArgon2idChaChaFixtureWhenPresent() {
     org.junit.jupiter.api.Assumptions.assumeTrue(
         fixtureExists("argon2id-chacha20-go-default.base64"),
         "当前仓库或外部 fixture 目录未提供 Argon2id + ChaCha20-Poly1305 fixture");
     byte[] fixture = readFixture("argon2id-chacha20-go-default.base64");
 
-    IllegalArgumentException error =
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> MadminEncryptionSupport.decryptData("fixture-secret", fixture));
+    byte[] decrypted = MadminEncryptionSupport.decryptData("fixture-secret", fixture);
 
     Assertions.assertEquals(
         MadminEncryptionAlgorithm.ARGON2ID_CHACHA20_POLY1305,
         MadminEncryptionSupport.algorithmOf(fixture));
-    Assertions.assertTrue(error.getMessage().contains("ChaCha20-Poly1305"));
+    Assertions.assertEquals("madmin fixture payload", new String(decrypted, StandardCharsets.UTF_8));
   }
 
 

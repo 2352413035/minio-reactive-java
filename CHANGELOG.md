@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 111 Crypto Gate Pass 与默认 madmin 解密放行
+
+- 对齐同目录 `minio-java` 的 adminapi crypto 方案，引入 `org.bouncycastle:bcprov-jdk18on:1.82`。
+- `MadminEncryptionSupport` 现在支持 Argon2id + AES-GCM、Argon2id + ChaCha20-Poly1305 与 PBKDF2 + AES-GCM 三类 madmin 载荷解密。
+- `EncryptedAdminResponse` 仍要求调用方显式提供对应账号的 `secretKey`；SDK 不保存、不猜测、不输出敏感明文。
+- `scripts/madmin-fixtures/check-crypto-gate.sh` 从 Fail 门禁升级为 Pass 门禁，校验状态文件、bcprov 依赖、源码 import 和 Go fixture 互操作。
+- capability matrix 中 Admin `encrypted-blocked` 降为 0；`destructive-blocked = 29` 不变，破坏性操作仍需独立 lab 或维护窗口。
+
 ## 阶段 110 破坏性 lab 缺口再审计与 tier edit 补证
 
 - 修正 tier edit 模板：按 madmin-go `TierCreds` 使用 `access` / `secret` 字段，不再使用旧式 `AccessKey` / `SecretKey`。

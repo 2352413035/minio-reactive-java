@@ -1,43 +1,40 @@
-# 16 加密边界图
+# Crypto 边界地图（阶段 111 后）
 
-阶段 32 复审后，结论仍然是 **Crypto Gate Fail（暂不引入新依赖）**。这不是功能遗漏，而是安全边界：在没有 owner、security reviewer、architect 三方批准前，SDK 不能引入 Argon2id / ChaCha20-Poly1305 依赖，也不能把 madmin 默认加密响应伪装成明文 typed 结果。
+阶段 111 已对齐同目录 `minio-java` 的 adminapi crypto 方案，引入 `org.bouncycastle:bcprov-jdk18on:1.82`，Crypto Gate 当前状态为 **Pass**。
 
-## 当前可支持
+这表示 SDK 已能解密 MinIO madmin 默认加密响应，但不表示 SDK 会自动保存或猜测用户凭证。所有解密仍必须由调用方显式传入对应账号的 `secretKey`。
 
-| 能力 | 状态 | 说明 |
+## 当前能力
+
+| 能力 | 当前状态 | 说明 |
 | --- | --- | --- |
-| 生成 PBKDF2 + AES-GCM 请求载荷 | 支持 | 用于 `setConfigKvText(...)`、`setConfigText(...)`、`addUser(...)` 等写入请求。 |
-| 解密 PBKDF2 + AES-GCM fixture | 支持 | `MadminEncryptionSupportTest` 和 Go fixture 已证明。 |
-| 识别 Argon2id + AES-GCM | 支持识别，不支持解密 | 返回 `EncryptedAdminResponse.algorithmName()` 供诊断。 |
-| 识别 Argon2id + ChaCha20-Poly1305 | 支持识别，不支持解密 | 返回 `EncryptedAdminResponse.algorithmName()` 供诊断。 |
+| 识别 madmin 加密响应 | 支持 | 通过 32 字节 salt 后的算法 ID 判断。 |
+| 解密 Argon2id + AES-GCM | 支持 | 对齐 minio-java 与 madmin-go 默认 AES 路径。 |
+| 解密 Argon2id + ChaCha20-Poly1305 | 支持 | 使用 Bouncy Castle，覆盖无 Native AES 场景。 |
+| 解密 PBKDF2 + AES-GCM | 支持 | 兼容 FIPS/历史夹具与 SDK 写入路径。 |
+| 明文自动解析 | 谨慎推进 | `EncryptedAdminResponse` 先提供显式 `decrypt(...)` / `decryptAsUtf8(...)`；部分明文模型提供 secretKey overload。 |
 
-## 当前 encrypted-blocked 路由
+## 原 encrypted-blocked 路由
 
-| 路由 | SDK 边界入口 | 原因 |
+以下路由仍返回 `EncryptedAdminResponse` 边界对象，但因为用户可显式解密，能力矩阵中的 `encrypted-blocked` 已降为 `0`。
+
+| route | 当前入口 | 说明 |
 | --- | --- | --- |
-| `ADMIN_GET_CONFIG` | `getConfigEncrypted()` | 服务端用 madmin 默认加密响应。 |
-| `ADMIN_GET_CONFIG_KV` | `getConfigKvEncrypted(...)` | 服务端用 madmin 默认加密响应。 |
-| `ADMIN_LIST_CONFIG_HISTORY_KV` | `listConfigHistoryKvEncrypted(...)` | 服务端用 madmin 默认加密响应。 |
-| `ADMIN_LIST_USERS` | `listUsersEncrypted()` | 服务端用 madmin 默认加密响应。 |
-| `ADMIN_ADD_SERVICE_ACCOUNT` | `createServiceAccount(...)` / `addServiceAccount(...)` | 创建结果可能包含加密凭证。 |
-| `ADMIN_INFO_SERVICE_ACCOUNT` | `getServiceAccountInfoEncrypted(...)` | 服务端用 madmin 默认加密响应。 |
-| `ADMIN_LIST_SERVICE_ACCOUNTS` | `listServiceAccountsEncrypted()` | 服务端用 madmin 默认加密响应。 |
-| `ADMIN_INFO_ACCESS_KEY` | `getAccessKeyInfoEncrypted(...)` | 服务端用 madmin 默认加密响应。 |
-| `ADMIN_LIST_ACCESS_KEYS_BULK` | `listAccessKeysEncrypted(...)` | 服务端用 madmin 默认加密响应。 |
+| `ADMIN_GET_CONFIG` | `getConfigEncrypted()` | 服务端用 madmin 加密响应；调用方显式解密。 |
+| `ADMIN_GET_CONFIG_KV` | `getConfigKvEncrypted(...)` | 服务端用 madmin 加密响应；调用方显式解密。 |
+| `ADMIN_LIST_CONFIG_HISTORY_KV` | `listConfigHistoryKvEncrypted(...)` | 服务端用 madmin 加密响应；调用方显式解密。 |
+| `ADMIN_LIST_USERS` | `listUsersEncrypted()` | 服务端用 madmin 加密响应；调用方显式解密。 |
+| `ADMIN_ADD_SERVICE_ACCOUNT` | `addServiceAccount(...)` / `createServiceAccount(...)` | 可返回加密凭证；调用方显式解密。 |
+| `ADMIN_INFO_SERVICE_ACCOUNT` | `getServiceAccountInfoEncrypted(...)` | 服务端用 madmin 加密响应；调用方显式解密。 |
+| `ADMIN_LIST_SERVICE_ACCOUNTS` | `listServiceAccountsEncrypted()` | 服务端用 madmin 加密响应；调用方显式解密。 |
+| `ADMIN_INFO_ACCESS_KEY` | `getAccessKeyInfoEncrypted(...)` / `getAccessKeyInfoTyped(..., secretKey)` | secretKey overload 可解析明文模型。 |
+| `ADMIN_LIST_ACCESS_KEYS_BULK` | `listAccessKeysEncrypted(...)` / `listAccessKeysTyped(..., secretKey)` | secretKey overload 可解析明文列表模型。 |
+| `ADMIN_LIST_IDP_CONFIG` | `listIdpConfigsEncrypted(...)` | 服务端用 madmin 加密响应；调用方显式解密。 |
+| `ADMIN_GET_IDP_CONFIG` | `getIdpConfigEncrypted(...)` | 服务端用 madmin 加密响应；调用方显式解密。 |
 
-## 阶段 25 复核命令
+## 安全规则
 
-```bash
-scripts/madmin-fixtures/check-crypto-gate.sh
-```
-
-该命令会：
-
-1. 验证仓库 committed fixture。
-2. 用系统 Go 重新生成 madmin fixture 并跑 Java 诊断测试。
-3. 检查 `pom.xml` 未出现未批准 crypto 依赖候选。
-4. 检查源码没有直接 import 未批准的 crypto/native 包。
-
-通过这个命令并不代表 Gate Pass；它代表当前 Gate Fail 边界仍然被正确执行。
-
-阶段 25 的依赖复核和拒绝理由详见 `docs/23-stage25-crypto-gate-review.md`。阶段 32 的独立复审和状态文件门禁详见 `docs/30-stage32-crypto-gate-independent-review.md`。未来若要 Gate Pass，必须先补齐候选版本、许可证、安全公告、JDK8/JDK17+ 测试矩阵、FIPS/Provider 影响和失败回退策略，并同步更新 `scripts/madmin-fixtures/crypto-gate-status.properties`。阶段 45 已把这些条件细化成可执行清单，详见 `docs/43-stage45-crypto-gate-pass-prep.md`；该清单不构成 Gate Pass。
+1. 不把 secretKey 写入文档、日志、测试报告或 git 提交。
+2. 解密失败必须抛出明确中文错误，不能伪装成空 JSON 或空模型。
+3. 日志只能记录算法名、加密字节数、是否可解密等安全诊断字段。
+4. 若后续 madmin-go 新增算法，先让 `requiresCryptoGate()` 重新暴露为 true，再补依赖审查和 fixture。

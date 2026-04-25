@@ -3,5 +3,6 @@
   "fixtureSecret": "fixture-secret",
   "fixturePlaintext": "madmin fixture payload",
   "defaultAlgorithmId": "00",
+  "forcedChaChaAlgorithmId": "01",
   "generatedBy": "scripts/madmin-fixtures/generate-fixtures.sh"
 }

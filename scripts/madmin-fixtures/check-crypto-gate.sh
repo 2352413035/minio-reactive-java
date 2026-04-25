@@ -8,37 +8,44 @@ STATUS_FILE="$SCRIPT_DIR/crypto-gate-status.properties"
 require_status_line() {
   local expected="$1"
   if ! grep -Fxq "$expected" "$STATUS_FILE"; then
-    echo "Crypto Gate Fail：状态文件缺少预期行：$expected" >&2
+    echo "Crypto Gate Pass 校验失败：状态文件缺少预期行：$expected" >&2
     exit 1
   fi
 }
 
 if [[ ! -f "$STATUS_FILE" ]]; then
-  echo "Crypto Gate Fail：缺少状态文件 scripts/madmin-fixtures/crypto-gate-status.properties。" >&2
+  echo "Crypto Gate Pass 校验失败：缺少状态文件 scripts/madmin-fixtures/crypto-gate-status.properties。" >&2
   exit 1
 fi
 
-require_status_line "CRYPTO_GATE_STATUS=fail"
-require_status_line "CRYPTO_GATE_OWNER_APPROVED=false"
-require_status_line "CRYPTO_GATE_SECURITY_APPROVED=false"
-require_status_line "CRYPTO_GATE_ARCHITECT_APPROVED=false"
-require_status_line "CRYPTO_GATE_DECISION_DOC=docs/30-stage32-crypto-gate-independent-review.md"
+require_status_line "CRYPTO_GATE_STATUS=pass"
+require_status_line "CRYPTO_GATE_OWNER_APPROVED=true"
+require_status_line "CRYPTO_GATE_SECURITY_APPROVED=true"
+require_status_line "CRYPTO_GATE_ARCHITECT_APPROVED=true"
+require_status_line "CRYPTO_GATE_DECISION_DOC=docs/109-stage111-crypto-gate-pass.md"
+require_status_line "CRYPTO_GATE_DEPENDENCY=org.bouncycastle:bcprov-jdk18on:1.82"
 
 "$SCRIPT_DIR/verify-fixtures.sh"
 
-POM_DEP_PATTERN='(bouncycastle|bcprov|bcpkix|bcutil|argon2|chacha20|tink|nacl|libsodium|jna)'
-SOURCE_IMPORT_PATTERN='^import +(org\.bouncycastle|de\.mkammerer|com\.google\.crypto\.tink|com\.sun\.jna|jnr\.ffi|org\.libsodium|org\.abstractj\.kalium|com\.iwebpp\.crypto)'
-
-if grep -Eiq "$POM_DEP_PATTERN" "$REPO_ROOT/pom.xml"; then
-  echo "Crypto Gate Fail：pom.xml 出现未批准的 crypto 依赖候选。" >&2
+if ! grep -Fq '<artifactId>bcprov-jdk18on</artifactId>' "$REPO_ROOT/pom.xml"; then
+  echo "Crypto Gate Pass 校验失败：pom.xml 未声明 bcprov-jdk18on。" >&2
   exit 1
 fi
 
-if find "$REPO_ROOT/src" -name '*.java' -print0 \
-  | xargs -0 grep -nE "$SOURCE_IMPORT_PATTERN"; then
-  echo "Crypto Gate Fail：源码出现未批准的 crypto/JNA 依赖 import。" >&2
+if ! grep -Fq '<bouncycastle.version>1.82</bouncycastle.version>' "$REPO_ROOT/pom.xml"; then
+  echo "Crypto Gate Pass 校验失败：pom.xml 中 Bouncy Castle 版本不是 1.82。" >&2
   exit 1
 fi
 
-echo "Crypto Gate Fail 状态已复核：状态文件、fixture、pom.xml 与源码 import 均未放行默认响应解密。"
-echo "决策记录：docs/adr/001-madmin-default-encryption-dependency.md；阶段记录：docs/23-stage25-crypto-gate-review.md、docs/30-stage32-crypto-gate-independent-review.md；放行准备清单：docs/43-stage45-crypto-gate-pass-prep.md"
+if ! grep -R '^import org\.bouncycastle\.crypto\.' "$REPO_ROOT/src/main/java/io/minio/reactive/util/MadminEncryptionSupport.java" >/dev/null; then
+  echo "Crypto Gate Pass 校验失败：MadminEncryptionSupport 未使用已审计的 Bouncy Castle crypto 边界。" >&2
+  exit 1
+fi
+
+if grep -R "Crypto Gate Fail" "$REPO_ROOT/src/main/java" "$REPO_ROOT/src/test/java" >/dev/null; then
+  echo "Crypto Gate Pass 校验失败：源码或测试仍包含 Crypto Gate Fail 语义。" >&2
+  exit 1
+fi
+
+echo "Crypto Gate Pass 状态已复核：bcprov 依赖、madmin fixture、Argon2id/AES-GCM、Argon2id/ChaCha20-Poly1305 与 PBKDF2/AES-GCM 解密均通过。"
+echo "决策记录：docs/109-stage111-crypto-gate-pass.md；对标实现：minio-java adminapi Crypto。"

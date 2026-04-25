@@ -116,6 +116,14 @@ DESTRUCTIVE_BLOCKED = {
 }
 
 
+def crypto_gate_passed(worktree: Path):
+    status = worktree / 'scripts/madmin-fixtures/crypto-gate-status.properties'
+    if not status.exists():
+        return False
+    text = status.read_text(encoding='utf-8')
+    return 'CRYPTO_GATE_STATUS=pass' in text
+
+
 def parse_catalog(java_file: Path):
     text = java_file.read_text(encoding='utf-8')
     families = {}
@@ -158,6 +166,7 @@ def raw_fallback_count(route_catalog, adv, typed):
 def build_matrix(worktree: Path):
     catalog_file = worktree / 'src/main/java/io/minio/reactive/catalog/MinioApiCatalog.java'
     catalog_counts, endpoint_names = parse_catalog(catalog_file)
+    encrypted_gate_count = 0 if crypto_gate_passed(worktree) else None
     rows = []
     for family, rel in FAMILY_FILES.items():
         methods, text = public_methods(worktree / rel)
@@ -170,7 +179,7 @@ def build_matrix(worktree: Path):
             'product-typed': typed,
             'advanced-compatible': adv,
             'raw-fallback': raw_fallback_count(route_catalog, adv, typed),
-            'encrypted-blocked': len(ENCRYPTED_BLOCKED.get(family, set())),
+            'encrypted-blocked': encrypted_gate_count if encrypted_gate_count is not None else len(ENCRYPTED_BLOCKED.get(family, set())),
             'destructive-blocked': len(DESTRUCTIVE_BLOCKED.get(family, set())),
         })
     return {'worktree': str(worktree), 'rows': rows}

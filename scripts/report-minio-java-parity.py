@@ -264,15 +264,15 @@ def markdown(report):
     credentials_done = len(report["credentials"]["missingByName"]) == 0
     if object_done and admin_done and args_done and credentials_done:
         lines.append(
-            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API、Admin 核心 API、`*Args` 类名与 credentials provider 类名已经达到精确同名收口；后续重点转向 provider 行为深化、Admin Crypto 自动解密、结果模型深化和正式发布工程。"
+            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API、Admin 核心 API、`*Args` 类名与 credentials provider 类名已经达到精确同名收口；后续重点转向 provider 行为深化、加密响应明文模型深化、破坏性 lab 与正式发布工程。"
         )
     elif object_done and admin_done and args_done:
         lines.append(
-            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API、Admin 核心 API 与 `*Args` 类名已经达到精确同名收口，后续重点转向凭证 Provider、Admin Crypto 自动解密、结果模型深化和正式发布工程。"
+            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API、Admin 核心 API 与 `*Args` 类名已经达到精确同名收口，后续重点转向凭证 Provider、加密响应明文模型深化、结果模型深化和正式发布工程。"
         )
     elif object_done and admin_done:
         lines.append(
-            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API 与 Admin 核心 API 已达到精确同名收口，后续重点转向 `*Args` builder、凭证 Provider、Admin Crypto 自动解密和正式发布工程。"
+            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API 与 Admin 核心 API 已达到精确同名收口，后续重点转向 `*Args` builder、凭证 Provider、加密响应明文模型深化和正式发布工程。"
         )
     else:
         lines.append(
