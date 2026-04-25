@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 106 高风险 Admin 写入加密语义对齐
+
+- `ReactiveMinioAdminClient` 的 tier add/edit、remote target set、site replication add/edit 现在按 MinIO madmin 语义自动加密请求体，并使用 `application/octet-stream` 发送。
+- 新增内部 `executeEncryptedBytesToString(...)`，用于既需要 madmin 加密又需要读取文本响应的接口。
+- 破坏性 lab 的 raw 路径继续显式构造加密体，证明 raw 是兜底调用器而不是业务语义包装器。
+- remote target 写入夹具优先使用 set 响应 ARN 恢复，`MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` 变为可选兜底；本阶段已在 JDK8/JDK17+ 一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵。
+- tier、batch job、site replication 仍未执行真实高风险矩阵；为保持风险分类口径，`destructive-blocked` 仍为 `29`。
+
 ## 阶段 105 高风险 lab 夹具模板与准备度审计
 
 - 新增 `scripts/minio-lab/audit-fixtures.sh`，逐项审计 tier、remote target、batch job、site replication 高风险夹具缺口；脚本不连接 MinIO、不输出凭证或请求体。

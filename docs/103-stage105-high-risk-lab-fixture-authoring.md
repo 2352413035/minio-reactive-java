@@ -18,7 +18,7 @@
 | --- | --- | --- | --- |
 | `tier-add-minio.json.example` | `MINIO_LAB_ADD_TIER_BODY_FILE` | 新增 MinIO 类型 tier | endpoint、bucket、凭证必须替换为独立 lab 资源 |
 | `tier-edit-creds.json.example` | `MINIO_LAB_EDIT_TIER_BODY_FILE` | 可选：编辑 tier 凭证 | 不是最小闭环必需项 |
-| `remote-target-set-replication.json.example` | `MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE` | 新增 bucket replication target | 删除时必须提供对应 ARN |
+| `remote-target-set-replication.json.example` | `MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE` | 新增 bucket replication target | 请求体内必须有 lab ARN；删除时优先使用 set 响应 ARN，必要时提供兜底 ARN |
 
 已有模板继续使用：
 
@@ -65,7 +65,7 @@
 | remote target 只读探测 | bucket，可选预期 ARN | 无写入恢复 | 阶段 104 已有 typed/raw 只读探测证据 |
 | batch job 只读探测 | `MINIO_LAB_ENABLE_BATCH_JOB_PROBES=true`，可选 jobID | 无写入恢复 | 仍需真实 job 夹具 |
 | tier add/edit/remove | 写入总开关 + tier 名称 + add 请求体 | `MINIO_LAB_REMOVE_TIER_AFTER_TEST=true` | 已有模板，未执行高风险矩阵 |
-| remote target set/remove | 写入总开关 + bucket + set 请求体 + 删除 ARN | 删除 ARN + remove 开关 | 已有模板，未执行高风险矩阵 |
+| remote target set/remove | 写入总开关 + bucket + set 请求体（含 lab ARN，endpoint 为源 MinIO 服务端视角的 host:port）；删除 ARN 可由 set 响应解析 | set 响应 ARN；可选手工 ARN 兜底 + remove 开关 | 已有模板，未执行高风险矩阵 |
 | batch job start/status/cancel | 写入总开关 + start YAML + cancel YAML | cancel 开关 | 已有模板，未执行高风险矩阵 |
 | site replication add/edit/remove | 写入总开关 + add JSON + remove JSON | remove 开关 | 已有模板，通常需要多节点 lab，未执行高风险矩阵 |
 

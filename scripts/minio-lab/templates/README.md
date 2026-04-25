@@ -6,7 +6,7 @@
 
 - 不要在仓库内填写真实凭证、token、签名或生产端点。
 - 不要把填写后的请求体提交到 git。
-- 模板中的资源名只是占位，执行前必须改成只属于本次 lab 的资源。
+- 模板中的资源名只是占位，执行前必须改成只属于本次 lab 的资源；remote target 的 `endpoint` 按 madmin 语义填写源 MinIO 服务端视角可访问的 `host:port`，不要带 `http://` 或 `https://`；Docker 端口映射场景下通常不是宿主机映射端口。
 - 未在独立 lab 执行并恢复前，不能把对应 `destructive-blocked` 计数移除。
 
 ## 模板对应关系
@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | `tier-add-minio.json.example` | `MINIO_LAB_ADD_TIER_BODY_FILE` | 新增 MinIO 类型 tier | `MINIO_LAB_REMOVE_TIER_AFTER_TEST=true` |
 | `tier-edit-creds.json.example` | `MINIO_LAB_EDIT_TIER_BODY_FILE` | 可选：编辑 tier 凭证 | 最终仍通过 remove tier 恢复 |
-| `remote-target-set-replication.json.example` | `MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE` | 新增 bucket replication target | 必须提供 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` |
+| `remote-target-set-replication.json.example` | `MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE` | 新增 bucket replication target | 请求体内必须有 `arn`；删除优先使用 set 响应 ARN，必要时提供 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` |
 | `batch-start-job.yaml.example` | `MINIO_LAB_BATCH_START_BODY_FILE` | 启动 batch job | 必须提供 cancel 请求体 |
 | `batch-cancel-job.yaml.example` | `MINIO_LAB_BATCH_CANCEL_BODY_FILE` | 取消刚启动的 batch job | `MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true` |
 | `site-replication-add.json.example` | `MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE` | 新增站点复制配置 | 必须提供 remove 请求体 |

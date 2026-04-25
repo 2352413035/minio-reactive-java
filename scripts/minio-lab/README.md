@@ -166,13 +166,13 @@ MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET=lab-bucket
 MINIO_LAB_REMOTE_TARGET_WRITE_CONTENT_TYPE=application/json
 MINIO_LAB_SET_REMOTE_TARGET_BODY=<仅属于独立 lab 的 set remote target 请求体>
 MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE=<可选，本机私有请求体文件>
-MINIO_LAB_REMOVE_REMOTE_TARGET_ARN=<刚写入 target 的 ARN>
+MINIO_LAB_REMOVE_REMOTE_TARGET_ARN=<可选；set 响应无法解析 ARN 时才需要手工提供>
 MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true
 ```
 
 测试会先通过专用 Admin 客户端设置 target，再通过 raw catalog 验证同一路由的兜底可用性，最后使用 ARN 删除恢复。
 
-可复制 `scripts/minio-lab/templates/remote-target-set-replication.json.example` 到仓库外私有目录后填写。删除 ARN 必须是本次 set 生成或预先可安全删除的独立 lab ARN。
+可复制 `scripts/minio-lab/templates/remote-target-set-replication.json.example` 到仓库外私有目录后填写。请求体内必须包含只属于本次 lab 的 `arn`，并且 `endpoint` 按 madmin 语义填写 `host:port`，不要带协议前缀。SDK 会优先使用 set 响应返回的 ARN 做删除恢复；如果目标 MinIO 没有返回 ARN，才需要把可安全删除的独立 lab ARN 写入 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN`。
 
 只要检测到写入请求体或 remote target 删除 ARN，但没有 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true`，`verify-env.sh` 就会拒绝执行。
 
