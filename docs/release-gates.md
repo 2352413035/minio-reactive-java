@@ -189,3 +189,17 @@
 - 仍需运维/lab 证据：`destructive-blocked = 29` 中尚未在独立 lab 或维护窗口证明的全量配置、IDP、站点复制变更、服务控制、升级、force-unlock 和压测类操作。
 
 因此正式发布不得再把 Crypto Gate 写成未完成阻塞项，但必须继续把 Crypto Gate Pass 作为回归证据；正式发布仍不能绕过破坏性运维证据和 Maven/tag 发布工程材料。
+
+## 阶段 115 发布元数据负责人输入清单
+
+阶段 115 后，正式 Maven/tag 发布除了引用阶段 113/114 的发布状态和破坏性边界报告，还必须引用 `docs/113-stage115-release-metadata-safe-prep.md`。
+
+发布负责人确认前，以下规则必须保持：
+
+1. 不把版本号改成正式版。
+2. 不把猜测的许可证、SCM、developer、organization、issueManagement 或 distributionManagement 写入 `pom.xml`。
+3. 不配置真实签名密钥，不在仓库中保存密钥 ID、passphrase、token 或发布仓库凭证。
+4. 不执行 `mvn deploy`，不创建 release tag，不推送远端。
+5. 每次发布复审都要重新生成 POM 元数据报告和破坏性边界报告。
+
+负责人确认后，才允许按清单分步添加 POM 元数据、source/javadoc/sign/SBOM profile，并先做本地 dry-run；真实 deploy 必须另行取得发布授权。
