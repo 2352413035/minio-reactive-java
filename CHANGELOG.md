@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 80 Maven 发布元数据预检
+
+- 新增 `scripts/report-pom-release-metadata.py`，用标准库审计双分支 POM 的基础坐标、发布元数据和 source/javadoc/sign/SBOM 插件准备度。
+- 新增 `docs/78-stage80-maven-release-metadata-preflight.md`，明确当前基础坐标齐全，但许可证、SCM、developers、distribution/signing/SBOM 等正式发布材料不能擅自补。
+- 本阶段不改版本号、不打 tag、不发布 Maven，继续保持 `0.1.0-SNAPSHOT`。
+
 ## 阶段 79 发布暂缓后缺口再审计
 
 - 新增 `docs/77-stage79-post-release-hold-gap-audit.md`，确认阶段 78 后没有新的 route/catalog/product/raw 缺口。

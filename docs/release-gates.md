@@ -173,3 +173,4 @@
 3. 发布工程材料：版本号、源码包、javadoc、pom 元数据、签名、校验和、许可证或 SBOM、发布说明、回滚策略。
 
 在这些证据齐全前，版本继续保持 `0.1.0-SNAPSHOT`，不得用 route parity 或 product-typed 满格替代外部门禁。
+阶段 80 起，发布负责人还应运行 `scripts/report-pom-release-metadata.py` 生成 POM 发布元数据报告。该报告为预检报告，只能说明哪些字段或插件缺失，不代表 Maven 发布已经放行。许可证、SCM、developers、distributionManagement、签名和 SBOM 策略必须由负责人确认后才能写入 POM。
