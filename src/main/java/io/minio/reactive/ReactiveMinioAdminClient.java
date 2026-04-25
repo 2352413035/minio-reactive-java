@@ -1077,72 +1077,144 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return runSiteReplicationNetperf(null, null);
   }
 
-  /** 运行集群 speedtest；这是高资源诊断接口，不能在共享环境默认执行。 */
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认资源压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runSpeedtest(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSpeedtest(
       byte[] body, String contentType) {
-    return speedtest(body, contentType)
-        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("speedtest", text));
+    return rejectDefaultSpeedtest("runSpeedtest", "runSpeedtest(AdminSpeedtestOptions)");
   }
 
-  /** 运行不带请求体的集群 speedtest。 */
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认资源压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runSpeedtest(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSpeedtest() {
     return runSpeedtest(null, null);
   }
 
-  /** 运行对象层 speedtest。 */
-  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runObjectSpeedtest(
-      byte[] body, String contentType) {
-    return speedtestObject(body, contentType)
-        .map(
-            text ->
-                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-object", text));
+  /** 使用 madmin 风格 query 参数运行集群 speedtest；只应在独立 lab 或维护窗口执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSpeedtest(
+      io.minio.reactive.messages.admin.AdminSpeedtestOptions options) {
+    return speedtest(options)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("speedtest", text));
   }
 
-  /** 运行不带请求体的对象层 speedtest。 */
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认资源压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runObjectSpeedtest(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runObjectSpeedtest(
+      byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("runObjectSpeedtest", "runObjectSpeedtest(AdminSpeedtestOptions)");
+  }
+
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认资源压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runObjectSpeedtest(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runObjectSpeedtest() {
     return runObjectSpeedtest(null, null);
   }
 
-  /** 运行磁盘层 speedtest。 */
-  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runDriveSpeedtest(
-      byte[] body, String contentType) {
-    return speedtestDrive(body, contentType)
-        .map(
-            text ->
-                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-drive", text));
+  /** 使用 madmin 风格 query 参数运行对象层 speedtest；建议传入小 size/concurrency/duration。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runObjectSpeedtest(
+      io.minio.reactive.messages.admin.AdminSpeedtestOptions options) {
+    return speedtestObject(options)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-object", text));
   }
 
-  /** 运行不带请求体的磁盘层 speedtest。 */
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认 1GiB 文件压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runDriveSpeedtest(io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions)}。
+   */
+  @Deprecated
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runDriveSpeedtest(
+      byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("runDriveSpeedtest", "runDriveSpeedtest(AdminDriveSpeedtestOptions)");
+  }
+
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认 1GiB 文件压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runDriveSpeedtest(io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runDriveSpeedtest() {
     return runDriveSpeedtest(null, null);
   }
 
-  /** 运行网络层 speedtest。 */
-  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runNetworkSpeedtest(
-      byte[] body, String contentType) {
-    return speedtestNet(body, contentType)
-        .map(
-            text ->
-                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-net", text));
+  /** 使用 madmin 风格 query 参数运行磁盘层 speedtest；只应在独立 lab 中执行。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runDriveSpeedtest(
+      io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions options) {
+    return speedtestDrive(options)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-drive", text));
   }
 
-  /** 运行不带请求体的网络层 speedtest。 */
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认网络压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runNetworkSpeedtest(java.time.Duration)}。
+   */
+  @Deprecated
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runNetworkSpeedtest(
+      byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("runNetworkSpeedtest", "runNetworkSpeedtest(Duration)");
+  }
+
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认网络压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runNetworkSpeedtest(java.time.Duration)}。
+   */
+  @Deprecated
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runNetworkSpeedtest() {
     return runNetworkSpeedtest(null, null);
   }
 
-  /** 运行站点层 speedtest。 */
-  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteSpeedtest(
-      byte[] body, String contentType) {
-    return speedtestSite(body, contentType)
-        .map(
-            text ->
-                io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-site", text));
+  /** 使用指定 duration 运行网络层 speedtest；MinIO 服务端会把过小 duration 提升到最小采样窗口。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runNetworkSpeedtest(
+      java.time.Duration duration) {
+    return speedtestNet(duration)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-net", text));
   }
 
-  /** 运行不带请求体的站点层 speedtest。 */
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认站点压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runSiteSpeedtest(java.time.Duration)}。
+   */
+  @Deprecated
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteSpeedtest(
+      byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("runSiteSpeedtest", "runSiteSpeedtest(Duration)");
+  }
+
+  /**
+   * 兼容旧版空参数入口；会触发服务端默认站点压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #runSiteSpeedtest(java.time.Duration)}。
+   */
+  @Deprecated
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteSpeedtest() {
     return runSiteSpeedtest(null, null);
+  }
+
+  /** 使用指定 duration 运行站点层 speedtest；需要已启用 site replication 的独立 lab。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runSiteSpeedtest(
+      java.time.Duration duration) {
+    return speedtestSite(duration)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("speedtest-site", text));
   }
 
   /**
@@ -2844,54 +2916,149 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return forceUnlock(paths, null, null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST`。 */
+  /**
+   * 调用 `ADMIN_SPEEDTEST` 的旧式空参数入口；会触发服务端默认资源压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtest(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<String> speedtest(byte[] body, String contentType) {
-    return executeToString("ADMIN_SPEEDTEST", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return rejectDefaultSpeedtest("speedtest", "speedtest(AdminSpeedtestOptions)");
   }
 
-  /** 调用 `ADMIN_SPEEDTEST`，不携带请求体。 */
+  /**
+   * 调用 `ADMIN_SPEEDTEST` 的旧式空参数入口；会触发服务端默认资源压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtest(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<String> speedtest() {
     return speedtest(null, null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_OBJECT`。 */
-  public Mono<String> speedtestObject(byte[] body, String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_OBJECT", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  /** 调用 `ADMIN_SPEEDTEST`，使用 madmin/server query 参数。 */
+  public Mono<String> speedtest(io.minio.reactive.messages.admin.AdminSpeedtestOptions options) {
+    return executeToString(
+        "ADMIN_SPEEDTEST",
+        emptyMap(),
+        requireSpeedtestOptions(options).toQueryParameters(),
+        emptyMap(),
+        null,
+        null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_OBJECT`，不携带请求体。 */
+  /**
+   * 调用 `ADMIN_SPEEDTEST_OBJECT` 的旧式空参数入口；会触发服务端默认对象压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestObject(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
+  public Mono<String> speedtestObject(byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("speedtestObject", "speedtestObject(AdminSpeedtestOptions)");
+  }
+
+  /**
+   * 调用 `ADMIN_SPEEDTEST_OBJECT` 的旧式空参数入口；会触发服务端默认对象压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestObject(io.minio.reactive.messages.admin.AdminSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<String> speedtestObject() {
     return speedtestObject(null, null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_DRIVE`。 */
-  public Mono<String> speedtestDrive(byte[] body, String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_DRIVE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  /** 调用 `ADMIN_SPEEDTEST_OBJECT`，使用 madmin/server query 参数。 */
+  public Mono<String> speedtestObject(io.minio.reactive.messages.admin.AdminSpeedtestOptions options) {
+    return executeToString(
+        "ADMIN_SPEEDTEST_OBJECT",
+        emptyMap(),
+        requireSpeedtestOptions(options).toQueryParameters(),
+        emptyMap(),
+        null,
+        null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_DRIVE`，不携带请求体。 */
+  /**
+   * 调用 `ADMIN_SPEEDTEST_DRIVE` 的旧式空参数入口；会触发服务端默认 1GiB 文件压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestDrive(io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions)}。
+   */
+  @Deprecated
+  public Mono<String> speedtestDrive(byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("speedtestDrive", "speedtestDrive(AdminDriveSpeedtestOptions)");
+  }
+
+  /**
+   * 调用 `ADMIN_SPEEDTEST_DRIVE` 的旧式空参数入口；会触发服务端默认 1GiB 文件压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestDrive(io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions)}。
+   */
+  @Deprecated
   public Mono<String> speedtestDrive() {
     return speedtestDrive(null, null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_NET`。 */
-  public Mono<String> speedtestNet(byte[] body, String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_NET", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  /** 调用 `ADMIN_SPEEDTEST_DRIVE`，使用 madmin/server query 参数。 */
+  public Mono<String> speedtestDrive(io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions options) {
+    return executeToString(
+        "ADMIN_SPEEDTEST_DRIVE",
+        emptyMap(),
+        requireDriveSpeedtestOptions(options).toQueryParameters(),
+        emptyMap(),
+        null,
+        null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_NET`，不携带请求体。 */
+  /**
+   * 调用 `ADMIN_SPEEDTEST_NET` 的旧式空参数入口；会触发服务端默认网络压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestNet(java.time.Duration)}。
+   */
+  @Deprecated
+  public Mono<String> speedtestNet(byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("speedtestNet", "speedtestNet(Duration)");
+  }
+
+  /**
+   * 调用 `ADMIN_SPEEDTEST_NET` 的旧式空参数入口；会触发服务端默认网络压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestNet(java.time.Duration)}。
+   */
+  @Deprecated
   public Mono<String> speedtestNet() {
     return speedtestNet(null, null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_SITE`。 */
-  public Mono<String> speedtestSite(byte[] body, String contentType) {
-    return executeToString("ADMIN_SPEEDTEST_SITE", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+  /** 调用 `ADMIN_SPEEDTEST_NET`，使用 madmin duration query 参数。 */
+  public Mono<String> speedtestNet(java.time.Duration duration) {
+    return executeToString(
+        "ADMIN_SPEEDTEST_NET", emptyMap(), durationQuery(duration), emptyMap(), null, null);
   }
 
-  /** 调用 `ADMIN_SPEEDTEST_SITE`，不携带请求体。 */
+  /**
+   * 调用 `ADMIN_SPEEDTEST_SITE` 的旧式空参数入口；会触发服务端默认站点压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestSite(java.time.Duration)}。
+   */
+  @Deprecated
+  public Mono<String> speedtestSite(byte[] body, String contentType) {
+    return rejectDefaultSpeedtest("speedtestSite", "speedtestSite(Duration)");
+  }
+
+  /**
+   * 调用 `ADMIN_SPEEDTEST_SITE` 的旧式空参数入口；会触发服务端默认站点压测，已禁用执行。
+   *
+   * @deprecated 请改用 {@link #speedtestSite(java.time.Duration)}。
+   */
+  @Deprecated
   public Mono<String> speedtestSite() {
     return speedtestSite(null, null);
+  }
+
+  /** 调用 `ADMIN_SPEEDTEST_SITE`，使用 madmin duration query 参数。 */
+  public Mono<String> speedtestSite(java.time.Duration duration) {
+    return executeToString(
+        "ADMIN_SPEEDTEST_SITE", emptyMap(), durationQuery(duration), emptyMap(), null, null);
   }
 
   /** 调用 `ADMIN_CLIENT_DEVNULL`。 */
@@ -2974,6 +3141,41 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return revokeTokens(userProvider, null, null);
   }
 
+
+  /** speedtest 空参数入口会触发服务端默认压测，强类型客户端必须要求调用方显式给出边界。 */
+  private static <T> Mono<T> rejectDefaultSpeedtest(String methodName, String replacement) {
+    return Mono.error(
+        new IllegalArgumentException(
+            methodName
+                + " 是资源压测接口，不能使用空参数触发服务端默认值；请改用 "
+                + replacement
+                + " 显式传入有界参数，或者在完全确认风险时使用 ReactiveMinioRawClient 显式传 query。"));
+  }
+
+
+
+  /** speedtest query 参数不能为 null，避免误触发服务端大默认值。 */
+  private static io.minio.reactive.messages.admin.AdminSpeedtestOptions requireSpeedtestOptions(
+      io.minio.reactive.messages.admin.AdminSpeedtestOptions options) {
+    if (options == null) {
+      throw new IllegalArgumentException("speedtest options 不能为空");
+    }
+    return options;
+  }
+
+  /** drive speedtest query 参数不能为 null，避免误触发服务端 1GiB 默认值。 */
+  private static io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions requireDriveSpeedtestOptions(
+      io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions options) {
+    if (options == null) {
+      throw new IllegalArgumentException("drive speedtest options 不能为空");
+    }
+    return options;
+  }
+
+  /** 生成 MinIO madmin 兼容的 duration query。 */
+  private static java.util.Map<String, String> durationQuery(java.time.Duration duration) {
+    return map("duration", io.minio.reactive.messages.admin.AdminSpeedtestOptions.formatDuration(duration));
+  }
 
   /** 生成 IDP 配置路由变量，并集中应用 madmin 的默认名称规则。 */
   private static java.util.Map<String, String> idpConfigPath(String type, String name) {

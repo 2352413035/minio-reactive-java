@@ -7,6 +7,8 @@ import io.minio.reactive.messages.admin.AdminBatchJobList;
 import io.minio.reactive.messages.admin.AdminBatchJobStartResult;
 import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminJsonResult;
+import io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions;
+import io.minio.reactive.messages.admin.AdminSpeedtestOptions;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
 import io.minio.reactive.messages.admin.AdminTierList;
 import java.io.BufferedReader;
@@ -16,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -360,6 +363,78 @@ class DestructiveAdminIntegrationTest {
     ReactiveMinioAdminClient admin = labAdminClient();
     ReactiveMinioRawClient raw = labRawClient();
     exerciseIdpWriteFixture(admin, raw);
+  }
+
+  @Test
+  void shouldRunBoundedSpeedtestProbesOnlyInsideVerifiedLab() throws Exception {
+    assumeDestructiveLabEnabled();
+    assertVerifiedLabEnvironment();
+    Assumptions.assumeTrue(
+        "true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_SPEEDTEST_PROBES")),
+        "缺少 MINIO_LAB_ENABLE_SPEEDTEST_PROBES=true，跳过 speedtest 资源压测探测。");
+
+    ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
+    AdminSpeedtestOptions objectOptions =
+        AdminSpeedtestOptions.builder()
+            .sizeBytes(intLabValue("MINIO_LAB_SPEEDTEST_OBJECT_SIZE", 1048576))
+            .concurrency(intLabValue("MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY", 1))
+            .duration(Duration.ofSeconds(intLabValue("MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS", 2)))
+            .bucket(labValue("MINIO_LAB_BUCKET"))
+            .build();
+    String typedCluster =
+        labStepValue(
+            "speedtest-probe",
+            "typed runSpeedtest bounded",
+            () -> admin.runSpeedtest(objectOptions).block().rawText());
+    String rawCluster =
+        labStepValue(
+            "speedtest-probe",
+            "raw ADMIN_SPEEDTEST bounded",
+            () ->
+                rawString(
+                    raw,
+                    "ADMIN_SPEEDTEST",
+                    emptyMap(),
+                    objectOptions.toQueryParameters(),
+                    null,
+                    null));
+    String typedObject =
+        labStepValue(
+            "speedtest-probe",
+            "typed runObjectSpeedtest bounded",
+            () -> admin.runObjectSpeedtest(objectOptions).block().rawText());
+    String rawObject =
+        labStepValue(
+            "speedtest-probe",
+            "raw ADMIN_SPEEDTEST_OBJECT bounded",
+            () ->
+                rawString(
+                    raw,
+                    "ADMIN_SPEEDTEST_OBJECT",
+                    emptyMap(),
+                    objectOptions.toQueryParameters(),
+                    null,
+                    null));
+    Assertions.assertTrue(notBlank(typedCluster), "typed cluster speedtest 应返回结果。");
+    Assertions.assertTrue(notBlank(rawCluster), "raw cluster speedtest 应返回结果。");
+    Assertions.assertTrue(notBlank(typedObject), "typed object speedtest 应返回结果。");
+    Assertions.assertTrue(notBlank(rawObject), "raw object speedtest 应返回结果。");
+
+    if ("true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_DRIVE_SPEEDTEST_PROBE"))) {
+      AdminDriveSpeedtestOptions driveOptions =
+          AdminDriveSpeedtestOptions.builder()
+              .serial(true)
+              .blockSizeBytes(longLabValue("MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE", 4096L))
+              .fileSizeBytes(longLabValue("MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE", 8192L))
+              .build();
+      String typedDrive =
+          labStepValue(
+              "speedtest-probe",
+              "typed runDriveSpeedtest bounded",
+              () -> admin.runDriveSpeedtest(driveOptions).block().rawText());
+      Assertions.assertTrue(notBlank(typedDrive), "typed drive speedtest 应返回结果。");
+    }
   }
 
   @Test
@@ -1037,6 +1112,22 @@ class DestructiveAdminIntegrationTest {
     int equals = trimmed.indexOf('=');
     int end = space < 0 ? equals : equals < 0 ? space : Math.min(space, equals);
     return end <= 0 ? trimmed : trimmed.substring(0, end);
+  }
+
+  private static int intLabValue(String name, int defaultValue) {
+    String value = labValue(name);
+    if (!notBlank(value)) {
+      return defaultValue;
+    }
+    return Integer.parseInt(value.trim());
+  }
+
+  private static long longLabValue(String name, long defaultValue) {
+    String value = labValue(name);
+    if (!notBlank(value)) {
+      return defaultValue;
+    }
+    return Long.parseLong(value.trim());
   }
 
   private static String getenvOrDefault(String name, String defaultValue) {

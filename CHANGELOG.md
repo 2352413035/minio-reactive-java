@@ -3,6 +3,14 @@
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
 
+
+## 阶段 120 speedtest 有界参数与独立 lab 补证
+
+- 新增 `AdminSpeedtestOptions` 与 `AdminDriveSpeedtestOptions`，为 speedtest/object/drive/net/site 提供 madmin 风格 query 参数重载。
+- 破坏性 lab 增加 `MINIO_LAB_ENABLE_SPEEDTEST_PROBES` 与小资源窗口参数，默认仍关闭，避免共享环境资源消耗。
+- JDK8/JDK17 分支均在一次性 Docker MinIO lab 中通过 `ADMIN_SPEEDTEST` 与 `ADMIN_SPEEDTEST_OBJECT` 的 typed/raw 有界压测证据。
+- `ADMIN_SPEEDTEST_DRIVE`、`ADMIN_SPEEDTEST_NET`、`ADMIN_SPEEDTEST_SITE` 仍分别需要磁盘、分布式 erasure 或 site replication 专用拓扑。
+
 ## 阶段 119 IDP 配置 madmin 语义对齐
 
 - `ReactiveMinioAdminClient` 的 IDP add/update 入口现在自动用当前凭证 secretKey 生成 madmin 加密请求体，并强制使用 `application/octet-stream`。
