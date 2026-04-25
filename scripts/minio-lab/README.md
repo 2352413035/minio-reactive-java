@@ -49,7 +49,17 @@ scripts/minio-lab/run-destructive-tests.sh
 
 ### 方式三：本机 Docker 一次性 lab
 
-如果本机有 `docker` 和 `minio/minio` 镜像，可以启动一个不占用共享 `9000/9001` 的一次性 lab。下面只展示结构，真实凭证应使用运行时变量或临时文件，不要写入仓库：
+如果本机有 `docker`、`mc` 和 `minio/minio` 镜像，优先使用脚本启动一个不占用共享 `9000/9001` 的一次性 lab：
+
+```bash
+scripts/minio-lab/start-docker-lab.sh
+MINIO_LAB_CONFIG_FILE=/tmp/minio-reactive-lab-xxxxxx/lab.properties \
+  scripts/minio-lab/run-destructive-tests.sh
+```
+
+脚本会生成临时凭证、私有 `mc` 配置目录和 `lab.properties`，并只输出临时路径、endpoint 和清理命令；不会把 access key 或 secret key 输出到终端或写入仓库。执行完后删除容器和 `/tmp/minio-reactive-lab-*` 目录即可。
+
+如果需要手工启动，也可以按下面结构运行；真实凭证应使用运行时变量或临时文件，不要写入仓库：
 
 ```bash
 docker rm -f minio-reactive-destructive-lab 2>/dev/null || true
@@ -59,12 +69,6 @@ docker run -d --name minio-reactive-destructive-lab \
   -e MINIO_ROOT_USER='<运行时生成的 lab 用户>' \
   -e MINIO_ROOT_PASSWORD='<运行时生成的强密码>' \
   minio/minio server /data --console-address ':9001'
-
-export MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true
-export MINIO_LAB_ENDPOINT=http://127.0.0.1:19000
-export MINIO_LAB_ACCESS_KEY='<lab 用户>'
-export MINIO_LAB_SECRET_KEY='<lab 密码>'
-export MINIO_LAB_CAN_RESTORE=true
 ```
 
 推荐再用独立 `mc` 配置目录创建测试 bucket，执行完后删除容器或整个临时配置目录。
