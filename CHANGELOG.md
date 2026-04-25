@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 101 PutObjectAPIArgs builder 边界判定
+
+- 对照 minio-java 上传参数层级后，确认 `PutObjectAPIArgs` 在响应式 SDK 中应保留为内部上传参数边界，而不是用户侧公开 builder。
+- 签名级报告脚本新增 `INTENTIONAL_ARG_BOUNDARIES` 分类，将 `PutObjectAPIArgs` 从未解释缺口移到“响应式 SDK 有意保留为内部边界”。
+- 新增 `docs/99-stage101-putobjectapiargs-boundary.md`，说明为什么用户应使用 `PutObjectArgs`、`UploadObjectArgs`、`AppendObjectArgs`、`UploadSnowballObjectsArgs` 等高层入口。
+
 ## 阶段 100 minio-java 签名级差异审计
 
 - 新增 `scripts/report-minio-java-signature-parity.py`，在名称级对标之外继续审计方法重载、credentials provider 构造器/工厂和 Args builder 入口。
