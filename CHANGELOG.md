@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 105 高风险 lab 夹具模板与准备度审计
+
+- 新增 `scripts/minio-lab/audit-fixtures.sh`，逐项审计 tier、remote target、batch job、site replication 高风险夹具缺口；脚本不连接 MinIO、不输出凭证或请求体。
+- 新增 tier 与 remote target 请求体模板，以及 `scripts/minio-lab/templates/README.md`，明确填写后的请求体必须放在仓库外私有目录。
+- 更新 lab 配置示例、lab README 和硬门禁提示，使用户能先准备私有夹具，再进入真实 typed/raw 破坏性矩阵。
+- 本阶段没有执行新的高风险写入矩阵，`destructive-blocked` 继续保持 `29`。
+
 ## 阶段 104 独立 Docker lab 破坏性矩阵补证
 
 - 新增 `scripts/minio-lab/start-docker-lab.sh`，可启动不占用共享 `9000/9001` 的一次性 Docker MinIO lab，并在 `/tmp` 生成私有配置，不输出凭证。

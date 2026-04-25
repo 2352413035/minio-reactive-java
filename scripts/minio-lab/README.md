@@ -83,6 +83,14 @@ scripts/minio-lab/audit-readiness.sh
 
 这个脚本只读取配置并复用 `verify-env.sh`，不会连接 MinIO、不会执行写入测试，也不会输出 access key、secret key、请求体或签名。它通过时只表示“可以启动独立 lab 测试”，不代表 typed/raw 破坏性矩阵已经实际通过；真实证据仍然来自 `run-destructive-tests.sh` 生成的本机报告。
 
+如果已经开始准备 tier、remote target、batch job 或 site replication 的本机私有请求体，可以再运行更细的夹具审计：
+
+```bash
+scripts/minio-lab/audit-fixtures.sh
+```
+
+`audit-fixtures.sh` 不连接 MinIO，只按矩阵列出缺少的变量、恢复开关和模板路径；它不会输出请求体、凭证、token 或签名。
+
 ## config write + restore 用例
 
 如果要执行真实配置写入与恢复，还必须提供一组可回滚配置：
@@ -149,6 +157,8 @@ MINIO_LAB_REMOVE_TIER_AFTER_TEST=true
 
 测试会先使用 `ReactiveMinioAdminClient` 写入，再使用 `ReactiveMinioRawClient` 的 catalog 路由交叉验证，最后删除该 tier。请求体可能包含远端存储信息，报告只记录是否设置，不输出内容。
 
+可复制 `scripts/minio-lab/templates/tier-add-minio.json.example` 和 `scripts/minio-lab/templates/tier-edit-creds.json.example` 到仓库外私有目录后填写。`edit` 请求体是可选项；最小闭环只要求 add 请求体与最终 remove 恢复。
+
 ### remote target set/remove
 
 ```properties
@@ -161,6 +171,8 @@ MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true
 ```
 
 测试会先通过专用 Admin 客户端设置 target，再通过 raw catalog 验证同一路由的兜底可用性，最后使用 ARN 删除恢复。
+
+可复制 `scripts/minio-lab/templates/remote-target-set-replication.json.example` 到仓库外私有目录后填写。删除 ARN 必须是本次 set 生成或预先可安全删除的独立 lab ARN。
 
 只要检测到写入请求体或 remote target 删除 ARN，但没有 `MINIO_LAB_ALLOW_WRITE_FIXTURES=true`，`verify-env.sh` 就会拒绝执行。
 
@@ -179,6 +191,8 @@ MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true
 
 测试会使用专用 Admin 客户端启动任务并读取状态，再使用 raw catalog 的 `ADMIN_CANCEL_BATCH_JOB` 取消任务；finally 中还会再次尝试专用客户端取消，降低残留任务风险。请求模板见 `scripts/minio-lab/templates/batch-start-job.yaml.example` 和 `scripts/minio-lab/templates/batch-cancel-job.yaml.example`。
 
+batch job 模板中的 bucket、prefix 和 jobID 必须按独立 lab 的实际任务填写；如果无法稳定取消，不应开启该矩阵。
+
 ### site replication add/edit/remove
 
 ```properties
@@ -190,6 +204,8 @@ MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true
 ```
 
 测试会使用专用 Admin 客户端新增站点复制配置，必要时使用 raw catalog 执行 edit，最后用 raw remove 和 finally 专用 remove 双重恢复。请求模板见 `scripts/minio-lab/templates/site-replication-*.json.example`。
+
+site replication 通常需要至少两个彼此隔离、可删除的 lab 站点；单节点临时容器通常只能准备模板，不能证明完整复制矩阵。
 
 ## 执行报告
 

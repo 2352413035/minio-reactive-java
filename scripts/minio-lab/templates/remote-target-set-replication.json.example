@@ -1,0 +1,14 @@
+{
+  "type": "replication",
+  "sourcebucket": "reactive-lab-bucket",
+  "targetbucket": "reactive-lab-target-bucket",
+  "endpoint": "http://127.0.0.1:19000",
+  "secure": false,
+  "region": "us-east-1",
+  "credentials": {
+    "accessKey": "<仅本机私有>",
+    "secretKey": "<仅本机私有>"
+  },
+  "replicationSync": false,
+  "disableProxy": false
+}

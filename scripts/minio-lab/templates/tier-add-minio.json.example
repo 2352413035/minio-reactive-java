@@ -1,0 +1,13 @@
+{
+  "Version": "v1",
+  "Type": "minio",
+  "Name": "reactive-lab-tier",
+  "MinIO": {
+    "Endpoint": "http://127.0.0.1:19000",
+    "AccessKey": "<仅本机私有>",
+    "SecretKey": "<仅本机私有>",
+    "Bucket": "reactive-lab-tier-bucket",
+    "Prefix": "tier-prefix/",
+    "Region": "us-east-1"
+  }
+}
