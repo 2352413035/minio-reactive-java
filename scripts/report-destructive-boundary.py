@@ -169,9 +169,9 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_SPEEDTEST_DRIVE',
-        'category': '资源压测',
-        'status': '需要压测窗口',
-        'evidence': '压测会消耗磁盘资源。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw bounded drive speedtest 已验证',
+        'evidence': '阶段 121：独立 Docker lab 使用 serial=true、blocksize=4096、filesize=8192 验证 typed/raw ADMIN_SPEEDTEST_DRIVE；强类型无参入口已禁用。',
     },
     {
         'route': 'ADMIN_SPEEDTEST_NET',

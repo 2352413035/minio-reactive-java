@@ -204,6 +204,22 @@ else
   print_row 'speedtest/object bounded typed/raw 探测' "未就绪：$speedtest_missing" '独立 lab + 显式 speedtest 开关 + 小 size/concurrency/duration + lab bucket' '不在共享环境执行；失败不降低边界' '无需额外模板'
 fi
 
+drive_speedtest_missing=""
+is_true "${MINIO_LAB_ENABLE_DRIVE_SPEEDTEST_PROBE:-false}" || append_missing drive_speedtest_missing '缺 MINIO_LAB_ENABLE_DRIVE_SPEEDTEST_PROBE=true'
+[[ "${MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE:-0}" =~ ^[0-9]+$ ]] || append_missing drive_speedtest_missing 'MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE 必须是数字'
+[[ "${MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE:-0}" =~ ^[0-9]+$ ]] || append_missing drive_speedtest_missing 'MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE 必须是数字'
+if [[ "${MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE:-0}" =~ ^[0-9]+$ && "${MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE:-0}" -le 0 ]]; then
+  append_missing drive_speedtest_missing 'MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE 必须大于 0'
+fi
+if [[ "${MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE:-0}" =~ ^[0-9]+$ && "${MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE:-0}" -le 0 ]]; then
+  append_missing drive_speedtest_missing 'MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE 必须大于 0'
+fi
+if [[ -z "$drive_speedtest_missing" ]]; then
+  print_row 'drive speedtest bounded typed/raw 探测' '可执行' '独立 lab + 显式 drive speedtest 开关 + 小 blocksize/filesize' '不在共享环境执行；仅代表本次独立 lab 磁盘窗口' '无需额外模板'
+else
+  print_row 'drive speedtest bounded typed/raw 探测' "未就绪：$drive_speedtest_missing" '独立 lab + 显式 drive speedtest 开关 + 小 blocksize/filesize' '不在共享环境执行；失败不降低边界' '无需额外模板'
+fi
+
 if is_true "${MINIO_LAB_ENABLE_BATCH_JOB_PROBES:-false}"; then
   print_row 'batch job typed/raw 只读探测' '夹具已设置' 'MINIO_LAB_ENABLE_BATCH_JOB_PROBES=true；可选预期 jobId' '无写入恢复' '无需额外模板'
 else
