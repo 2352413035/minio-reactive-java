@@ -300,7 +300,7 @@ PUT /demo-bucket/hello.txt
 例如：
 
 ```text
-hello from reactive minio sdk
+你好，来自 reactive minio sdk
 ```
 
 ### 关键请求头
@@ -366,7 +366,7 @@ hello from reactive minio sdk
 例如：
 
 ```text
-hello from reactive minio sdk
+你好，来自 reactive minio sdk
 ```
 
 ### 当前项目里的一个重要实现经验

@@ -34,7 +34,7 @@ public final class ReactiveMinioLiveExample {
             "reactive-demo-" + UUID.randomUUID().toString().replace("-", ""));
     String object = read(properties, "minio.object", "MINIO_OBJECT", "hello.txt");
     String content =
-        read(properties, "minio.content", "MINIO_CONTENT", "hello from reactive minio sdk");
+        read(properties, "minio.content", "MINIO_CONTENT", "你好，来自 reactive minio sdk");
 
     ReactiveMinioClient client =
         ReactiveMinioClient.builder()
@@ -46,33 +46,33 @@ public final class ReactiveMinioLiveExample {
     Mono<Void> flow =
         client
             .bucketExists(bucket)
-            .doOnNext(exists -> System.out.println("bucket exists before create: " + exists))
+            .doOnNext(exists -> System.out.println("建桶前 bucket 是否存在：" + exists))
             .flatMap(
                 exists -> {
                   if (exists) {
                     return Mono.empty();
                   }
-                  System.out.println("creating bucket: " + bucket);
+                  System.out.println("正在创建 bucket：" + bucket);
                   return client.makeBucket(bucket)
-                      .doOnSuccess(ignored -> System.out.println("bucket created: " + bucket));
+                      .doOnSuccess(ignored -> System.out.println("bucket 已创建：" + bucket));
                 })
             .then(client.putObject(bucket, object, content, "text/plain"))
-            .doOnSuccess(ignored -> System.out.println("object uploaded: " + object))
+            .doOnSuccess(ignored -> System.out.println("对象已上传：" + object))
             .then(client.statObject(bucket, object))
             .doOnNext(ReactiveMinioLiveExample::printHeaders)
             // 这一段曾经暴露过 WebClient 响应体生命周期处理错误，因此保留下来作为验证点。
             .then(client.getObjectAsString(bucket, object))
-            .doOnNext(value -> System.out.println("downloaded content: " + value))
+            .doOnNext(value -> System.out.println("下载内容：" + value))
             .then(client.removeObject(bucket, object))
-            .doOnSuccess(ignored -> System.out.println("object removed: " + object))
+            .doOnSuccess(ignored -> System.out.println("对象已删除：" + object))
             .then(client.removeBucket(bucket))
-            .doOnSuccess(ignored -> System.out.println("bucket removed: " + bucket))
+            .doOnSuccess(ignored -> System.out.println("bucket 已删除：" + bucket))
             .doOnError(
                 ReactiveS3Exception.class,
                 ex -> {
-                  System.err.println("MinIO returned an S3 error.");
-                  System.err.println("status = " + ex.statusCode());
-                  System.err.println("body   = " + ex.responseBody());
+                  System.err.println("MinIO 返回了 S3 错误。");
+                  System.err.println("状态码 = " + ex.statusCode());
+                  System.err.println("响应体 = " + ex.responseBody());
                 });
 
     flow.block();
@@ -95,11 +95,11 @@ public final class ReactiveMinioLiveExample {
     String value = firstNonBlank(System.getenv(envKey), properties.getProperty(propertyKey));
     if (value == null) {
       throw new IllegalStateException(
-          "Missing config value. Please set "
-              + propertyKey
-              + " in classpath resource "
+          "缺少必需配置，请在 classpath 资源 "
               + LOCAL_CONFIG_FILE
-              + " or "
+              + " 中设置 "
+              + propertyKey
+              + "，或设置环境变量 "
               + envKey);
     }
     return value;
@@ -122,7 +122,7 @@ public final class ReactiveMinioLiveExample {
   }
 
   private static void printHeaders(Map<String, java.util.List<String>> headers) {
-    System.out.println("object headers:");
+    System.out.println("对象响应头：");
     for (Map.Entry<String, java.util.List<String>> entry : headers.entrySet()) {
       System.out.println("  " + entry.getKey() + " = " + entry.getValue());
     }
