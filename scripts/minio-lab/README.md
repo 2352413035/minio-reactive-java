@@ -144,6 +144,18 @@ MINIO_LAB_BATCH_EXPECTED_JOB_ID=
 - `MINIO_LAB_EXPECT_TIER_IN_LIST=true` 时，`listTiers()` typed 摘要必须能看到 `MINIO_LAB_TIER_NAME`。
 - `MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN` 不为空时，`listRemoteTargetsInfo(...)` typed 摘要必须能看到该 ARN。
 - `MINIO_LAB_BATCH_EXPECTED_JOB_ID` 不为空时，batch job typed 摘要或 raw JSON 中必须能看到该任务 ID。
+
+### replication diff 探测
+
+`ADMIN_REPLICATION_DIFF` 与 madmin 的 `BucketReplicationDiff` 一致：选项通过 query 传递，主要包括 `verbose`、`prefix` 和 `arn`，不需要请求体。阶段 118 起，SDK 的专用 Admin 客户端新增无请求体重载，并在 lab 中提供可选 typed/raw 探测：
+
+```properties
+MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE=true
+MINIO_LAB_REPLICATION_DIFF_PREFIX=可选前缀
+MINIO_LAB_REPLICATION_DIFF_ARN=可选目标ARN
+```
+
+这个探测要求 `MINIO_LAB_BUCKET` 已经具备真实复制配置。普通单节点 Docker lab 如果没有 bucket replication 规则，服务端可能返回错误；这种失败只能说明环境未满足复制差异扫描条件，不能用来降低 `destructive-blocked`。
 - `verify-env.sh` 仍会拒绝共享端点 和常见本机默认端点。
 
 ## tier / remote target 可回滚写入夹具
