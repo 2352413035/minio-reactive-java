@@ -425,6 +425,43 @@ public final class ReactiveMinioClient {
     return setObjectLegalHold(bucket, object, null, configuration);
   }
 
+  /** 对齐 minio-java：启用对象 Legal Hold。 */
+  public Mono<Void> enableObjectLegalHold(String bucket, String object) {
+    return enableObjectLegalHold(bucket, object, null);
+  }
+
+  /** 对齐 minio-java：启用指定版本对象的 Legal Hold。 */
+  public Mono<Void> enableObjectLegalHold(String bucket, String object, String versionId) {
+    return setObjectLegalHold(bucket, object, versionId, ObjectLegalHoldConfiguration.enabled());
+  }
+
+  /** 对齐 minio-java：关闭对象 Legal Hold。 */
+  public Mono<Void> disableObjectLegalHold(String bucket, String object) {
+    return disableObjectLegalHold(bucket, object, null);
+  }
+
+  /** 对齐 minio-java：关闭指定版本对象的 Legal Hold。 */
+  public Mono<Void> disableObjectLegalHold(String bucket, String object, String versionId) {
+    return setObjectLegalHold(bucket, object, versionId, ObjectLegalHoldConfiguration.disabled());
+  }
+
+  /** 对齐 minio-java：判断对象 Legal Hold 是否启用。 */
+  public Mono<Boolean> isObjectLegalHoldEnabled(String bucket, String object) {
+    return isObjectLegalHoldEnabled(bucket, object, null);
+  }
+
+  /** 对齐 minio-java：判断指定版本对象 Legal Hold 是否启用。 */
+  public Mono<Boolean> isObjectLegalHoldEnabled(String bucket, String object, String versionId) {
+    return getObjectLegalHold(bucket, object, versionId)
+        .map(ObjectLegalHoldConfiguration::enabledValue)
+        .onErrorResume(
+            ReactiveS3Exception.class,
+            error ->
+                "NoSuchObjectLockConfiguration".equals(error.errorCode())
+                    ? Mono.just(false)
+                    : Mono.error(error));
+  }
+
   /** 设置指定版本对象的 Legal Hold 配置。 */
   public Mono<Void> setObjectLegalHold(
       String bucket, String object, String versionId, ObjectLegalHoldConfiguration configuration) {
@@ -475,14 +512,29 @@ public final class ReactiveMinioClient {
     return getBucketSubresource(bucket, "cors").map(S3Xml::parseBucketCors);
   }
 
+  /** 对齐 minio-java 方法名：获取 bucket CORS 配置。 */
+  public Mono<BucketCorsConfiguration> getBucketCors(String bucket) {
+    return getBucketCorsConfiguration(bucket);
+  }
+
   /** 设置 bucket CORS 配置。 */
   public Mono<Void> setBucketCorsConfiguration(String bucket, BucketCorsConfiguration configuration) {
     return putBucketSubresource(bucket, "cors", S3Xml.bucketCorsXml(configuration), "application/xml");
   }
 
+  /** 对齐 minio-java 方法名：设置 bucket CORS 配置。 */
+  public Mono<Void> setBucketCors(String bucket, BucketCorsConfiguration configuration) {
+    return setBucketCorsConfiguration(bucket, configuration);
+  }
+
   /** 删除 bucket CORS 配置。 */
   public Mono<Void> deleteBucketCorsConfiguration(String bucket) {
     return deleteBucketSubresource(bucket, "cors");
+  }
+
+  /** 对齐 minio-java 方法名：删除 bucket CORS 配置。 */
+  public Mono<Void> deleteBucketCors(String bucket) {
+    return deleteBucketCorsConfiguration(bucket);
   }
 
   /** 获取 bucket 静态网站配置摘要。 */
@@ -598,6 +650,11 @@ public final class ReactiveMinioClient {
     return setBucketNotification(bucket, S3Xml.bucketNotificationXml(configuration));
   }
 
+  /** 对齐 minio-java：通过写入空 notification 配置删除通知规则。 */
+  public Mono<Void> deleteBucketNotification(String bucket) {
+    return setBucketNotificationConfiguration(bucket, BucketNotificationConfiguration.empty());
+  }
+
   /**
    * 监听指定 bucket 的事件通知，并以响应式字节流返回服务端推送内容。
    *
@@ -647,8 +704,24 @@ public final class ReactiveMinioClient {
     return getBucketSubresource(bucket, "object-lock");
   }
 
+  /** 对齐 minio-java 方法名：获取 bucket 默认对象锁配置。 */
+  public Mono<String> getObjectLockConfiguration(String bucket) {
+    return getBucketObjectLockConfiguration(bucket);
+  }
+
   public Mono<Void> setBucketObjectLockConfiguration(String bucket, String objectLockXml) {
     return putBucketSubresource(bucket, "object-lock", objectLockXml, "application/xml");
+  }
+
+  /** 对齐 minio-java 方法名：设置 bucket 默认对象锁配置。 */
+  public Mono<Void> setObjectLockConfiguration(String bucket, String objectLockXml) {
+    return setBucketObjectLockConfiguration(bucket, objectLockXml);
+  }
+
+  /** 对齐 minio-java：通过写入空对象锁配置删除默认保留配置。 */
+  public Mono<Void> deleteObjectLockConfiguration(String bucket) {
+    return setBucketObjectLockConfiguration(
+        bucket, "<ObjectLockConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"/>");
   }
 
   public Mono<String> getBucketReplication(String bucket) {
