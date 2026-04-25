@@ -120,6 +120,39 @@ class MadminEncryptionSupportTest {
   }
 
   @Test
+  void shouldDecryptSupportedEncryptedAdminResponseWithExplicitSecretKey() {
+    byte[] fixture = readFixture("pbkdf2-aesgcm-go.base64");
+    io.minio.reactive.messages.admin.EncryptedAdminResponse response =
+        new io.minio.reactive.messages.admin.EncryptedAdminResponse(fixture);
+
+    Assertions.assertTrue(response.isEncrypted());
+    Assertions.assertTrue(response.decryptSupported());
+    Assertions.assertTrue(response.requiresSecretKey());
+    Assertions.assertFalse(response.requiresCryptoGate());
+    Assertions.assertEquals("madmin fixture payload", response.decryptAsUtf8("fixture-secret"));
+    Assertions.assertArrayEquals(
+        "madmin fixture payload".getBytes(StandardCharsets.UTF_8), response.decrypt("fixture-secret"));
+  }
+
+  @Test
+  void shouldKeepDefaultArgon2idResponseAsEncryptedBoundaryWhenDecryptFails() {
+    byte[] fixture = readFixture("argon2id-aesgcm-go-default.base64");
+    io.minio.reactive.messages.admin.EncryptedAdminResponse response =
+        new io.minio.reactive.messages.admin.EncryptedAdminResponse(fixture);
+
+    IllegalArgumentException error =
+        Assertions.assertThrows(
+            IllegalArgumentException.class, () -> response.decryptAsUtf8("fixture-secret"));
+
+    Assertions.assertTrue(response.isEncrypted());
+    Assertions.assertFalse(response.decryptSupported());
+    Assertions.assertTrue(response.requiresSecretKey());
+    Assertions.assertTrue(response.requiresCryptoGate());
+    Assertions.assertTrue(error.getMessage().contains("Argon2id + AES-GCM"));
+    Assertions.assertTrue(response.diagnosticMessage().contains("Crypto Gate"));
+  }
+
+  @Test
   void shouldDiagnoseUnsupportedDefaultArgon2idAesGcmFixture() {
     byte[] fixture = readFixture("argon2id-aesgcm-go-default.base64");
 

@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 103 Crypto Gate 自动解密准备
+
+- `EncryptedAdminResponse` 新增 `requiresSecretKey()`、`decrypt(secretKey)`、`decryptAsUtf8(secretKey)`，调用方可显式提供 secret key 解密已放行算法。
+- 当前只支持无需新增依赖的 PBKDF2 + AES-GCM madmin 载荷；MinIO 默认 Argon2id / ChaCha20-Poly1305 仍保持 Crypto Gate 边界。
+- 新增 `docs/101-stage103-crypto-gate-decryption-prep.md`，说明涉及 Crypto Gate 的接口、madmin 格式、解密条件、失败语义和仍未放行的原因。
+- 新增测试覆盖 PBKDF2 Go fixture 通过 `EncryptedAdminResponse` 解密，以及默认 Argon2id 响应继续保留加密边界。
+
 ## 阶段 102 发布完成度与剩余门禁审计
 
 - 新增 `docs/100-stage102-release-completion-gate-audit.md`，汇总名称级对标、签名级对标、capability matrix 和多 JDK 验证证据。
