@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 99 credentials provider 行为细化
+
+- `AwsEnvironmentProvider` 对空字符串主变量改为和 minio-java 一致：存在但为空时直接报错，不再静默回退到次级变量。
+- `Jwt` 增加 `access_token` / `expires_in` 的 Jackson 映射，支持 OIDC/ClientGrants JSON 直接反序列化。
+- 新增 `docs/97-stage99-credentials-provider-behavior.md`，记录 provider 行为差异、验证和边界。
+- 新增测试覆盖空字符串环境变量和 minio-java 风格 JWT JSON 字段名。
+
 ## 阶段 98 provider 行为深化与 Crypto Gate 回归
 
 - `AssumeRoleProvider`、`WebIdentityProvider`、`ClientGrantsProvider`、`LdapIdentityProvider`、`CertificateIdentityProvider` 新增 `fromStsClient(...)` 桥接工厂。

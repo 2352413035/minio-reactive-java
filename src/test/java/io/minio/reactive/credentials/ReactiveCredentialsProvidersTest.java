@@ -1,5 +1,6 @@
 package io.minio.reactive.credentials;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,6 +64,52 @@ class ReactiveCredentialsProvidersTest {
                           Assertions.assertEquals("aws-sk", credentials.secretKey());
                           Assertions.assertEquals("aws-session", credentials.sessionToken());
                         })));
+  }
+
+  @Test
+  void shouldRejectEmptyAwsPrimaryEnvironmentValue() {
+    Assertions.assertThrows(
+        ProviderException.class,
+        () ->
+            withSystemProperty(
+                "AWS_ACCESS_KEY_ID",
+                "",
+                () ->
+                    withSystemProperty(
+                        "AWS_ACCESS_KEY",
+                        "fallback-ak",
+                        () ->
+                            withSystemProperty(
+                                "AWS_SECRET_ACCESS_KEY",
+                                "aws-sk",
+                                () -> new AwsEnvironmentProvider().fetch()))));
+
+    Assertions.assertThrows(
+        ProviderException.class,
+        () ->
+            withSystemProperty(
+                "AWS_ACCESS_KEY_ID",
+                "aws-ak",
+                () ->
+                    withSystemProperty(
+                        "AWS_SECRET_ACCESS_KEY",
+                        "",
+                        () ->
+                            withSystemProperty(
+                                "AWS_SECRET_KEY",
+                                "fallback-sk",
+                                () -> new AwsEnvironmentProvider().fetch()))));
+  }
+
+  @Test
+  void shouldDeserializeJwtWithMinioJavaFieldNames() throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+
+    Jwt jwt = mapper.readValue("{\"access_token\":\"json-token\",\"expires_in\":60}", Jwt.class);
+
+    Assertions.assertEquals("json-token", jwt.token());
+    Assertions.assertEquals(60, jwt.expiry());
+    Assertions.assertTrue(mapper.writeValueAsString(jwt).contains("access_token"));
   }
 
   @Test
