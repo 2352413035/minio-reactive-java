@@ -1419,12 +1419,24 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
+  /** 列出全部用户并用调用方显式提供的 secretKey 解密为明文 JSON。 */
+  public Mono<String> listUsersDecrypted(String secretKey) {
+    requireText("secretKey", secretKey);
+    return listUsersEncrypted().map(response -> response.decryptAsUtf8(secretKey));
+  }
+
   /** 获取配置 KV 的加密响应；配置读取由 MinIO 服务端加密返回，调用方显式解密后再解析。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getConfigKvEncrypted(
       String key) {
     requireText("key", key);
     return executeToBytes("ADMIN_GET_CONFIG_KV", emptyMap(), map("key", key), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 获取配置 KV 并用调用方显式提供的 secretKey 解密为明文文本。 */
+  public Mono<String> getConfigKvDecrypted(String key, String secretKey) {
+    requireText("secretKey", secretKey);
+    return getConfigKvEncrypted(key).map(response -> response.decryptAsUtf8(secretKey));
   }
 
   /** 列出配置历史的加密响应；调用方可用对应账号 secretKey 显式解密。 */
@@ -1443,10 +1455,22 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
+  /** 列出配置历史并用调用方显式提供的 secretKey 解密为明文文本。 */
+  public Mono<String> listConfigHistoryKvDecrypted(int count, String secretKey) {
+    requireText("secretKey", secretKey);
+    return listConfigHistoryKvEncrypted(count).map(response -> response.decryptAsUtf8(secretKey));
+  }
+
   /** 获取完整配置的加密响应；这是需要调用方显式提供 secretKey 的 crypto boundary。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getConfigEncrypted() {
     return executeToBytes("ADMIN_GET_CONFIG", emptyMap(), emptyMap(), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 获取完整配置并用调用方显式提供的 secretKey 解密为明文文本。 */
+  public Mono<String> getConfigDecrypted(String secretKey) {
+    requireText("secretKey", secretKey);
+    return getConfigEncrypted().map(response -> response.decryptAsUtf8(secretKey));
   }
 
   /** 列出 IDP 配置的加密响应；服务端按 madmin 协议加密返回，调用方显式解密后再解析。 */
@@ -1455,6 +1479,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     requireText("type", type);
     return executeToBytes("ADMIN_LIST_IDP_CONFIG", map("type", type), emptyMap(), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 列出 IDP 配置并用调用方显式提供的 secretKey 解密为明文 JSON。 */
+  public Mono<String> listIdpConfigsDecrypted(String type, String secretKey) {
+    requireText("secretKey", secretKey);
+    return listIdpConfigsEncrypted(type).map(response -> response.decryptAsUtf8(secretKey));
   }
 
   /** 获取单个 IDP 配置的加密响应；调用方可用对应账号 secretKey 显式解密。 */
@@ -1470,6 +1500,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
             null,
             null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 获取单个 IDP 配置并用调用方显式提供的 secretKey 解密为明文 JSON。 */
+  public Mono<String> getIdpConfigDecrypted(String type, String name, String secretKey) {
+    requireText("secretKey", secretKey);
+    return getIdpConfigEncrypted(type, name).map(response -> response.decryptAsUtf8(secretKey));
   }
 
   /** 列出全部用户组，返回强类型用户组名称列表。 */
@@ -1549,6 +1585,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
+  /** 获取服务账号信息并用调用方显式提供的 secretKey 解密为明文 JSON。 */
+  public Mono<String> getServiceAccountInfoDecrypted(String accessKey, String secretKey) {
+    requireText("secretKey", secretKey);
+    return getServiceAccountInfoEncrypted(accessKey).map(response -> response.decryptAsUtf8(secretKey));
+  }
+
   /** 对齐 minio-java：获取服务账号信息，返回可显式解密的加密边界对象。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getServiceAccountInfo(
       String accessKey) {
@@ -1560,6 +1602,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToBytes(
             "ADMIN_LIST_SERVICE_ACCOUNTS", emptyMap(), emptyMap(), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 列出当前用户服务账号并用调用方显式提供的 secretKey 解密为明文 JSON。 */
+  public Mono<String> listServiceAccountsDecrypted(String secretKey) {
+    requireText("secretKey", secretKey);
+    return listServiceAccountsEncrypted().map(response -> response.decryptAsUtf8(secretKey));
   }
 
   /** 对齐 minio-java：按用户名列出服务账号，返回可显式解密的加密边界对象。 */
@@ -1574,6 +1622,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
             null,
             null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 按用户名列出服务账号并用调用方显式提供的 secretKey 解密为明文 JSON。 */
+  public Mono<String> listServiceAccountDecrypted(String username, String secretKey) {
+    requireText("secretKey", secretKey);
+    return listServiceAccount(username).map(response -> response.decryptAsUtf8(secretKey));
   }
 
   /** 删除服务账号，返回空结果而不是兼容入口的字符串。 */

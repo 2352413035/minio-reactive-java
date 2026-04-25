@@ -171,7 +171,7 @@ def build_matrix(worktree: Path):
     for family, rel in FAMILY_FILES.items():
         methods, text = public_methods(worktree / rel)
         route_catalog = catalog_counts.get(family, 0)
-        adv = advanced_count(family, methods, text)
+        adv = min(advanced_count(family, methods, text), route_catalog)
         typed = typed_count(family, methods, route_catalog)
         rows.append({
             'family': family,

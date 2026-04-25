@@ -56,7 +56,7 @@ minio.content=你好，来自 reactive minio sdk
 - 版本能力：`listObjectVersions` / `listObjectVersionsPage` typed 分页模型。
 - Admin：server/storage/data-usage/account/config-help、pool/rebalance/tier/site-replication/peer-idp/top-locks/obd/health、batch job 状态/描述、replication MRF backlog 等 L1 只读摘要模型，用户、用户组、策略、服务账号等 typed 或风险分层入口。
 - KMS、STS、Metrics、Health：均有独立专用客户端；KMS/Metrics 指标入口保留 Prometheus 文本和样本解析，STS 普通 AssumeRole 已有 typed 请求对象，Health 已有布尔检查。
-- madmin 加密边界：配置、IDP 配置、服务账号、access key 等默认加密响应显式返回 `EncryptedAdminResponse`，并暴露算法、字节数和解密支持状态；阶段 111 起已对齐 minio-java 支持 Argon2id/AES-GCM、Argon2id/ChaCha20-Poly1305 与 PBKDF2/AES-GCM，调用方提供对应 `secretKey` 后可显式解密。
+- madmin 加密边界：配置、IDP 配置、服务账号、access key 等默认加密响应显式返回 `EncryptedAdminResponse`，并暴露算法、字节数和解密支持状态；阶段 111 起已对齐 minio-java 支持 Argon2id/AES-GCM、Argon2id/ChaCha20-Poly1305 与 PBKDF2/AES-GCM，阶段 112 又补充一组带 `secretKey` 的便捷入口，调用方可显式解密为明文字符串或业务模型。
 - 破坏性 Admin 实验环境：破坏性 Admin 测试只允许在独立可回滚环境中运行，支持独立 lab 配置文件和无凭证准备度审计；阶段 84 已在 Docker 独立 MinIO 上验证 config KV、bucket quota 与 remote target 只读探测的 typed/raw 路径；默认共享 MinIO 集成测试不会修改危险配置。
 
 这些能力已经通过 JDK8 单元测试以及真实 MinIO 集成测试进行了验证。
@@ -261,6 +261,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/107-stage109-site-replication-lab-matrix.md`
 - `docs/108-stage110-destructive-lab-gap-closure.md`
 - `docs/109-stage111-crypto-gate-pass.md`
+- `docs/110-stage112-encrypted-admin-decrypted-helpers.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`
