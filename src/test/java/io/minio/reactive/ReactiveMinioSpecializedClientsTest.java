@@ -91,6 +91,7 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioClient.class, "downloadObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "getPresignedPostFormData");
     assertMonoMethodExists(ReactiveMinioClient.class, "uploadObject");
+    assertFluxMethodExists(ReactiveMinioClient.class, "promptObject");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "serverInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "addUser");
     assertMonoMethodExists(ReactiveMinioKmsClient.class, "keyStatus");
@@ -418,6 +419,55 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/bucket1/append.txt"));
     Assertions.assertTrue(offsets.contains("5"));
     Assertions.assertTrue(contentTypes.contains("text/plain"));
+  }
+
+  @Test
+  void shouldPromptObjectWithLambdaArnLikeMinioJava() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> customHeaders = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  customHeaders.add(request.headers().getFirst("x-test-header"));
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).body("推理结果").build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    String result =
+        new String(
+            client
+                .promptObject(
+                    "bucket1",
+                    "context.txt",
+                    "v1",
+                    "arn:minio:s3-object-lambda::model",
+                    "请总结这个对象",
+                    java.util.Collections.<String, Object>singletonMap("temperature", 0.2D),
+                    java.util.Collections.singletonMap("x-test-header", "yes"))
+                .blockFirst(),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+    Assertions.assertEquals("推理结果", result);
+    Assertions.assertTrue(paths.contains("/bucket1/context.txt"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "lambdaArn=", "versionId=v1"));
+    Assertions.assertTrue(contentTypes.contains("application/json"));
+    Assertions.assertTrue(customHeaders.contains("yes"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> client.promptObject("bucket1", "context.txt", "lambda", " ").blockFirst());
   }
 
 
