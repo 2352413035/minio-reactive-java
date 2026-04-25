@@ -91,5 +91,6 @@ if "$SCRIPT_DIR/verify-env.sh" >"$verify_output" 2>&1; then
 else
   printf '拒绝：当前配置不能启动破坏性 lab 测试。原因如下：\n'
   sed 's/^/  /' "$verify_output"
+  printf '提示：如果你正在准备 tier、remote target、batch job 或 site replication 夹具，请运行 `scripts/minio-lab/audit-fixtures.sh` 查看逐项缺口。\n'
   exit 1
 fi
