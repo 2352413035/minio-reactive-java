@@ -161,3 +161,15 @@
 - 可继续：结果模型深化、中文错误解释、示例和只读旁证。
 
 发布负责人接手时，应先按阶段 65 的阻塞交接表确认 owner、安全、架构、运维或发布负责人是否已经提供外部证据；没有外部证据时，不能降低 `encrypted-blocked` 或 `destructive-blocked`。
+
+## 阶段 77/78 破坏性 lab 与发布工程预检
+
+阶段 77 后，发布负责人可以先运行 `scripts/minio-lab/audit-readiness.sh` 做非破坏性准备度审计。该脚本只说明当前配置是否满足启动独立 lab 的门禁，不连接 MinIO，不执行写入测试，也不输出 access key、secret key、请求体或签名。
+
+阶段 78 后，正式 tag/Maven 发布必须继续暂缓，除非同时具备：
+
+1. Crypto Gate Pass 的三方批准、依赖审查和四 JDK 验证证据。
+2. 独立破坏性 lab 的 typed/raw 矩阵报告和恢复确认。
+3. 发布工程材料：版本号、源码包、javadoc、pom 元数据、签名、校验和、许可证或 SBOM、发布说明、回滚策略。
+
+在这些证据齐全前，版本继续保持 `0.1.0-SNAPSHOT`，不得用 route parity 或 product-typed 满格替代外部门禁。
