@@ -4,6 +4,7 @@ import io.minio.reactive.ReactiveMinioAdminClient;
 import io.minio.reactive.ReactiveMinioRawClient;
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AdminBatchJobList;
+import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminJsonResult;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
 import io.minio.reactive.messages.admin.AdminTierList;
@@ -57,6 +58,7 @@ class DestructiveAdminIntegrationTest {
         "缺少 MINIO_LAB_TEST_CONFIG_KV/MINIO_LAB_RESTORE_CONFIG_KV，跳过真实 config 写入与恢复。");
 
     ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
 
     try {
       runLabStep("config", "typed setConfigKvText 测试值", () -> admin.setConfigKvText(testConfigKv).block());
@@ -64,8 +66,44 @@ class DestructiveAdminIntegrationTest {
           "config",
           "typed getConfigHelp 测试值",
           () -> admin.getConfigHelp(configSubSystem(testConfigKv)).block());
+      runLabStep(
+          "config",
+          "raw ADMIN_SET_CONFIG_KV 测试值",
+          () ->
+              rawVoid(
+                  raw,
+                  "ADMIN_SET_CONFIG_KV",
+                  emptyMap(),
+                  emptyMap(),
+                  encryptedLabBody(testConfigKv),
+                  "application/octet-stream"));
+      labStepValue(
+          "config",
+          "raw ADMIN_HELP_CONFIG_KV 测试值",
+          () ->
+              rawString(
+                  raw,
+                  "ADMIN_HELP_CONFIG_KV",
+                  emptyMap(),
+                  map("subSys", configSubSystem(testConfigKv), "key", ""),
+                  null,
+                  null));
     } finally {
-      runLabStep("config", "typed setConfigKvText 恢复值", () -> admin.setConfigKvText(restoreConfigKv).block());
+      try {
+        runLabStep(
+            "config",
+            "raw ADMIN_SET_CONFIG_KV 恢复值",
+            () ->
+                rawVoid(
+                    raw,
+                    "ADMIN_SET_CONFIG_KV",
+                    emptyMap(),
+                    emptyMap(),
+                    encryptedLabBody(restoreConfigKv),
+                    "application/octet-stream"));
+      } finally {
+        runLabStep("config", "typed setConfigKvText 恢复值", () -> admin.setConfigKvText(restoreConfigKv).block());
+      }
     }
     Assertions.assertNotNull(
         labStepValue(
@@ -86,6 +124,7 @@ class DestructiveAdminIntegrationTest {
         "缺少 bucket quota lab 配置，跳过真实 bucket quota 写入与恢复。");
 
     ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
     try {
       runLabStep(
           "bucket-quota",
@@ -93,11 +132,43 @@ class DestructiveAdminIntegrationTest {
           () -> admin.setBucketQuota(bucket, bytes(testQuotaJson), "application/json").block());
       labStepValue(
           "bucket-quota", "typed getBucketQuotaInfo 测试值", () -> admin.getBucketQuotaInfo(bucket).block());
-    } finally {
       runLabStep(
           "bucket-quota",
-          "typed setBucketQuota 恢复值",
-          () -> admin.setBucketQuota(bucket, bytes(restoreQuotaJson), "application/json").block());
+          "raw ADMIN_SET_BUCKET_QUOTA 测试值",
+          () ->
+              rawVoid(
+                  raw,
+                  "ADMIN_SET_BUCKET_QUOTA",
+                  emptyMap(),
+                  map("bucket", bucket),
+                  bytes(testQuotaJson),
+                  "application/json"));
+      Assertions.assertNotNull(
+          labStepValue(
+              "bucket-quota",
+              "raw ADMIN_GET_BUCKET_QUOTA 测试值",
+              () ->
+                  AdminBucketQuota.parse(
+                      rawString(raw, "ADMIN_GET_BUCKET_QUOTA", map("bucket", bucket)))));
+    } finally {
+      try {
+        runLabStep(
+            "bucket-quota",
+            "raw ADMIN_SET_BUCKET_QUOTA 恢复值",
+            () ->
+                rawVoid(
+                    raw,
+                    "ADMIN_SET_BUCKET_QUOTA",
+                    emptyMap(),
+                    map("bucket", bucket),
+                    bytes(restoreQuotaJson),
+                    "application/json"));
+      } finally {
+        runLabStep(
+            "bucket-quota",
+            "typed setBucketQuota 恢复值",
+            () -> admin.setBucketQuota(bucket, bytes(restoreQuotaJson), "application/json").block());
+      }
     }
     Assertions.assertNotNull(
         labStepValue(
@@ -621,6 +692,30 @@ class DestructiveAdminIntegrationTest {
             body,
             contentType)
         .block();
+  }
+
+  private static void rawVoid(
+      ReactiveMinioRawClient raw,
+      String endpointName,
+      Map<String, String> pathVariables,
+      Map<String, String> query,
+      byte[] body,
+      String contentType) {
+    raw.executeToVoid(
+            MinioApiCatalog.byName(endpointName),
+            pathVariables,
+            query,
+            emptyMap(),
+            body,
+            contentType)
+        .block();
+  }
+
+  private static byte[] encryptedLabBody(String plainText) {
+    // MinIO madmin 写入类配置接口要求请求体用当前凭证 secretKey 加密。
+    // raw 客户端不替用户做业务语义判断，所以 lab 里显式构造加密体来证明兜底能力。
+    return io.minio.reactive.util.MadminEncryptionSupport.encryptData(
+        labValue("MINIO_LAB_SECRET_KEY"), bytes(plainText));
   }
 
   private static boolean containsTierName(AdminTierList tiers, String tierName) {

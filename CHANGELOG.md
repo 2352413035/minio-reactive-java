@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 84 Crypto Gate 解释与 Docker 独立 lab 证据
+
+- 新增 `docs/82-stage84-crypto-gate-docker-lab.md`，把 Crypto Gate 涉及接口、MinIO madmin 加密处理、解密条件和“不是一定可解密”的边界说明清楚。
+- `scripts/minio-lab/run-destructive-tests.sh` 不再把 lab 端点复制到通用 `MINIO_ENDPOINT`，避免内部门禁误判 lab 与共享环境相同。
+- 修正 bucket quota lab 示例字段为 madmin-go 实际使用的 `quotatype`。
+- `DestructiveAdminIntegrationTest` 为 config KV 与 bucket quota 增加 raw 兜底写入/读取/恢复验证；JDK8 与 JDK17+ 均在 Docker 独立 MinIO lab 中通过。
+- 本阶段只证明 config、bucket quota 与 remote target 只读探测的 typed/raw 路径，tier/remote target 写入、batch job、site replication 仍等待私有夹具，Crypto Gate 仍保持 Fail。
+
 ## 阶段 83 最终完成边界判定
 
 - 新增 `docs/81-stage83-final-boundary.md`，明确当前“发布候选完成、正式发布阻塞于外部门禁”的结论。

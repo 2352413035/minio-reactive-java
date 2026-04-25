@@ -46,6 +46,29 @@ scripts/minio-lab/run-destructive-tests.sh
 
 配置文件采用简单 `KEY=VALUE` 格式。脚本只读取键值，不执行配置文件中的 shell 代码。真实凭证和真实端点 不要提交到仓库。
 
+
+### 方式三：本机 Docker 一次性 lab
+
+如果本机有 `docker` 和 `minio/minio` 镜像，可以启动一个不占用共享 `9000/9001` 的一次性 lab。下面只展示结构，真实凭证应使用运行时变量或临时文件，不要写入仓库：
+
+```bash
+docker rm -f minio-reactive-destructive-lab 2>/dev/null || true
+docker run -d --name minio-reactive-destructive-lab \
+  -p 127.0.0.1:19000:9000 \
+  -p 127.0.0.1:19001:9001 \
+  -e MINIO_ROOT_USER='<运行时生成的 lab 用户>' \
+  -e MINIO_ROOT_PASSWORD='<运行时生成的强密码>' \
+  minio/minio server /data --console-address ':9001'
+
+export MINIO_ALLOW_DESTRUCTIVE_ADMIN_TESTS=true
+export MINIO_LAB_ENDPOINT=http://127.0.0.1:19000
+export MINIO_LAB_ACCESS_KEY='<lab 用户>'
+export MINIO_LAB_SECRET_KEY='<lab 密码>'
+export MINIO_LAB_CAN_RESTORE=true
+```
+
+推荐再用独立 `mc` 配置目录创建测试 bucket，执行完后删除容器或整个临时配置目录。
+
 ### 非破坏性准备度审计
 
 如果只是想确认当前 shell 或私有配置文件是否满足门禁，可以先运行：
@@ -70,8 +93,9 @@ export MINIO_LAB_RESTORE_CONFIG_KV='api requests_max=0'
 1. 运行 `verify-env.sh`，证明这是独立 lab。
 2. 使用 `setConfigKvText(MINIO_LAB_TEST_CONFIG_KV)` 写入测试配置。
 3. 通过 `getConfigHelp(...)` 做只读探测，证明服务端仍可响应。
-4. finally 中使用 `setConfigKvText(MINIO_LAB_RESTORE_CONFIG_KV)` 恢复。
-5. 恢复后再次执行只读探测。
+4. 使用 `ReactiveMinioRawClient` 调用 `ADMIN_SET_CONFIG_KV` 和 `ADMIN_HELP_CONFIG_KV`，证明 raw 兜底也能处理同一接口；raw 写入体会在测试中显式构造 madmin 加密体。
+5. finally 中先尝试 raw 恢复，再使用 `setConfigKvText(MINIO_LAB_RESTORE_CONFIG_KV)` 恢复。
+6. 恢复后再次执行只读探测。
 
 如果没有提供这两个变量，真实配置写入测试会跳过；默认 `mvn test` 永远不会修改 MinIO 服务端配置。
 
@@ -81,8 +105,8 @@ export MINIO_LAB_RESTORE_CONFIG_KV='api requests_max=0'
 
 ```properties
 MINIO_LAB_BUCKET=lab-bucket
-MINIO_LAB_TEST_BUCKET_QUOTA_JSON={"quota":1048576,"type":"hard"}
-MINIO_LAB_RESTORE_BUCKET_QUOTA_JSON={"quota":0,"type":"hard"}
+MINIO_LAB_TEST_BUCKET_QUOTA_JSON={"quota":1048576,"quotatype":"hard"}
+MINIO_LAB_RESTORE_BUCKET_QUOTA_JSON={"quota":0,"quotatype":"hard"}
 
 MINIO_LAB_TIER_NAME=archive
 MINIO_LAB_EXPECT_TIER_IN_LIST=false
@@ -92,7 +116,7 @@ MINIO_LAB_ENABLE_BATCH_JOB_PROBES=false
 MINIO_LAB_BATCH_EXPECTED_JOB_ID=
 ```
 
-- bucket quota 写入必须同时设置测试值和恢复值，并且 finally 中总是尝试恢复。
+- bucket quota 写入必须同时设置测试值和恢复值，并且 finally 中总是尝试恢复。bucket quota 写入会同时覆盖 typed 与 raw：专用客户端负责用户友好入口，raw 负责 catalog 兜底入口。
 - tier、remote target、batch job 只做仅实验环境 typed/raw 双路径探测，不进入共享 live 门禁。
 - `MINIO_LAB_EXPECT_TIER_IN_LIST=true` 时，`listTiers()` typed 摘要必须能看到 `MINIO_LAB_TIER_NAME`。
 - `MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN` 不为空时，`listRemoteTargetsInfo(...)` typed 摘要必须能看到该 ARN。
