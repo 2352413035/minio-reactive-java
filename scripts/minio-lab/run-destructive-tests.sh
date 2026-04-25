@@ -40,9 +40,8 @@ LAB_REPORT_DETAIL="verify-env 门禁拒绝或配置不完整。"
 : "${MINIO_LAB_ACCESS_KEY:?缺少 MINIO_LAB_ACCESS_KEY}"
 : "${MINIO_LAB_SECRET_KEY:?缺少 MINIO_LAB_SECRET_KEY}"
 
-export MINIO_ENDPOINT="$MINIO_LAB_ENDPOINT"
-export MINIO_ACCESS_KEY="$MINIO_LAB_ACCESS_KEY"
-export MINIO_SECRET_KEY="$MINIO_LAB_SECRET_KEY"
+# 破坏性测试只读取 MINIO_LAB_*。这里不要把 lab 端点复制到通用 MINIO_ENDPOINT，
+# 否则用例内部再次执行 verify-env 时会误判“lab 与共享环境相同”，失去隔离门禁意义。
 export MINIO_REGION="${MINIO_LAB_REGION:-us-east-1}"
 
 cd "$REPO_ROOT"
