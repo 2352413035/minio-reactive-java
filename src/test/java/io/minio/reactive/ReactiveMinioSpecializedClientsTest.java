@@ -136,7 +136,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 131, 60, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 134, 60, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 203, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
@@ -643,6 +643,99 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "user=root-user"));
     Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc2"));
+  }
+
+
+  @Test
+  void shouldBuildStage93ObjectArgsRequests() {
+    java.util.List<String> methods = new java.util.ArrayList<String>();
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> ranges = new java.util.ArrayList<String>();
+    java.util.List<String> copySources = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  methods.add(request.method().name());
+                  paths.add(request.url().getPath());
+                  ranges.add(request.headers().getFirst("Range"));
+                  copySources.add(request.headers().getFirst("X-Amz-Copy-Source"));
+                  contentTypes.add(request.headers().getFirst("Content-Type"));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .header("ETag", "\"etag-1\"")
+                          .body("body")
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertTrue(
+        client.bucketExists(BucketExistsArgs.builder().bucket("bucket1").build()).block());
+    client
+        .putObject(
+            PutObjectArgs.builder()
+                .bucket("bucket1")
+                .object("object1")
+                .content("中文内容")
+                .contentType("text/plain")
+                .build())
+        .block();
+    client
+        .getObject(
+            GetObjectArgs.builder()
+                .bucket("bucket1")
+                .object("object1")
+                .offset(1)
+                .length(2)
+                .build())
+        .collectList()
+        .block();
+    client
+        .copyObject(
+            CopyObjectArgs.builder()
+                .bucket("bucket1")
+                .object("copy1")
+                .sourceBucket("source-bucket")
+                .sourceObject("source-object")
+                .build())
+        .block();
+    client
+        .removeObject(RemoveObjectArgs.builder().bucket("bucket1").object("object1").build())
+        .block();
+    java.net.URI uri =
+        client
+            .getPresignedObjectUrl(
+                GetPresignedObjectUrlArgs.builder().bucket("bucket1").object("object1").build())
+            .block();
+
+    Assertions.assertNotNull(uri);
+    Assertions.assertTrue(methods.contains("HEAD"));
+    Assertions.assertTrue(methods.contains("PUT"));
+    Assertions.assertTrue(methods.contains("GET"));
+    Assertions.assertTrue(methods.contains("DELETE"));
+    Assertions.assertTrue(paths.contains("/bucket1/object1"));
+    Assertions.assertTrue(paths.contains("/bucket1/copy1"));
+    Assertions.assertTrue(ranges.contains("bytes=1-2"));
+    Assertions.assertTrue(copySources.contains("/source-bucket/source-object"));
+    Assertions.assertTrue(contentTypes.contains("text/plain"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> GetObjectArgs.builder().bucket("bucket1").object("object1").offset(0).build());
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            RemoveObjectsArgs.builder()
+                .bucket("bucket1")
+                .objects(java.util.Collections.<String>emptyList())
+                .build());
   }
 
 
