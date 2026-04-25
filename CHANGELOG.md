@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 79 发布暂缓后缺口再审计
+
+- 新增 `docs/77-stage79-post-release-hold-gap-audit.md`，确认阶段 78 后没有新的 route/catalog/product/raw 缺口。
+- 明确剩余差距是 Crypto Gate、独立破坏性 lab 和 Maven/tag 发布工程证据，不是继续新增重复 API。
+- 下一轮安全推进方向收敛为 POM 发布元数据预检、用户示例/中文诊断和只读旁证扩展。
+
 ## 阶段 78 发布工程预检
 
 - 新增 `docs/76-stage78-release-engineering-preflight.md`，明确当前只能作为发布候选继续验证，不能正式 tag/Maven 发布。
