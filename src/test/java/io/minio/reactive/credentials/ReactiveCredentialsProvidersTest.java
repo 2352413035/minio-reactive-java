@@ -5,8 +5,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.ProviderException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 class ReactiveCredentialsProvidersTest {
@@ -173,6 +178,44 @@ class ReactiveCredentialsProvidersTest {
             .build());
   }
 
+  @Test
+  void shouldFetchIdentityCredentialsThroughReactiveStsClient() {
+    List<String> queries = new ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  queries.add(request.url().getQuery());
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).body(stsSuccessXml()).build());
+                })
+            .build();
+    io.minio.reactive.ReactiveMinioStsClient stsClient =
+        io.minio.reactive.ReactiveMinioStsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertEquals("sts-access", AssumeRoleProvider.fromStsClient(stsClient).fetch().accessKey());
+    Assertions.assertEquals(
+        "sts-access",
+        WebIdentityProvider.fromStsClient(stsClient, () -> new Jwt("web-token", 900)).fetch().accessKey());
+    Assertions.assertEquals(
+        "sts-access",
+        ClientGrantsProvider.fromStsClient(stsClient, () -> new Jwt("client-token", 900)).fetch().accessKey());
+    Assertions.assertEquals(
+        "sts-access", LdapIdentityProvider.fromStsClient(stsClient, "ldap-user", "ldap-pass").fetch().accessKey());
+    Assertions.assertEquals(
+        "sts-access", CertificateIdentityProvider.fromStsClient(stsClient).fetch().accessKey());
+
+    Assertions.assertTrue(containsQueryPart(queries, "WebIdentityToken=web-token"));
+    Assertions.assertTrue(containsQueryPart(queries, "Token=client-token"));
+    Assertions.assertTrue(containsQueryPart(queries, "LDAPUsername=ldap-user"));
+    Assertions.assertTrue(containsQueryPart(queries, "LDAPPassword=ldap-pass"));
+    Assertions.assertTrue(containsQueryPart(queries, "Action=AssumeRoleWithCertificate"));
+  }
+
   private static void withSystemProperty(String key, String value, Runnable runnable) {
     String old = System.getProperty(key);
     try {
@@ -185,5 +228,23 @@ class ReactiveCredentialsProvidersTest {
         System.setProperty(key, old);
       }
     }
+  }
+
+  private static boolean containsQueryPart(List<String> queries, String part) {
+    for (String query : queries) {
+      if (query != null && query.contains(part)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static String stsSuccessXml() {
+    return "<AssumeRoleResponse><AssumeRoleResult><Credentials>"
+        + "<AccessKeyId>sts-access</AccessKeyId>"
+        + "<SecretAccessKey>sts-secret</SecretAccessKey>"
+        + "<SessionToken>sts-token</SessionToken>"
+        + "<Expiration>2030-01-01T00:00:00Z</Expiration>"
+        + "</Credentials></AssumeRoleResult></AssumeRoleResponse>";
   }
 }
