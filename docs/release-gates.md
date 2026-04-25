@@ -203,3 +203,11 @@
 5. 每次发布复审都要重新生成 POM 元数据报告和破坏性边界报告。
 
 负责人确认后，才允许按清单分步添加 POM 元数据、source/javadoc/sign/SBOM profile，并先做本地 dry-run；真实 deploy 必须另行取得发布授权。
+
+## 阶段 116 发布就绪总览报告
+
+阶段 116 后，发布复审应运行 `scripts/report-release-readiness.py` 生成聚合报告。该报告把 SDK 发布候选与正式 Maven/tag 发布拆开判定：
+
+- `SDK 发布候选就绪 = 是` 说明功能覆盖、Crypto Gate、route parity 和 raw fallback 已收口。
+- `正式 Maven/tag 发布就绪 = 否` 时，仍不得发布 Maven、创建 tag 或推送远端。
+- 只有 POM 元数据、release 插件、签名、SBOM、发布仓库、回滚策略和破坏性边界证据都满足后，才允许把正式发布门禁改为通过。

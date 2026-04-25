@@ -80,7 +80,7 @@ minio.content=你好，来自 reactive minio sdk
 
 阶段 84 已按独立 Docker lab 口径补充真实破坏性证据：JDK8 与 JDK17+ 分支均通过 `DestructiveAdminIntegrationTest`，覆盖 config KV 与 bucket quota 的 typed/raw 写入、读取和恢复，以及 remote target 的 typed/raw 只读探测；阶段 105 已补齐 tier、remote target、batch job、site replication 的模板与夹具审计脚本；阶段 106 已把 tier、remote target set、site replication add/edit 的专用客户端请求体切换为 madmin 加密语义，并在双分支一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵；阶段 107 又在双分支双容器 Docker lab 通过 tier add/remove typed/raw 写入恢复矩阵；阶段 108 继续在双分支双容器 Docker lab 通过 batch job start/status/cancel typed/raw 矩阵；阶段 109 补齐 site replication add/remove typed/raw 矩阵；阶段 110 补齐 tier edit typed/raw 矩阵。剩余 service restart/update、decommission、rebalance、force-unlock、speedtest 与 site replication edit 等更强变体仍需维护窗口或更复杂拓扑，因此破坏性边界不能直接清零。
 
-机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md`、`.omx/reports/capability-matrix.md`、`.omx/reports/pom-release-metadata-jdk8.md`、`.omx/reports/pom-release-metadata-jdk17.md`、`.omx/reports/destructive-boundary-jdk8.md` 和 `.omx/reports/destructive-boundary-jdk17.md`。阶段 115 的发布负责人输入清单见 `docs/113-stage115-release-metadata-safe-prep.md`。
+机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md`、`.omx/reports/capability-matrix.md`、`.omx/reports/pom-release-metadata-jdk8.md`、`.omx/reports/pom-release-metadata-jdk17.md`、`.omx/reports/destructive-boundary-jdk8.md` 和 `.omx/reports/destructive-boundary-jdk17.md`。阶段 115 的发布负责人输入清单见 `docs/113-stage115-release-metadata-safe-prep.md`；阶段 116 的聚合发布就绪总览脚本见 `scripts/report-release-readiness.py` 和 `docs/114-stage116-release-readiness-aggregator.md`。
 
 阶段 26 已整理为 `0.1.0-SNAPSHOT` 发布候选口径：路由和调用入口闭环，常用 typed 客户端可用，Crypto/破坏性风险边界明确；阶段 111 已把 Crypto Gate 更新为 Pass 门禁，后续继续按 product-typed 成熟度与破坏性 lab 证据推进。详见 `CHANGELOG.md` 和 `docs/24-stage26-release-closeout.md`。
 
@@ -265,6 +265,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/111-stage113-release-readiness-and-destructive-boundary.md`
 - `docs/112-stage114-destructive-boundary-report.md`
 - `docs/113-stage115-release-metadata-safe-prep.md`
+- `docs/114-stage116-release-readiness-aggregator.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`
@@ -275,3 +276,4 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `scripts/report-minio-java-parity.py`
 - `scripts/report-minio-java-signature-parity.py`
 - `scripts/report-destructive-boundary.py`
+- `scripts/report-release-readiness.py`
