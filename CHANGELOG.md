@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 102 发布完成度与剩余门禁审计
+
+- 新增 `docs/100-stage102-release-completion-gate-audit.md`，汇总名称级对标、签名级对标、capability matrix 和多 JDK 验证证据。
+- 明确 SDK 功能覆盖层面已经完成 minio-java 主体 API 对标，且签名级报告没有未解释缺口。
+- 明确正式发布层面仍阻塞于 Crypto Gate 自动解密、高风险破坏性 lab 全矩阵和 Maven/tag/sign/SBOM 等发布工程材料。
+- 后续开发方向从重复补 API 名称转为外部门禁执行、真实 lab 补证、Crypto Gate 设计实现和 release engineering。
+
 ## 阶段 101 PutObjectAPIArgs builder 边界判定
 
 - 对照 minio-java 上传参数层级后，确认 `PutObjectAPIArgs` 在响应式 SDK 中应保留为内部上传参数边界，而不是用户侧公开 builder。
