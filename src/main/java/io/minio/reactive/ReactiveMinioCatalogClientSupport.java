@@ -2,6 +2,7 @@ package io.minio.reactive;
 
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.catalog.MinioApiEndpoint;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -107,6 +108,43 @@ abstract class ReactiveMinioCatalogClientSupport {
       String contentType) {
     return executor.executeToVoid(
         endpoint(endpointName), pathVariables, queryParameters, headers, body, contentType);
+  }
+
+  /**
+   * 执行可能返回 madmin 加密载荷的接口，并用当前凭证自动解密为 UTF-8 文本。
+   *
+   * <p>MinIO 的部分 Admin 读取接口（例如 IDP 配置读取）会返回加密响应；mock 或旧版本服务端可能返回明文。
+   * 这里先按字节接收，只有确认是 madmin 加密格式时才解密，否则按明文兼容处理。
+   */
+  protected Mono<String> executePossiblyEncryptedResponseToString(
+      String endpointName,
+      Map<String, String> pathVariables,
+      Map<String, String> queryParameters,
+      Map<String, String> headers,
+      byte[] body,
+      String contentType) {
+    return executor
+        .credentials()
+        .flatMap(
+            credentials ->
+                executor
+                    .executeToBytes(
+                        endpoint(endpointName),
+                        pathVariables,
+                        queryParameters,
+                        headers,
+                        body,
+                        contentType)
+                    .map(
+                        bytes -> {
+                          if (io.minio.reactive.util.MadminEncryptionSupport.isEncrypted(bytes)) {
+                            return new String(
+                                io.minio.reactive.util.MadminEncryptionSupport.decryptData(
+                                    credentials.secretKey(), bytes),
+                                StandardCharsets.UTF_8);
+                          }
+                          return new String(bytes, StandardCharsets.UTF_8);
+                        }));
   }
 
   /** 使用当前凭证 secretKey 加密原始请求体后执行无响应体接口。 */

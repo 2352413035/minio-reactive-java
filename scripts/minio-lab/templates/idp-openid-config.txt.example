@@ -1,0 +1,1 @@
+config_url="http://idp-lab:5556/dex/.well-known/openid-configuration" client_id="minio-reactive-lab" client_secret="CHANGE_ME_IN_PRIVATE_FIXTURE" claim_name="policy" scopes="openid,profile,email" redirect_uri_dynamic="on"

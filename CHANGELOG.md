@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+
+## 阶段 119 IDP 配置 madmin 语义对齐
+
+- `ReactiveMinioAdminClient` 的 IDP add/update 入口现在自动用当前凭证 secretKey 生成 madmin 加密请求体，并强制使用 `application/octet-stream`。
+- IDP list/get 强类型入口会自动识别并解密 madmin 加密响应，mock 明文 JSON 仍继续兼容。
+- 破坏性 lab 增加 IDP 配置夹具准备度审计、示例变量、OpenID KV 模板和可选 typed/raw 集成测试矩阵；没有真实 IDP 夹具时不降低破坏性边界。
+
 ## 阶段 118 replication diff query 语义
 
 - `runReplicationDiff` 新增无请求体和 query 选项重载，对齐 madmin `BucketReplicationDiff` 的 `verbose`、`prefix`、`arn` 参数语义。

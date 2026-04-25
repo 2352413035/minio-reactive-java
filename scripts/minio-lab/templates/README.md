@@ -9,6 +9,7 @@
 - 模板中的资源名只是占位，执行前必须改成只属于本次 lab 的资源；tier 名称必须大写；remote target 的 `endpoint` 按 madmin 语义填写源 MinIO 服务端视角可访问的 `host:port`，不要带 `http://` 或 `https://`；Docker 端口映射场景下通常不是宿主机映射端口。
 - tier edit 请求体按 madmin-go 的 `TierCreds` 语义使用 `access` / `secret` 字段，不是完整 tier 配置。
 - site replication add 请求体按 madmin-go 语义是 `PeerSite[]` 数组，字段名是 `endpoints`；remove 最小恢复体可使用 `{"all": true}` 清理本次 lab 拓扑。
+- IDP config add/update 请求体不是 JSON，而是 MinIO config KV 片段；专用 Admin 客户端会自动加密，raw 兜底路径需要调用方显式加密后使用 `application/octet-stream`。
 - 未在独立 lab 执行并恢复前，不能把对应 `destructive-blocked` 计数移除。
 
 ## 模板对应关系
@@ -23,6 +24,7 @@
 | `site-replication-add.json.example` | `MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE` | 新增站点复制配置；请求体是 `PeerSite[]` 数组 | 必须提供 remove 请求体，推荐本次 lab 使用 `all=true` |
 | `site-replication-edit.json.example` | `MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE` | 可选：编辑站点复制配置；通常需要真实 deploymentID | 最终仍通过 remove 请求体恢复 |
 | `site-replication-remove.json.example` | `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE` | 移除刚新增的站点复制配置；最小 lab 可用 `all=true` | `MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true` |
+| `idp-openid-config.txt.example` | `MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE` / `MINIO_LAB_UPDATE_IDP_CONFIG_BODY_FILE` | 新增或更新 OpenID 配置；请求体是 config KV 片段 | `MINIO_LAB_DELETE_IDP_AFTER_TEST=true`，必要时手工恢复 server config |
 
 ## 推荐流程
 

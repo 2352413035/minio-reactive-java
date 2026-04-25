@@ -27,19 +27,19 @@ ROUTES = [
         'route': 'ADMIN_ADD_IDP_CONFIG',
         'category': '拓扑或身份提供方',
         'status': '需要独立 IDP 夹具',
-        'evidence': '会影响认证链路，不能在共享环境执行。',
+        'evidence': '阶段 119 已对齐 madmin 加密/解密语义；仍需要独立 OIDC/LDAP 夹具，不能在共享环境执行。',
     },
     {
         'route': 'ADMIN_UPDATE_IDP_CONFIG',
         'category': '拓扑或身份提供方',
         'status': '需要独立 IDP 夹具',
-        'evidence': '会影响认证链路，不能在共享环境执行。',
+        'evidence': '阶段 119 已对齐 madmin 加密/解密语义；仍需要独立 OIDC/LDAP 夹具，不能在共享环境执行。',
     },
     {
         'route': 'ADMIN_DELETE_IDP_CONFIG',
         'category': '拓扑或身份提供方',
         'status': '需要恢复材料',
-        'evidence': '可能删除认证入口，必须有恢复计划。',
+        'evidence': '阶段 119 已加入可选 typed/raw lab 矩阵；删除认证入口必须有独立 IDP 夹具和恢复计划。',
     },
     {
         'route': 'ADMIN_SET_BUCKET_QUOTA',

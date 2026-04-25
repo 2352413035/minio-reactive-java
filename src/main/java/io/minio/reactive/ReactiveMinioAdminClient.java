@@ -24,7 +24,6 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
 
-
   /** 新增内部用户，自动生成 MinIO madmin 兼容加密载荷。 */
   public Mono<Void> addUser(io.minio.reactive.messages.admin.AddUserRequest request) {
     if (request == null) {
@@ -38,7 +37,6 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   public Mono<Void> addUser(String accessKey, String secretKey) {
     return addUser(io.minio.reactive.messages.admin.AddUserRequest.of(accessKey, secretKey));
   }
-
 
   /**
    * 设置单条或多条配置 KV 文本。
@@ -619,43 +617,42 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return revokeUserProviderTokens(userProvider, null, null);
   }
 
-  /** 新增 IDP 配置；这是身份源写入操作，只应在受控维护窗口执行。 */
+  /**
+   * 新增 IDP 配置；按 madmin 协议自动用当前凭证 secretKey 加密请求体。
+   *
+   * <p>MinIO 服务端要求 IDP add/update 的请求体是 `application/octet-stream` 加密载荷。
+   * `contentType` 参数保留为兼容旧签名，不会透传给服务端。
+   */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> addIdpConfigEntry(
       String type, String name, byte[] body, String contentType) {
-    requireText("type", type);
-    requireText("name", name);
     requireBytes("body", body);
     return addIdpConfig(type, name, body, contentType)
         .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("idp-config-add", text));
   }
 
-  /** 新增 IDP 配置，默认使用 application/json。 */
+  /** 新增 IDP 配置，SDK 会自动生成 madmin 加密请求体。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> addIdpConfigEntry(
       String type, String name, byte[] body) {
-    return addIdpConfigEntry(type, name, body, "application/json");
+    return addIdpConfigEntry(type, name, body, null);
   }
 
-  /** 更新 IDP 配置；请求体由调用方审计，SDK 不保存敏感身份源字段。 */
+  /** 更新 IDP 配置；请求体由调用方审计，SDK 只负责 madmin 加密封装，不保存敏感身份源字段。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> updateIdpConfigEntry(
       String type, String name, byte[] body, String contentType) {
-    requireText("type", type);
-    requireText("name", name);
     requireBytes("body", body);
     return updateIdpConfig(type, name, body, contentType)
         .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("idp-config-update", text));
   }
 
-  /** 更新 IDP 配置，默认使用 application/json。 */
+  /** 更新 IDP 配置，SDK 会自动生成 madmin 加密请求体。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> updateIdpConfigEntry(
       String type, String name, byte[] body) {
-    return updateIdpConfigEntry(type, name, body, "application/json");
+    return updateIdpConfigEntry(type, name, body, null);
   }
 
-  /** 删除 IDP 配置；这是身份源高风险写入，必须明确 type 和 name。 */
+  /** 删除 IDP 配置；这是身份源高风险写入，必须明确 type，name 为空时按 madmin 语义使用 `_`。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> deleteIdpConfigEntry(
       String type, String name, byte[] body, String contentType) {
-    requireText("type", type);
-    requireText("name", name);
     return deleteIdpConfig(type, name, body, contentType)
         .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("idp-config-delete", text));
   }
@@ -1237,7 +1234,6 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         null);
   }
 
-
   /** 列出全部内置策略，返回通用 JSON 结果。 */
   public Mono<io.minio.reactive.messages.admin.AdminPolicyList> listPolicies() {
     return listCannedPolicies().map(io.minio.reactive.messages.admin.AdminPolicyList::parse);
@@ -1406,7 +1402,6 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return ldapPolicyEntities().map(io.minio.reactive.messages.admin.AdminPolicyEntities::parse);
   }
 
-
   /** 绑定 LDAP 策略实体；该操作会改变身份源策略映射，必须使用受控请求体。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> attachLdapPolicy(
       byte[] body, String contentType) {
@@ -1432,7 +1427,6 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachLdapPolicy(byte[] body) {
     return detachLdapPolicy(body, "application/json");
   }
-
 
   /** 列出全部用户的加密响应；调用方可用对应账号 secretKey 显式解密。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listUsersEncrypted() {
@@ -1657,7 +1651,6 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToVoid(
         "ADMIN_DELETE_SERVICE_ACCOUNT", emptyMap(), map("accessKey", accessKey), emptyMap(), null, null);
   }
-
 
   /**
    * 创建服务账号，返回服务端加密响应载荷。
@@ -1985,7 +1978,6 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
 
-
   /** 获取 access key 信息的加密响应；当前 MinIO 服务端返回 madmin 加密载荷。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getAccessKeyInfoEncrypted(
       String accessKey) {
@@ -2271,54 +2263,69 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return importIamV2(null, null);
   }
 
-  /** 调用 `ADMIN_ADD_IDP_CONFIG`。 */
+  /** 调用 `ADMIN_ADD_IDP_CONFIG`，按 madmin 协议自动加密请求体并强制使用 application/octet-stream。 */
   public Mono<String> addIdpConfig(String type, String name, byte[] body, String contentType) {
-    return executeToString("ADMIN_ADD_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), body, contentType);
+    return executeEncryptedBytesToString(
+        "ADMIN_ADD_IDP_CONFIG", idpConfigPath(type, name), emptyMap(), body);
   }
 
-  /** 调用 `ADMIN_ADD_IDP_CONFIG`，不携带请求体。 */
+  /** 调用 `ADMIN_ADD_IDP_CONFIG`，发送加密空请求体；真实服务端通常仍会按配置内容校验失败。 */
   public Mono<String> addIdpConfig(String type, String name) {
     return addIdpConfig(type, name, null, null);
   }
 
-  /** 调用 `ADMIN_UPDATE_IDP_CONFIG`。 */
+  /** 调用 `ADMIN_UPDATE_IDP_CONFIG`，按 madmin 协议自动加密请求体并强制使用 application/octet-stream。 */
   public Mono<String> updateIdpConfig(String type, String name, byte[] body, String contentType) {
-    return executeToString("ADMIN_UPDATE_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), body, contentType);
+    return executeEncryptedBytesToString(
+        "ADMIN_UPDATE_IDP_CONFIG", idpConfigPath(type, name), emptyMap(), body);
   }
 
-  /** 调用 `ADMIN_UPDATE_IDP_CONFIG`，不携带请求体。 */
+  /** 调用 `ADMIN_UPDATE_IDP_CONFIG`，发送加密空请求体；真实服务端通常仍会按配置内容校验失败。 */
   public Mono<String> updateIdpConfig(String type, String name) {
     return updateIdpConfig(type, name, null, null);
   }
 
-  /** 调用 `ADMIN_LIST_IDP_CONFIG`。 */
+  /** 调用 `ADMIN_LIST_IDP_CONFIG`，自动解密 MinIO madmin 加密响应；mock 明文响应会原样兼容。 */
   @Deprecated
   public Mono<String> listIdpConfig(String type) {
-    return executeToString("ADMIN_LIST_IDP_CONFIG", map("type", type), emptyMap(), emptyMap(), null, null);
+    String cfgType = idpConfigType(type);
+    return executePossiblyEncryptedResponseToString(
+        "ADMIN_LIST_IDP_CONFIG", map("type", cfgType), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 列出指定类型的 IDP 配置名称；只读摘要保留原始 JSON。 */
+  /** 列出指定类型的 IDP 配置名称；真实 MinIO 加密响应会自动解密，摘要保留解密后的原始 JSON。 */
   public Mono<io.minio.reactive.messages.admin.AdminIdpConfigList> listIdpConfigs(String type) {
-    requireText("type", type);
-    return listIdpConfig(type).map(raw -> io.minio.reactive.messages.admin.AdminIdpConfigList.parse(type, raw));
+    String cfgType = idpConfigType(type);
+    return listIdpConfig(cfgType)
+        .map(raw -> io.minio.reactive.messages.admin.AdminIdpConfigList.parse(cfgType, raw));
   }
 
-  /** 调用 `ADMIN_GET_IDP_CONFIG`。 */
+  /** 调用 `ADMIN_GET_IDP_CONFIG`，自动解密 MinIO madmin 加密响应；mock 明文响应会原样兼容。 */
   @Deprecated
   public Mono<String> getIdpConfig(String type, String name) {
-    return executeToString("ADMIN_GET_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), null, null);
+    return executePossiblyEncryptedResponseToString(
+        "ADMIN_GET_IDP_CONFIG",
+        idpConfigPath(type, name),
+        emptyMap(),
+        emptyMap(),
+        null,
+        null);
   }
 
-  /** 获取单个 IDP 配置的通用 JSON 包装；字段可能随 MinIO 版本变化，因此保留原文。 */
+  /** 获取单个 IDP 配置的通用 JSON 包装；真实 MinIO 加密响应会自动解密后再解析。 */
   public Mono<io.minio.reactive.messages.admin.AdminJsonResult> getIdpConfigInfo(String type, String name) {
-    requireText("type", type);
-    requireText("name", name);
     return getIdpConfig(type, name).map(io.minio.reactive.messages.admin.AdminJsonResult::parse);
   }
 
-  /** 调用 `ADMIN_DELETE_IDP_CONFIG`。 */
+  /** 调用 `ADMIN_DELETE_IDP_CONFIG`；删除接口按 madmin 语义不需要加密请求体。 */
   public Mono<String> deleteIdpConfig(String type, String name, byte[] body, String contentType) {
-    return executeToString("ADMIN_DELETE_IDP_CONFIG", map("type", type, "name", name), emptyMap(), emptyMap(), body, contentType);
+    return executeToString(
+        "ADMIN_DELETE_IDP_CONFIG",
+        idpConfigPath(type, name),
+        emptyMap(),
+        emptyMap(),
+        body,
+        contentType);
   }
 
   /** 调用 `ADMIN_DELETE_IDP_CONFIG`，不携带请求体。 */
@@ -2967,6 +2974,31 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return revokeTokens(userProvider, null, null);
   }
 
+
+  /** 生成 IDP 配置路由变量，并集中应用 madmin 的默认名称规则。 */
+  private static java.util.Map<String, String> idpConfigPath(String type, String name) {
+    String cfgType = idpConfigType(type);
+    return map("type", cfgType, "name", idpConfigName(cfgType, name));
+  }
+
+  /** 校验 IDP 配置类型，提前给出比服务端 400 更清晰的中文错误。 */
+  private static String idpConfigType(String type) {
+    requireText("type", type);
+    String normalized = type.trim().toLowerCase(java.util.Locale.ROOT);
+    if (!"openid".equals(normalized) && !"ldap".equals(normalized)) {
+      throw new IllegalArgumentException("type 只能是 openid 或 ldap");
+    }
+    return normalized;
+  }
+
+  /** 对齐 madmin 默认命名语义：name 为空时使用 `_`；LDAP 只允许默认配置名。 */
+  private static String idpConfigName(String cfgType, String name) {
+    String normalized = name == null || name.trim().isEmpty() ? "_" : name.trim();
+    if ("ldap".equals(cfgType) && !"_".equals(normalized)) {
+      throw new IllegalArgumentException("LDAP IDP 配置只支持默认名称 `_`");
+    }
+    return normalized;
+  }
 
   /**
    * MinIO madmin-go 的 site replication 客户端会固定携带 api-version=1。

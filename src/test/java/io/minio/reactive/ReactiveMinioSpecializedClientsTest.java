@@ -204,6 +204,8 @@ class ReactiveMinioSpecializedClientsTest {
         new java.util.ArrayList<org.springframework.http.HttpMethod>();
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -257,6 +259,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> copySources = new java.util.ArrayList<String>();
     java.util.List<String> ranges = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -391,6 +395,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> offsets = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -548,6 +554,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> autoExtractHeaders = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -654,6 +662,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> ranges = new java.util.ArrayList<String>();
     java.util.List<String> copySources = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -744,6 +754,8 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldBuildStage94BucketSubresourceArgsRequests() {
     java.util.List<String> queries = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -1471,6 +1483,46 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   @Test
+  void shouldAutoDecryptStage119IdpConfigResponses() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  String plain =
+                      request.url().getPath().endsWith("/idp-config/openid")
+                          ? "[{\"type\":\"openid\",\"name\":\"primary\",\"enabled\":true}]"
+                          : "{\"type\":\"openid\",\"name\":\"primary\",\"info\":[{\"key\":\"config_url\",\"value\":\"http://idp/.well-known/openid-configuration\",\"isCfg\":true}]}";
+                  byte[] encrypted =
+                      MadminEncryptionSupport.encryptData(
+                          "admin-secret", plain.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(
+                              reactor.core.publisher.Flux.just(
+                                  new org.springframework.core.io.buffer.DefaultDataBufferFactory()
+                                      .wrap(encrypted)))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("admin-access", "admin-secret")
+            .build();
+
+    AdminIdpConfigList configs = admin.listIdpConfigs("openid").block();
+    Assertions.assertEquals(1, configs.count());
+    Assertions.assertEquals("primary", configs.names().get(0));
+    Assertions.assertTrue(admin.getIdpConfigInfo("openid", "primary").block().rawJson().contains("config_url"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp-config/openid"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp-config/openid/primary"));
+  }
+
+  @Test
   void shouldDecryptEncryptedAdminResponsesWithExplicitSecretKey() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     WebClient webClient =
@@ -1763,6 +1815,8 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldBuildStage50SensitiveImportArchiveRequestsWithoutLoggingBody() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -1948,6 +2002,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> queries = new java.util.ArrayList<String>();
     java.util.List<String> methods = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -1956,6 +2012,8 @@ class ReactiveMinioSpecializedClientsTest {
                   queries.add(request.url().getQuery());
                   methods.add(request.method().name());
                   contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  pathMethods.add(request.method().name() + " " + request.url().getPath());
+                  contentLengths.add(request.headers().getFirst("Content-Length"));
                   return Mono.just(
                       ClientResponse.create(HttpStatus.OK)
                           .body(stage59RemainingAdminLabRiskBody(request.url().getPath(), request.method().name()))
@@ -2064,7 +2122,19 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(contentTypes.contains("application/json"));
     Assertions.assertTrue(contentTypes.contains("application/yaml"));
     Assertions.assertTrue(contentTypes.contains("application/octet-stream"));
+    int idpAddIndex = pathMethods.indexOf("PUT /minio/admin/v3/idp-config/openid/primary");
+    int idpUpdateIndex = pathMethods.indexOf("POST /minio/admin/v3/idp-config/openid/primary");
+    Assertions.assertTrue(idpAddIndex >= 0, "必须捕获 IDP add 请求");
+    Assertions.assertTrue(idpUpdateIndex >= 0, "必须捕获 IDP update 请求");
+    Assertions.assertEquals("application/octet-stream", contentTypes.get(idpAddIndex));
+    Assertions.assertEquals("application/octet-stream", contentTypes.get(idpUpdateIndex));
+    Assertions.assertTrue(Integer.parseInt(contentLengths.get(idpAddIndex)) > jsonBody.length);
+    Assertions.assertTrue(Integer.parseInt(contentLengths.get(idpUpdateIndex)) > jsonBody.length);
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.addIdpConfigEntry("openid", "primary", new byte[0]));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.addIdpConfigEntry("saml", "primary", jsonBody));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.addIdpConfigEntry("ldap", "primary", jsonBody));
+    Assertions.assertEquals(
+        "idp-config-delete-ok", admin.deleteIdpConfigEntry("openid", "").block().rawText());
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setBucketQuotaConfig(" ", jsonBody));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.editTierConfig("warm-tier", null));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.forceUnlockPaths(""));
@@ -2134,6 +2204,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> queries = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -2208,6 +2280,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> queries = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -2268,6 +2342,8 @@ class ReactiveMinioSpecializedClientsTest {
     java.util.List<String> paths = new java.util.ArrayList<String>();
     java.util.List<String> queries = new java.util.ArrayList<String>();
     java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> pathMethods = new java.util.ArrayList<String>();
+    java.util.List<String> contentLengths = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
@@ -3088,7 +3164,8 @@ class ReactiveMinioSpecializedClientsTest {
   }
 
   private static String stage59RemainingAdminLabRiskBody(String path, String method) {
-    if (path.equals("/minio/admin/v3/idp-config/openid/primary")) {
+    if (path.equals("/minio/admin/v3/idp-config/openid/primary")
+        || path.equals("/minio/admin/v3/idp-config/openid/_")) {
       if ("DELETE".equals(method)) {
         return "idp-config-delete-ok";
       }
