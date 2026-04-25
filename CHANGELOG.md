@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 93 对象存储高频 Args builder 起步
+
+- 新增 22 个对象存储相关 `*Args` 类，覆盖 bucket、object、文件上传下载、append、compose、presign、FanOut 和 Snowball 的高频迁移路径。
+- `ReactiveMinioClient` 新增 Args 重载，继续委托既有强类型方法，避免把 Args 入口做成 raw 包装。
+- Builder 增加中文基础校验，避免空 bucket/object/filename/列表等错误进入 HTTP 层。
+- 新增 `docs/91-stage93-object-args-builder.md`，记录本阶段 Args 范围、边界和后续补齐方向。
+- 重新生成 minio-java 对标报告后，`*Args` builder 从 0 / 86 提升到 22 / 86；对象和 Admin 核心 API 继续保持精确同名满格。
+
 ## 阶段 92 Admin 核心 API 同名覆盖收口
 
 - `ReactiveMinioAdminClient` 新增 `addUpdateGroup`、`removeGroup`、`attachPolicy`、`detachPolicy`、`setPolicy`、`clearBucketQuota`、`listServiceAccount`、`getServiceAccountInfo` 等 minio-java 同名迁移入口。

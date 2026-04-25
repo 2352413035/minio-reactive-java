@@ -112,6 +112,12 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseBuckets);
   }
 
+  /** 使用 Args builder 风格列出 bucket，便于从 minio-java 迁移。 */
+  public Mono<List<BucketInfo>> listBuckets(ListBucketsArgs args) {
+    requireArgs(args, "ListBucketsArgs");
+    return listBuckets();
+  }
+
   public Mono<String> getBucketLocation(String bucket) {
     S3Request request =
         request(HttpMethod.GET, bucket, null).queryParameter("location", null).build();
@@ -119,6 +125,12 @@ public final class ReactiveMinioClient {
     return sign(request)
         .flatMap(httpClient::exchangeToString)
         .map(S3Xml::parseBucketLocation);
+  }
+
+  /** 使用 Args builder 风格获取 bucket 所在区域。 */
+  public Mono<String> getBucketLocation(GetBucketLocationArgs args) {
+    GetBucketLocationArgs safeArgs = requireArgs(args, "GetBucketLocationArgs");
+    return getBucketLocation(safeArgs.bucket());
   }
 
   public Mono<Boolean> bucketExists(String bucket) {
@@ -130,6 +142,12 @@ public final class ReactiveMinioClient {
         .onErrorResume(
             ReactiveS3Exception.class,
             ex -> ex.statusCode() == 404 ? Mono.just(false) : Mono.error(ex));
+  }
+
+  /** 使用 Args builder 风格判断 bucket 是否存在。 */
+  public Mono<Boolean> bucketExists(BucketExistsArgs args) {
+    BucketExistsArgs safeArgs = requireArgs(args, "BucketExistsArgs");
+    return bucketExists(safeArgs.bucket());
   }
 
   public Mono<Void> makeBucket(String bucket) {
@@ -151,8 +169,20 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToVoid);
   }
 
+  /** 使用 Args builder 风格创建 bucket。 */
+  public Mono<Void> makeBucket(MakeBucketArgs args) {
+    MakeBucketArgs safeArgs = requireArgs(args, "MakeBucketArgs");
+    return makeBucket(safeArgs.bucket());
+  }
+
   public Mono<Void> removeBucket(String bucket) {
     return sign(request(HttpMethod.DELETE, bucket, null).build()).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 使用 Args builder 风格删除 bucket。 */
+  public Mono<Void> removeBucket(RemoveBucketArgs args) {
+    RemoveBucketArgs safeArgs = requireArgs(args, "RemoveBucketArgs");
+    return removeBucket(safeArgs.bucket());
   }
 
   public Flux<ObjectInfo> listObjects(String bucket) {
@@ -172,6 +202,12 @@ public final class ReactiveMinioClient {
               return Mono.empty();
             })
         .flatMapIterable(ListObjectsResult::contents);
+  }
+
+  /** 使用 Args builder 风格列出对象。 */
+  public Flux<ObjectInfo> listObjects(ListObjectsArgs args) {
+    ListObjectsArgs safeArgs = requireArgs(args, "ListObjectsArgs");
+    return listObjects(safeArgs.bucket(), safeArgs.prefix(), safeArgs.recursive());
   }
 
   public Mono<ListObjectsResult> listObjectsPage(
@@ -249,6 +285,16 @@ public final class ReactiveMinioClient {
     return sign(request(HttpMethod.GET, bucket, object).build()).flatMapMany(httpClient::exchangeToBody);
   }
 
+  /** 使用 Args builder 风格读取对象，可选 offset/length 范围读取。 */
+  public Flux<byte[]> getObject(GetObjectArgs args) {
+    GetObjectArgs safeArgs = requireArgs(args, "GetObjectArgs");
+    if (safeArgs.offset() == null) {
+      return getObject(safeArgs.bucket(), safeArgs.object());
+    }
+    long endInclusive = safeArgs.offset() + safeArgs.length() - 1L;
+    return getObjectRange(safeArgs.bucket(), safeArgs.object(), safeArgs.offset(), endInclusive);
+  }
+
   public Flux<byte[]> getObjectRange(String bucket, String object, long startInclusive, long endInclusive) {
     if (startInclusive < 0 || endInclusive < startInclusive) {
       throw new IllegalArgumentException("byte range 无效");
@@ -280,6 +326,13 @@ public final class ReactiveMinioClient {
    */
   public Mono<Void> downloadObject(String bucket, String object, Path filename) {
     return downloadObject(bucket, object, filename, false);
+  }
+
+  /** 使用 Args builder 风格下载对象到本地文件。 */
+  public Mono<Void> downloadObject(DownloadObjectArgs args) {
+    DownloadObjectArgs safeArgs = requireArgs(args, "DownloadObjectArgs");
+    return downloadObject(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.filename(), safeArgs.overwrite());
   }
 
   /** 下载对象到本地文件，可显式控制是否覆盖已有目标文件。 */
@@ -324,6 +377,13 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToVoid);
   }
 
+  /** 使用 Args builder 风格上传内存对象。 */
+  public Mono<Void> putObject(PutObjectArgs args) {
+    PutObjectArgs safeArgs = requireArgs(args, "PutObjectArgs");
+    return putObject(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.content(), safeArgs.contentType());
+  }
+
   public Mono<Void> putObject(String bucket, String object, String content, String contentType) {
     return putObject(bucket, object, content.getBytes(StandardCharsets.UTF_8), contentType);
   }
@@ -345,6 +405,13 @@ public final class ReactiveMinioClient {
     return statObject(bucket, object)
         .map(ReactiveMinioClient::contentLength)
         .flatMap(offset -> appendObjectAtOffset(bucket, object, actualContent, contentType, offset));
+  }
+
+  /** 使用 Args builder 风格追加对象。 */
+  public Mono<ObjectWriteResult> appendObject(AppendObjectArgs args) {
+    AppendObjectArgs safeArgs = requireArgs(args, "AppendObjectArgs");
+    return appendObject(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.content(), safeArgs.contentType());
   }
 
   /** 使用字符串内容追加对象，默认按 UTF-8 转字节。 */
@@ -369,6 +436,13 @@ public final class ReactiveMinioClient {
   /** 上传本地文件，对齐 minio-java 的 `uploadObject` 方法名。 */
   public Mono<Void> uploadObject(String bucket, String object, Path filename) {
     return uploadObject(bucket, object, filename, null);
+  }
+
+  /** 使用 Args builder 风格上传本地文件。 */
+  public Mono<Void> uploadObject(UploadObjectArgs args) {
+    UploadObjectArgs safeArgs = requireArgs(args, "UploadObjectArgs");
+    return uploadObject(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.filename(), safeArgs.contentType());
   }
 
   /**
@@ -406,6 +480,12 @@ public final class ReactiveMinioClient {
     return Mono.fromCallable(() -> buildSnowballTar(safeObjects))
         .subscribeOn(Schedulers.boundedElastic())
         .flatMap(tar -> uploadSnowballTar(bucket, snowballObject, tar));
+  }
+
+  /** 使用 Args builder 风格上传 Snowball 对象。 */
+  public Mono<ObjectWriteResult> uploadSnowballObjects(UploadSnowballObjectsArgs args) {
+    UploadSnowballObjectsArgs safeArgs = requireArgs(args, "UploadSnowballObjectsArgs");
+    return uploadSnowballObjects(safeArgs.bucket(), safeArgs.objects(), safeArgs.compression());
   }
 
   /** 上传 Snowball 对象；`compression=true` 的 Snappy 路径留给后续依赖评审阶段。 */
@@ -455,8 +535,21 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToHeaders);
   }
 
+  /** 使用 Args builder 风格复制对象。 */
+  public Mono<Map<String, List<String>>> copyObject(CopyObjectArgs args) {
+    CopyObjectArgs safeArgs = requireArgs(args, "CopyObjectArgs");
+    return copyObject(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.sourceBucket(), safeArgs.sourceObject());
+  }
+
   public Mono<Void> removeObject(String bucket, String object) {
     return sign(request(HttpMethod.DELETE, bucket, object).build()).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 使用 Args builder 风格删除单个对象。 */
+  public Mono<Void> removeObject(RemoveObjectArgs args) {
+    RemoveObjectArgs safeArgs = requireArgs(args, "RemoveObjectArgs");
+    return removeObject(safeArgs.bucket(), safeArgs.object());
   }
 
   public Mono<DeleteObjectsResult> removeObjects(String bucket, Iterable<String> objects) {
@@ -473,8 +566,20 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseDeleteObjects);
   }
 
+  /** 使用 Args builder 风格批量删除对象。 */
+  public Mono<DeleteObjectsResult> removeObjects(RemoveObjectsArgs args) {
+    RemoveObjectsArgs safeArgs = requireArgs(args, "RemoveObjectsArgs");
+    return removeObjects(safeArgs.bucket(), safeArgs.objects());
+  }
+
   public Mono<Map<String, List<String>>> statObject(String bucket, String object) {
     return sign(request(HttpMethod.HEAD, bucket, object).build()).flatMap(httpClient::exchangeToHeaders);
+  }
+
+  /** 使用 Args builder 风格获取对象元数据。 */
+  public Mono<Map<String, List<String>>> statObject(StatObjectArgs args) {
+    StatObjectArgs safeArgs = requireArgs(args, "StatObjectArgs");
+    return statObject(safeArgs.bucket(), safeArgs.object());
   }
 
   /** 获取对象 ACL，返回 Owner、Grant 和原始 XML。 */
@@ -979,6 +1084,15 @@ public final class ReactiveMinioClient {
         .map(credentials -> signer.presign(request, config, credentials, expires));
   }
 
+  /** 使用 Args builder 风格生成对象预签名 URL。 */
+  public Mono<URI> getPresignedObjectUrl(GetPresignedObjectUrlArgs args) {
+    GetPresignedObjectUrlArgs safeArgs = requireArgs(args, "GetPresignedObjectUrlArgs");
+    Duration expiry =
+        safeArgs.expiry() == null ? DEFAULT_PRESIGN_EXPIRY : safeArgs.expiry();
+    return getPresignedObjectUrl(
+        safeArgs.method(), safeArgs.bucket(), safeArgs.object(), expiry);
+  }
+
   public Mono<URI> getPresignedGetObjectUrl(String bucket, String object, Duration expires) {
     return getPresignedObjectUrl(HttpMethod.GET, bucket, object, expires);
   }
@@ -1040,6 +1154,13 @@ public final class ReactiveMinioClient {
                   .exchangeToString(request)
                   .map(raw -> PutObjectFanOutResponse.parse(bucket, raw));
             });
+  }
+
+  /** 使用 Args builder 风格执行 FanOut 上传。 */
+  public Mono<PutObjectFanOutResponse> putObjectFanOut(PutObjectFanOutArgs args) {
+    PutObjectFanOutArgs safeArgs = requireArgs(args, "PutObjectFanOutArgs");
+    return putObjectFanOut(
+        safeArgs.bucket(), safeArgs.content(), safeArgs.entries(), safeArgs.contentType());
   }
 
   /** 使用默认 contentType 执行 FanOut 上传。 */
@@ -1201,6 +1322,13 @@ public final class ReactiveMinioClient {
                             completeMultipartUpload(bucket, object, upload.uploadId(), completeParts))
                     .onErrorResume(
                         error -> abortMultipartUpload(bucket, object, upload.uploadId()).then(Mono.error(error))));
+  }
+
+  /** 使用 Args builder 风格组合对象。 */
+  public Mono<CompletedMultipartUpload> composeObject(final ComposeObjectArgs args) {
+    ComposeObjectArgs safeArgs = requireArgs(args, "ComposeObjectArgs");
+    return composeObject(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.sources(), safeArgs.contentType());
   }
 
   /** 使用多个源对象组合成一个目标对象，contentType 由服务端默认处理。 */
@@ -1598,6 +1726,13 @@ public final class ReactiveMinioClient {
       throw new IllegalArgumentException(message);
     }
     return value;
+  }
+
+  private static <T> T requireArgs(T args, String name) {
+    if (args == null) {
+      throw new IllegalArgumentException(name + " 不能为空");
+    }
+    return args;
   }
 
   private static CannedAcl requireCannedAcl(CannedAcl cannedAcl) {
