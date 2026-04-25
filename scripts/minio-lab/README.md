@@ -111,6 +111,17 @@ export MINIO_LAB_RESTORE_CONFIG_KV='api requests_max=0'
 
 如果没有提供这两个变量，真实配置写入测试会跳过；默认 `mvn test` 永远不会修改 MinIO 服务端配置。
 
+### full config 原样写回补证
+
+`ADMIN_SET_CONFIG` 是比单条 KV 更高风险的全量配置接口。阶段 117 起，只有设置 `MINIO_LAB_ALLOW_FULL_CONFIG_WRITE=true` 时，破坏性 lab 才会执行以下闭环：
+
+1. 使用 `getConfigDecrypted(MINIO_LAB_SECRET_KEY)` 读取并解密独立 lab 的原始全量配置。
+2. 使用 `setConfigText(...)` 走专用 Admin 客户端原样写回。
+3. 使用 raw `ADMIN_SET_CONFIG` 走 catalog 兜底路径原样写回。
+4. finally 中继续用原始全量配置文本恢复。
+
+该测试不要求用户提供全量配置文本，也不会把全量配置写入仓库或报告；如果服务端拒绝原样写回，就保持 `ADMIN_SET_CONFIG` 为未通过证据，不伪造成功。
+
 ## bucket quota / tier / remote target / batch job lab 夹具
 
 阶段 24 起，破坏性实验环境支持更多可选夹具。它们默认全部跳过，只有在独立 lab 配置文件或环境变量中明确设置后才执行：

@@ -48,7 +48,7 @@ python3 minio-reactive-java/scripts/report-release-readiness.py \
 | --- | --- |
 | SDK 发布候选 | 就绪。minio-java 对象/Admin API、Args、credentials、签名级缺口、route parity、raw fallback 与 Crypto Gate 均已收口。 |
 | 正式 Maven/tag 发布 | 未就绪。POM 发布元数据、source/javadoc/sign/SBOM 插件、发布仓库与回滚策略仍需负责人确认。 |
-| 破坏性 Admin 证据 | 29 个风险路由中 11 个已有独立 lab 证据，其余仍需独立 lab 或维护窗口。 |
+| 破坏性 Admin 证据 | 阶段 117 后，29 个风险路由中 12 个已有独立 lab 证据，其余 17 个仍需独立 lab 或维护窗口。 |
 
 ## 维护要求
 
