@@ -176,3 +176,13 @@
 
 在这些证据齐全前，版本继续保持 `0.1.0-SNAPSHOT`，不得用 route parity 或 product-typed 满格替代外部门禁。
 阶段 80 起，发布负责人还应运行 `scripts/report-pom-release-metadata.py` 生成 POM 发布元数据报告。该报告为预检报告，只能说明哪些字段或插件缺失，不代表 Maven 发布已经放行。许可证、SCM、developers、distributionManagement、签名和 SBOM 策略必须由负责人确认后才能写入 POM。
+
+## 阶段 113 当前发布状态
+
+阶段 113 后，当前发布候选状态更新为：
+
+- 已完成：minio-java 主体 API 对标、route parity、product-typed、raw 兜底、Crypto Gate Pass。
+- 仍需负责人材料：许可证、SCM、developers、issueManagement、organization、distributionManagement、source/javadoc/sign/SBOM、发布仓库和回滚策略。
+- 仍需运维/lab 证据：`destructive-blocked = 29` 中尚未在独立 lab 或维护窗口证明的全量配置、IDP、站点复制变更、服务控制、升级、force-unlock 和压测类操作。
+
+因此正式发布不得再把 Crypto Gate 写成未完成阻塞项，但必须继续把 Crypto Gate Pass 作为回归证据；正式发布仍不能绕过破坏性运维证据和 Maven/tag 发布工程材料。

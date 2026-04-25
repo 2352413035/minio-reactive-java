@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 113 发布就绪与破坏性边界再审计
+
+- 重新运行 POM 发布元数据预检，确认基础坐标齐全，但正式 Maven 发布仍缺 URL、许可证、SCM、developers、issueManagement、organization、distributionManagement、source/javadoc/sign/SBOM 等负责人材料。
+- 重新分类 `destructive-blocked = 29`：其中 11 个可回滚路径已有独立 Docker lab typed/raw 证据，其余属于全量配置、IDP、站点复制变更、服务控制、升级、force-unlock 和压测等维护窗口边界。
+- 更新发布门禁口径：Crypto Gate 已 Pass 并转为每次发布必须回归的证据项；正式发布仍阻塞于破坏性运维证据和发布工程材料。
+
 ## 阶段 112 加密 Admin 响应显式解密便捷入口
 
 - 在 Crypto Gate Pass 基础上，为配置、用户、IDP、服务账号和 access key 等加密 Admin 响应补充显式 `secretKey` 解密入口。
