@@ -46,7 +46,7 @@ TYPED_METHODS = {
         'getUserInfo','deleteUser','setUserEnabled','listPolicies','getPolicy','getPolicyV2','putPolicy','deletePolicy',
         'setUserPolicy','setGroupPolicy','listUsersEncrypted','listGroupsTyped','getGroupInfo','setGroupEnabled','updateGroupMembers',
         'createServiceAccount','getServiceAccountInfoEncrypted','listServiceAccountsEncrypted','deleteServiceAccountTyped','addServiceAccount',
-        'getBucketQuotaInfo','listTiers','listPolicyEntities','listIdpConfigs','getIdpConfigInfo',
+        'getBucketQuotaInfo','listTiers','listPolicyEntities','listIdpConfigsEncrypted','getIdpConfigEncrypted',
         'listRemoteTargetsInfo','listBatchJobsInfo','getBatchJobStatusInfo','describeBatchJobInfo',
         'getSiteReplicationMetainfo','traceStream','logStream',
         'listBucketUsersInfo','getTemporaryAccountInfo',
@@ -99,6 +99,7 @@ ENCRYPTED_BLOCKED = {
     'admin': {
         'ADMIN_LIST_USERS','ADMIN_ADD_SERVICE_ACCOUNT','ADMIN_INFO_SERVICE_ACCOUNT','ADMIN_LIST_SERVICE_ACCOUNTS',
         'ADMIN_GET_CONFIG','ADMIN_GET_CONFIG_KV','ADMIN_LIST_CONFIG_HISTORY_KV',
+        'ADMIN_LIST_IDP_CONFIG','ADMIN_GET_IDP_CONFIG',
         'ADMIN_INFO_ACCESS_KEY','ADMIN_LIST_ACCESS_KEYS_BULK'
     }
 }

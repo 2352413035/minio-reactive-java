@@ -10,7 +10,7 @@
 - route parity：233 / 233。
 - product-typed：S3/Admin/KMS/STS/Metrics/Health 全部分组满格。
 - `raw-fallback = 0`。
-- `encrypted-blocked = 9` 仍未放行。
+- `encrypted-blocked = 11` 仍未放行。
 - `destructive-blocked = 29` 仍未放行。
 
 ## 2. 不允许直接发布 1.0 的原因
@@ -26,7 +26,7 @@
 
 ## 3. Crypto Gate Pass 清单
 
-只有全部满足后，才能把 `encrypted-blocked = 9` 里的默认 madmin 加密响应升级为明文模型：
+只有全部满足后，才能把 `encrypted-blocked = 11` 里的默认 madmin 加密响应升级为明文模型：
 
 1. owner 批准：确认维护成本、兼容范围和失败回退策略。
 2. security-reviewer 批准：确认密码学依赖、许可证、安全公告、FIPS/Provider 影响和敏感日志策略。

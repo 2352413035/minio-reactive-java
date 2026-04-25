@@ -7,7 +7,7 @@
 1. **没有发现公开路由缺口**：JDK8 与 JDK17+ 双分支 route parity 均为 233 / 233，catalog 缺失 0、额外 0。
 2. **没有发现产品入口缺口**：能力矩阵显示 S3/Admin/KMS/STS/Metrics/Health 的 product-typed 均已达到 route-catalog 数量。
 3. **没有 raw-only 缺口**：`raw-fallback = 0`，raw 保留为未来新增路由和高级排障兜底。
-4. **剩余不是 SDK API 缺口**：`encrypted-blocked = 9` 与 `destructive-blocked = 29` 属于外部门禁或环境证据问题，不应通过新增重复 API 或降低统计口径解决。
+4. **剩余不是 SDK API 缺口**：`encrypted-blocked = 11` 与 `destructive-blocked = 29` 属于外部门禁或环境证据问题，不应通过新增重复 API 或降低统计口径解决。
 5. **用户面文档已收口**：README、typed 使用指南、发布报告和阶段 62 用户指南都明确了平级专用客户端优先、raw 只兜底、Crypto/lab 风险不夸大。
 
 因此，当前项目已经达到“发布候选可解释状态”：公开接口对标、调用入口、产品边界、验证证据和用户说明已经闭环；真正剩余的是 Crypto Gate 批准、独立破坏性 lab 和更细结果模型深化。
@@ -51,7 +51,7 @@
 
 ### 4.1 Crypto Gate
 
-`encrypted-blocked = 9` 仍保留。原因是默认 madmin 加密响应的明文解密尚未完成 owner/security/architect 三方批准、依赖审查和双分支测试矩阵。
+`encrypted-blocked = 11` 仍保留。原因是默认 madmin 加密响应的明文解密尚未完成 owner/security/architect 三方批准、依赖审查和双分支测试矩阵。
 
 当前正确行为：返回 `EncryptedAdminResponse`，给出算法和边界解释。
 

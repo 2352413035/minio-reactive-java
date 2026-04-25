@@ -10,7 +10,7 @@
 - 产品化入口已经闭环：S3、Admin、KMS、STS、Metrics、Health 均有专用客户端或明确边界。
 - `ReactiveMinioRawClient` 仍是新增接口、特殊请求和 catalog 兜底调用器，不替代专用客户端。
 - 当前仍是 `0.1.0-SNAPSHOT` 发布候选口径，不是正式 1.0。
-- `encrypted-blocked = 9` 与 `destructive-blocked = 29` 仍是外部门禁，不允许通过文档口径“抹掉”。
+- `encrypted-blocked = 11` 与 `destructive-blocked = 29` 仍是外部门禁，不允许通过文档口径“抹掉”。
 
 ## 2. 对外发布说明草案
 

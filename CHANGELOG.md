@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 74 IDP 加密边界统计修正
+
+- 能力矩阵把 `ADMIN_LIST_IDP_CONFIG` 与 `ADMIN_GET_IDP_CONFIG` 纳入 Crypto Gate 统计。
+- 当前 Admin `encrypted-blocked` 从 9 修正为 11；这是更真实的风险统计，不是 Crypto Gate 放行或 SDK 覆盖退化。
+- 新增 `docs/72-stage74-encrypted-boundary-accounting.md` 记录修正依据、当前 11 个加密边界和验证口径。
+
 ## 阶段 73 加密响应安全诊断增强
 
 - `EncryptedAdminResponse` 新增 `encryptedSize()`、`decryptSupported()`、`requiresCryptoGate()` 与 `diagnosticMessage()`。
