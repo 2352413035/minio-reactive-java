@@ -22,6 +22,7 @@ import io.minio.reactive.messages.BucketWebsiteConfiguration;
 import io.minio.reactive.messages.CannedAcl;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
+import io.minio.reactive.messages.ComposeSource;
 import io.minio.reactive.messages.DeleteObjectsResult;
 import io.minio.reactive.messages.ListMultipartUploadsResult;
 import io.minio.reactive.messages.ListObjectsResult;
@@ -896,6 +897,33 @@ public final class ReactiveMinioClient {
     return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseListMultipartUploads);
   }
 
+  /**
+   * 使用 multipart copy 上传一个 part，是 composeObject 的底层强类型步骤。
+   *
+   * <p>该方法直接对齐 S3 的 UploadPartCopy：目标对象使用 multipart uploadId，
+   * 源对象放入 `x-amz-copy-source` 头，可选范围放入 `x-amz-copy-source-range`。
+   */
+  public Mono<PartInfo> uploadPartCopy(
+      String bucket, String object, String uploadId, int partNumber, ComposeSource source) {
+    if (partNumber < 1) {
+      throw new IllegalArgumentException("partNumber 必须为正数");
+    }
+    if (source == null) {
+      throw new IllegalArgumentException("compose source 不能为空");
+    }
+    S3Request.Builder builder =
+        request(HttpMethod.PUT, bucket, object)
+            .queryParameter("partNumber", Integer.toString(partNumber))
+            .queryParameter("uploadId", requireNonBlank(uploadId, "uploadId 不能为空"))
+            .header("X-Amz-Copy-Source", source.copySourceHeader());
+    if (source.copySourceRangeHeader() != null) {
+      builder.header("X-Amz-Copy-Source-Range", source.copySourceRangeHeader());
+    }
+    return sign(builder.build())
+        .flatMap(httpClient::exchangeToString)
+        .map(xml -> S3Xml.parseCopyPartResult(partNumber, xml));
+  }
+
   public Mono<PartInfo> uploadPart(
       String bucket, String object, String uploadId, int partNumber, byte[] content) {
     byte[] actualContent = content == null ? new byte[0] : content;
@@ -936,6 +964,55 @@ public final class ReactiveMinioClient {
     S3Request request =
         request(HttpMethod.DELETE, bucket, object).queryParameter("uploadId", uploadId).build();
     return sign(request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 使用多个源对象组合成一个目标对象。 */
+  public Mono<CompletedMultipartUpload> composeObject(
+      final String bucket,
+      final String object,
+      final List<ComposeSource> sources,
+      final String contentType) {
+    final List<ComposeSource> safeSources = requireComposeSources(sources);
+    return createMultipartUpload(bucket, object, contentType)
+        .flatMap(
+            upload ->
+                Flux.range(0, safeSources.size())
+                    .concatMap(
+                        index ->
+                            uploadPartCopy(
+                                bucket, object, upload.uploadId(), index + 1, safeSources.get(index)))
+                    .map(part -> new CompletePart(part.partNumber(), part.etag()))
+                    .collectList()
+                    .flatMap(
+                        completeParts ->
+                            completeMultipartUpload(bucket, object, upload.uploadId(), completeParts))
+                    .onErrorResume(
+                        error -> abortMultipartUpload(bucket, object, upload.uploadId()).then(Mono.error(error))));
+  }
+
+  /** 使用多个源对象组合成一个目标对象，contentType 由服务端默认处理。 */
+  public Mono<CompletedMultipartUpload> composeObject(
+      final String bucket, final String object, final List<ComposeSource> sources) {
+    return composeObject(bucket, object, sources, null);
+  }
+
+  /** 变参形式的对象组合入口，适合少量源对象的直接调用。 */
+  public Mono<CompletedMultipartUpload> composeObject(
+      final String bucket, final String object, final ComposeSource... sources) {
+    List<ComposeSource> list = new ArrayList<ComposeSource>();
+    if (sources != null) {
+      Collections.addAll(list, sources);
+    }
+    return composeObject(bucket, object, list, null);
+  }
+
+  /** 单源对象组合入口，本质上仍走 multipart copy，便于与后续多源逻辑保持一致。 */
+  public Mono<CompletedMultipartUpload> composeObject(
+      final String bucket,
+      final String object,
+      final String sourceBucket,
+      final String sourceObject) {
+    return composeObject(bucket, object, ComposeSource.of(sourceBucket, sourceObject));
   }
 
   public Mono<CompletedMultipartUpload> uploadMultipartObject(
@@ -1046,6 +1123,27 @@ public final class ReactiveMinioClient {
       builder.append(value.trim());
     }
     return builder.toString();
+  }
+
+  private static List<ComposeSource> requireComposeSources(List<ComposeSource> sources) {
+    if (sources == null || sources.isEmpty()) {
+      throw new IllegalArgumentException("compose source 列表不能为空");
+    }
+    List<ComposeSource> safeSources = new ArrayList<ComposeSource>();
+    for (ComposeSource source : sources) {
+      if (source == null) {
+        throw new IllegalArgumentException("compose source 不能为空");
+      }
+      safeSources.add(source);
+    }
+    return safeSources;
+  }
+
+  private static String requireNonBlank(String value, String message) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException(message);
+    }
+    return value;
   }
 
   private static CannedAcl requireCannedAcl(CannedAcl cannedAcl) {

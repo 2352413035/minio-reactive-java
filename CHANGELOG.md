@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 87 composeObject 对象组合入口
+
+- 新增 `ComposeSource`，用于描述对象组合的源 bucket、object、versionId 与可选字节范围。
+- `ReactiveMinioClient` 新增 `uploadPartCopy` 与多组 `composeObject` 强类型入口，内部使用 multipart upload、multipart copy、complete multipart，并在失败时 abort 清理。
+- 新增 `docs/85-stage87-compose-object-parity.md`，记录对象组合流程和与 minio-java 的对标边界。
+- 重新生成 minio-java 对标报告后，对象存储核心 API 精确同名从 53 / 59 提升到 54 / 59，剩余缺口为 `appendObject`、`getPresignedPostFormData`、`promptObject`、`putObjectFanOut`、`uploadSnowballObjects`。
+
 ## 阶段 86 minio-java 文件上传下载同名入口
 
 - `ReactiveMinioClient` 新增 `downloadObject` / `uploadObject` 的 Path 与字符串文件名重载，默认语义对齐 minio-java：下载先 HEAD 再 GET、校验长度、写临时文件后移动，且默认不覆盖已有目标文件。

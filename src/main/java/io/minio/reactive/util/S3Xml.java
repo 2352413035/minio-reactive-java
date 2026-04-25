@@ -192,6 +192,16 @@ public final class S3Xml {
     return new MultipartUpload(text(root, "Bucket"), text(root, "Key"), text(root, "UploadId"));
   }
 
+  public static PartInfo parseCopyPartResult(int partNumber, String xml) {
+    Document document = parse(xml);
+    Element root = document.getDocumentElement();
+    String etag = text(root, "ETag");
+    if (etag == null || etag.trim().isEmpty()) {
+      throw new IllegalArgumentException("UploadPartCopy 响应缺少 ETag");
+    }
+    return new PartInfo(partNumber, etag, 0L, text(root, "LastModified"));
+  }
+
   public static ListPartsResult parseListParts(String xml) {
     Document document = parse(xml);
     Element root = document.getDocumentElement();
