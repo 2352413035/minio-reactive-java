@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 114 破坏性边界机器报告
+
+- 新增 `scripts/report-destructive-boundary.py`，支持 Markdown/JSON 输出 29 个高风险 Admin 路由的分类报告。
+- 报告区分已有独立 lab 证据、可回滚候选、拓扑或身份提供方、维护窗口和资源压测五类，避免把 `destructive-blocked` 误解成功能缺口。
+- 发布门禁要求后续复审同时引用 capability matrix 与 destructive boundary 报告。
+
 ## 阶段 113 发布就绪与破坏性边界再审计
 
 - 重新运行 POM 发布元数据预检，确认基础坐标齐全，但正式 Maven 发布仍缺 URL、许可证、SCM、developers、issueManagement、organization、distributionManagement、source/javadoc/sign/SBOM 等负责人材料。

@@ -63,7 +63,7 @@ minio.content=你好，来自 reactive minio sdk
 
 ## 主对标口径
 
-阶段 85 起，本项目的 SDK 主对标项目明确为同目录 `minio-java`：对象存储 API、Admin API、`*Args` builder、credentials provider、Admin Crypto 和用户体验优先参考官方 Java SDK。`minio` 服务端源码仍用于确认真实 HTTP 路由和 MinIO 扩展协议，但不能再用服务端 route catalog 覆盖替代 Java SDK 对标完成度。阶段 110 已继续围绕剩余高风险 lab 矩阵补齐 tier edit typed/raw 证据；阶段 113 又重新分类 `destructive-blocked` 风险口径，确认它是运维/lab 风险分类，不改变 minio-java API 对标完成口径。
+阶段 85 起，本项目的 SDK 主对标项目明确为同目录 `minio-java`：对象存储 API、Admin API、`*Args` builder、credentials provider、Admin Crypto 和用户体验优先参考官方 Java SDK。`minio` 服务端源码仍用于确认真实 HTTP 路由和 MinIO 扩展协议，但不能再用服务端 route catalog 覆盖替代 Java SDK 对标完成度。阶段 110 已继续围绕剩余高风险 lab 矩阵补齐 tier edit typed/raw 证据；阶段 113 又重新分类 `destructive-blocked` 风险口径，确认它是运维/lab 风险分类；阶段 114 将该分类固化为 `scripts/report-destructive-boundary.py` 机器报告，不改变 minio-java API 对标完成口径。
 
 当前可用 `scripts/report-minio-java-parity.py` 生成机器报告。阶段 98 报告显示：对象存储核心 API 59 个中 59 个已经精确同名，剩余 0 个缺失；Admin 核心 API 24 个中 24 个已经精确同名，别名或部分覆盖项为 0；`*Args` builder 已达到 86 / 86 同名收口；credentials provider 类名缺失 0 个；identity provider 已能显式桥接 `ReactiveMinioStsClient`；AWS 环境变量空字符串和 JWT JSON 字段名继续贴近 minio-java 行为；签名级报告显示对象 API 与 Admin API 没有缺失或重载较少项，且 `PutObjectAPIArgs` 已被明确归类为响应式内部上传边界。阶段 102 判定：SDK 功能覆盖层面已经完成 minio-java 主体 API 对标。阶段 103 已提供 PBKDF2 + AES-GCM 加密响应的显式 secretKey 解密路径；阶段 111 按 minio-java 的 Bouncy Castle 方案放行默认 Argon2id/AES-GCM 与 Argon2id/ChaCha20-Poly1305 解密，因此 Crypto Gate 已从 Fail 变为 Pass，Admin `encrypted-blocked = 0`、`destructive-blocked = 29`。阶段 113 复核后，正式发布不再阻塞于 Crypto Gate，但仍阻塞于剩余破坏性运维证据和 Maven/tag 发布工程材料。阶段 104 已把独立 Docker lab 的 config KV、bucket quota 写入恢复和 remote target typed/raw 只读探测固化为可重复证据；阶段 108 补齐 batch job start/status/cancel 的独立 Docker typed/raw 证据；阶段 109 继续补齐 site replication add/remove 的双容器 typed/raw 证据。
 
@@ -263,6 +263,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/109-stage111-crypto-gate-pass.md`
 - `docs/110-stage112-encrypted-admin-decrypted-helpers.md`
 - `docs/111-stage113-release-readiness-and-destructive-boundary.md`
+- `docs/112-stage114-destructive-boundary-report.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`
