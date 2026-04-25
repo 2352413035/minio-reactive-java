@@ -132,6 +132,12 @@ public final class ReactiveMinioHealthClient extends ReactiveMinioCatalogClientS
       return this;
     }
 
+    /** 使用 minio-java 风格 Provider 配置凭证，并桥接到响应式 provider。 */
+    public Builder credentialsProvider(io.minio.reactive.credentials.Provider provider) {
+      this.credentialsProvider = ReactiveCredentialsProvider.from(provider);
+      return this;
+    }
+
     public Builder webClient(WebClient webClient) {
       this.webClient = webClient;
       return this;
