@@ -1413,13 +1413,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   }
 
 
-  /** 列出全部用户的加密响应；默认响应解密能力完成前不伪装成明文用户列表。 */
+  /** 列出全部用户的加密响应；调用方可用对应账号 secretKey 显式解密。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listUsersEncrypted() {
     return executeToBytes("ADMIN_LIST_USERS", emptyMap(), emptyMap(), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 获取配置 KV 的加密响应；配置读取由 MinIO 服务端加密返回，不能伪装成明文 typed 模型。 */
+  /** 获取配置 KV 的加密响应；配置读取由 MinIO 服务端加密返回，调用方显式解密后再解析。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getConfigKvEncrypted(
       String key) {
     requireText("key", key);
@@ -1427,7 +1427,7 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 列出配置历史的加密响应；解密 Gate 通过前只暴露边界对象。 */
+  /** 列出配置历史的加密响应；调用方可用对应账号 secretKey 显式解密。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse>
       listConfigHistoryKvEncrypted(int count) {
     if (count < 0) {
@@ -1443,13 +1443,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 获取完整配置的加密响应；这是 crypto boundary，不进入明文 typed 完成口径。 */
+  /** 获取完整配置的加密响应；这是需要调用方显式提供 secretKey 的 crypto boundary。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getConfigEncrypted() {
     return executeToBytes("ADMIN_GET_CONFIG", emptyMap(), emptyMap(), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 列出 IDP 配置的加密响应；服务端按 madmin 协议加密返回，不能伪装成明文列表。 */
+  /** 列出 IDP 配置的加密响应；服务端按 madmin 协议加密返回，调用方显式解密后再解析。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse>
       listIdpConfigsEncrypted(String type) {
     requireText("type", type);
@@ -1457,7 +1457,7 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 获取单个 IDP 配置的加密响应；默认解密 Gate 通过前只暴露边界对象。 */
+  /** 获取单个 IDP 配置的加密响应；调用方可用对应账号 secretKey 显式解密。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse>
       getIdpConfigEncrypted(String type, String name) {
     requireText("type", type);
@@ -1520,7 +1520,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /**
    * 创建服务账号，返回可解释的创建结果。
    *
-   * <p>当前阶段尚不能解密服务端默认 Argon2id/ChaCha20 响应，因此结果可能只包含加密响应原文。
+   * <p>MinIO 服务端通常返回 madmin 加密载荷；结果会保留 `EncryptedAdminResponse`，调用方可用对应账号
+   * secretKey 显式解密，SDK 不会自动猜测或记录 secretKey。
    */
   public Mono<io.minio.reactive.messages.admin.ServiceAccountCreateResult> createServiceAccount(
       io.minio.reactive.messages.admin.AddServiceAccountRequest request) {
@@ -1532,7 +1533,14 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.ServiceAccountCreateResult::fromResponseBytes);
   }
 
-  /** 获取服务账号信息的加密响应；默认响应解密能力完成前不伪装成明文模型。 */
+  /** 创建服务账号，并用调用方显式提供的 secretKey 解密为明文结果模型。 */
+  public Mono<io.minio.reactive.messages.admin.ServiceAccountCreateResult> createServiceAccount(
+      io.minio.reactive.messages.admin.AddServiceAccountRequest request, String secretKey) {
+    requireText("secretKey", secretKey);
+    return createServiceAccount(request).map(result -> result.decrypt(secretKey));
+  }
+
+  /** 获取服务账号信息的加密响应；调用方可用对应账号 secretKey 显式解密。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getServiceAccountInfoEncrypted(
       String accessKey) {
     requireText("accessKey", accessKey);
@@ -1541,20 +1549,20 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 对齐 minio-java：获取服务账号信息；Crypto Gate 通过前返回加密边界对象。 */
+  /** 对齐 minio-java：获取服务账号信息，返回可显式解密的加密边界对象。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getServiceAccountInfo(
       String accessKey) {
     return getServiceAccountInfoEncrypted(accessKey);
   }
 
-  /** 列出当前用户的服务账号加密响应；默认响应解密能力完成前不伪装成明文模型。 */
+  /** 列出当前用户的服务账号加密响应；调用方可用对应账号 secretKey 显式解密。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listServiceAccountsEncrypted() {
     return executeToBytes(
             "ADMIN_LIST_SERVICE_ACCOUNTS", emptyMap(), emptyMap(), emptyMap(), null, null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 对齐 minio-java：按用户名列出服务账号；Crypto Gate 通过前返回加密边界对象。 */
+  /** 对齐 minio-java：按用户名列出服务账号，返回可显式解密的加密边界对象。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listServiceAccount(
       String username) {
     requireText("username", username);
@@ -1579,8 +1587,8 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   /**
    * 创建服务账号，返回服务端加密响应载荷。
    *
-   * <p>MinIO 服务端会用 madmin 默认加密算法返回服务账号凭证。当前 Java 端尚不能解密默认
-   * Argon2id/ChaCha20 响应，因此这里返回 `EncryptedAdminResponse`，不伪装成已解析凭证。
+   * <p>MinIO 服务端会用 madmin 默认加密算法返回服务账号凭证。阶段 111 起 Java 端已支持默认
+   * Argon2id/ChaCha20 响应解密，但仍要求调用方显式提供 secretKey 后再解析，避免在 SDK 内部保存敏感凭证。
    */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> addServiceAccount(
       io.minio.reactive.messages.admin.AddServiceAccountRequest request) {
@@ -1590,6 +1598,15 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeEncryptedJsonToBytes(
             "ADMIN_ADD_SERVICE_ACCOUNT", emptyMap(), emptyMap(), request.toPayload())
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 创建服务账号，并用调用方显式提供的 secretKey 解密为明文结果模型。 */
+  public Mono<io.minio.reactive.messages.admin.ServiceAccountCreateResult> addServiceAccount(
+      io.minio.reactive.messages.admin.AddServiceAccountRequest request, String secretKey) {
+    requireText("secretKey", secretKey);
+    return addServiceAccount(request)
+        .map(response -> io.minio.reactive.messages.admin.ServiceAccountCreateResult
+            .fromResponseBytes(response.decrypt(secretKey)));
   }
 
   /** 调用 `ADMIN_SERVICE_V2`。 */
@@ -1908,13 +1925,21 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 兼容保留：当前 MinIO 返回加密载荷，不能在 Crypto Gate Pass 前解析成明文模型。 */
+  /** 兼容保留：该重载没有 secretKey，不能安全自动解密成明文模型。 */
   public Mono<io.minio.reactive.messages.admin.AdminAccessKeyInfo> getAccessKeyInfoTyped(
       String accessKey) {
     requireText("accessKey", accessKey);
     return Mono.error(
         new UnsupportedOperationException(
-            "ADMIN_INFO_ACCESS_KEY 返回 madmin 加密载荷；请使用 getAccessKeyInfoEncrypted(...)，等 Crypto Gate Pass 后再使用明文模型"));
+            "ADMIN_INFO_ACCESS_KEY 返回 madmin 加密载荷；请使用 getAccessKeyInfoEncrypted(...).decryptAsUtf8(secretKey) 后再解析明文模型"));
+  }
+
+  /** 获取 access key 信息，并用调用方显式提供的 secretKey 解密为明文模型。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeyInfo> getAccessKeyInfoTyped(
+      String accessKey, String secretKey) {
+    requireText("secretKey", secretKey);
+    return getAccessKeyInfoEncrypted(accessKey)
+        .map(response -> io.minio.reactive.messages.admin.AdminAccessKeyInfo.parse(response.decryptAsUtf8(secretKey)));
   }
 
   /** 列出 access key 批量信息的加密响应；当前 MinIO 服务端返回 madmin 加密载荷。 */
@@ -1931,13 +1956,21 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
-  /** 兼容保留：当前 MinIO 返回加密载荷，不能在 Crypto Gate Pass 前解析成明文列表模型。 */
+  /** 兼容保留：该重载没有 secretKey，不能安全自动解密成明文列表模型。 */
   public Mono<io.minio.reactive.messages.admin.AdminAccessKeyList> listAccessKeysTyped(
       String listType) {
     requireText("listType", listType);
     return Mono.error(
         new UnsupportedOperationException(
-            "ADMIN_LIST_ACCESS_KEYS_BULK 返回 madmin 加密载荷；请使用 listAccessKeysEncrypted(...)，等 Crypto Gate Pass 后再使用明文模型"));
+            "ADMIN_LIST_ACCESS_KEYS_BULK 返回 madmin 加密载荷；请使用 listAccessKeysEncrypted(...).decryptAsUtf8(secretKey) 后再解析明文模型"));
+  }
+
+  /** 列出 access key 批量信息，并用调用方显式提供的 secretKey 解密为明文列表模型。 */
+  public Mono<io.minio.reactive.messages.admin.AdminAccessKeyList> listAccessKeysTyped(
+      String listType, String secretKey) {
+    requireText("secretKey", secretKey);
+    return listAccessKeysEncrypted(listType)
+        .map(response -> io.minio.reactive.messages.admin.AdminAccessKeyList.parse(response.decryptAsUtf8(secretKey)));
   }
 
   /** 获取临时账号信息；该只读接口不等同于 encrypted-blocked 的 access key 批量列表。 */
@@ -1980,7 +2013,7 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
 
   /** 调用 `ADMIN_ADD_SERVICE_ACCOUNT`，不携带请求体。 */
   public Mono<String> addServiceAccount() {
-    return addServiceAccount(null, null);
+    return addServiceAccount((byte[]) null, null);
   }
 
   /** 调用 `ADMIN_UPDATE_SERVICE_ACCOUNT`。 */

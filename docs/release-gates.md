@@ -24,7 +24,7 @@
 - 固定 `madmin-go` 版本
 - 夹具元数据 与文档一致
 
-`check-crypto-gate.sh` 的通过含义是：当前 Gate Fail 边界仍被正确执行。阶段 32 起，它还会校验 `scripts/madmin-fixtures/crypto-gate-status.properties` 中的三方批准状态。它会确认 夹具可用，并检查 `pom.xml` 与源码 import 没有引入未批准 crypto/native 依赖。它不代表默认 madmin 加密响应已经可以明文 typed 解析。阶段 45 起，任何 Gate Pass 实现还必须先对照 `docs/43-stage45-crypto-gate-pass-prep.md` 补齐候选依赖、许可证、安全公告、Provider/FIPS、四个 JDK 版本测试矩阵和失败回退证据。
+`check-crypto-gate.sh` 的通过含义是：阶段 111 的 Crypto Gate Pass 边界仍被正确执行。它会校验 `scripts/madmin-fixtures/crypto-gate-status.properties`、`bcprov-jdk18on:1.82` 依赖、源码 Bouncy Castle import、committed Go fixture 与当前 Go 工具链新生成 fixture。它证明默认 madmin 加密响应可由合法调用方显式提供 `secretKey` 解密，但不代表 SDK 会自动保存或输出敏感明文。
 
 ## 3. 破坏性 Admin 门禁
 
@@ -131,7 +131,7 @@
 2. `docs/24-stage26-release-closeout.md` 的能力快照和剩余风险。
 3. 双分支 route parity 报告。
 4. 双分支 capability matrix。
-5. Crypto Gate Fail 仍被正确执行的证据。
+5. Crypto Gate Pass 仍被正确执行的证据。
 6. 破坏性实验环境仍拒绝共享 MinIO 的证据。
 7. 阶段 31 后还要附上 破坏性实验环境报告模板或本机报告生成证据，证明失败恢复提示可追溯。
 
@@ -141,11 +141,11 @@
 阶段 64 后，发布候选与正式发布必须分开说明：
 
 - 发布候选：route parity 233 / 233、product-typed 满格、`raw-fallback = 0`，并且 Crypto/lab 风险边界清楚。
-- 正式发布：除发布候选证据外，还需要 Crypto Gate Pass、独立破坏性 lab 报告、Maven/tag 发布工程材料和回滚策略。
+- 正式发布：除发布候选证据外，当前还需要独立破坏性 lab 报告、Maven/tag 发布工程材料和回滚策略；Crypto Gate 已在阶段 111 Pass，但仍要保留回归证据。
 
 正式发布前至少补齐：
 
-1. Crypto Gate 三方批准与依赖审查。
+1. Crypto Gate Pass 回归证据：依赖版本、fixture、JDK8/JDK17/JDK21/JDK25 验证。
 2. 独立 lab typed/raw 破坏性矩阵报告。
 3. JDK8/JDK17/JDK21/JDK25 构建与测试矩阵。
 4. 源码包、javadoc 包、pom 元数据、签名、校验和、许可证/SBOM 或依赖清单。
@@ -159,10 +159,10 @@
 阶段 65 后，任何对外发布说明都必须同时引用 `docs/63-stage65-release-handoff.md`，并把以下状态分开说明：
 
 - 已完成：route parity 233 / 233、产品化入口满格、专用客户端优先、raw 兜底可用。
-- 未放行：Crypto Gate Pass、独立破坏性 lab、Maven/tag 正式发布工程。
+- 未放行：独立破坏性 lab、Maven/tag 正式发布工程。Crypto Gate 已 Pass，但每次发布仍要回归。
 - 可继续：结果模型深化、中文错误解释、示例和只读旁证。
 
-发布负责人接手时，应先按阶段 65 的阻塞交接表确认 owner、安全、架构、运维或发布负责人是否已经提供外部证据；没有外部证据时，不能降低 `encrypted-blocked` 或 `destructive-blocked`。
+发布负责人接手时，应先按阶段 65 的阻塞交接表确认 owner、安全、架构、运维或发布负责人是否已经提供外部证据；没有外部证据时，不能降低 `destructive-blocked`；`encrypted-blocked` 已由阶段 111 的 Crypto Gate Pass 证据降为 0。
 
 ## 阶段 77/78 破坏性 lab 与发布工程预检
 
@@ -170,7 +170,7 @@
 
 阶段 78 后，正式 tag/Maven 发布必须继续暂缓，除非同时具备：
 
-1. Crypto Gate Pass 的三方批准、依赖审查和四 JDK 验证证据。
+1. Crypto Gate Pass 的依赖审查、fixture 和四 JDK 验证证据。
 2. 独立破坏性 lab 的 typed/raw 矩阵报告和恢复确认。
 3. 发布工程材料：版本号、源码包、javadoc、pom 元数据、签名、校验和、许可证或 SBOM、发布说明、回滚策略。
 

@@ -37,4 +37,12 @@ public final class ServiceAccountCreateResult {
   public EncryptedAdminResponse encryptedResponse() { return encryptedResponse; }
   public ServiceAccountCredentials credentials() { return credentials; }
   public String rawJson() { return rawJson; }
+
+  /** 使用调用方显式提供的 secretKey 解密并解析服务账号创建结果。 */
+  public ServiceAccountCreateResult decrypt(String secretKey) {
+    if (!encrypted) {
+      return this;
+    }
+    return fromResponseBytes(encryptedResponse.decrypt(secretKey));
+  }
 }

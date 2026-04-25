@@ -50,8 +50,9 @@ public final class EncryptedAdminResponse {
   /**
    * 使用调用方显式提供的 secretKey 解密载荷。
    *
-   * <p>该方法只支持当前 Java 运行时已经放行的算法；MinIO 默认 Argon2id 系列载荷仍会抛出中文错误，调用方应保留
-   * `EncryptedAdminResponse` 作为回退边界，不能把失败结果伪装成空明文。
+   * <p>阶段 111 起 SDK 已对齐 minio-java 支持 MinIO 默认 Argon2id 系列载荷。调用方仍必须显式提供
+   * 对应账号的 secretKey；如果 secretKey 错误或响应损坏，应保留 `EncryptedAdminResponse` 作为回退边界，
+   * 不能把失败结果伪装成空明文。
    */
   public byte[] decrypt(String secretKey) {
     return MadminEncryptionSupport.decryptData(secretKey, encryptedData);
@@ -62,7 +63,7 @@ public final class EncryptedAdminResponse {
     return new String(decrypt(secretKey), StandardCharsets.UTF_8);
   }
 
-  /** 是否仍需要 Crypto Gate 放行后才能解密。 */
+  /** 是否遇到已识别但当前 Java 端仍未支持的算法；已知 madmin 算法在阶段 111 后应为 false。 */
   public boolean requiresCryptoGate() {
     return isEncrypted() && !decryptSupported();
   }
@@ -79,6 +80,6 @@ public final class EncryptedAdminResponse {
     if (algorithm.decryptSupported()) {
       return "madmin 加密算法 " + algorithm.displayName() + " 当前支持 Java 端解密";
     }
-    return "madmin 加密算法 " + algorithm.displayName() + " 当前需要 Crypto Gate 放行后才能解密";
+    return "madmin 加密算法 " + algorithm.displayName() + " 当前 Java 端暂不支持解密";
   }
 }

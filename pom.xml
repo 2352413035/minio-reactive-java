@@ -17,6 +17,7 @@
         <spring.framework.version>5.3.39</spring.framework.version>
         <reactor.netty.version>1.0.41</reactor.netty.version>
         <jackson.version>2.17.1</jackson.version>
+        <bouncycastle.version>1.82</bouncycastle.version>
         <junit.version>5.10.2</junit.version>
     </properties>
 
@@ -37,6 +38,12 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
         </dependency>
 
         <dependency>

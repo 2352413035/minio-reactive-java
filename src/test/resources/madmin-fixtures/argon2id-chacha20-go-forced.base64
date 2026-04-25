@@ -1,0 +1,5 @@
+# 由 madmin-go v3.0.109 使用 "go run . forced ChaCha20" 生成。
+# secret: fixture-secret
+# plaintext: madmin fixture payload
+# algorithm: 0x01 Argon2id + ChaCha20-Poly1305
+Q4A94kLg4dPhf5ouBOAlXnhObTCg0NEhN4wua/PGsV4B+4kyJwcQogEb/6Z8HkGAk/OFlk4O3zT4uz8JuYgECplBVakngLAvPff4mb69kg==

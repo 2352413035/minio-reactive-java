@@ -4,11 +4,12 @@ package io.minio.reactive.util;
  * MinIO madmin 加密载荷头部中的算法 ID。
  *
  * <p>这里刻意把“可识别”和“当前 Java 端可解密”分开：SDK 可以识别 madmin-go 默认
- * Argon2id 载荷，但在没有通过 crypto 依赖 ADR 前，只允许解密 PBKDF2 + AES-GCM。
+ * Argon2id 载荷。阶段 111 已对齐 minio-java 的 Bouncy Castle 方案，三类已知算法都可解密；
+ * 枚举仍保留能力标记，便于未来遇到新算法时继续把“可识别”和“可解密”分开。
  */
 public enum MadminEncryptionAlgorithm {
-  ARGON2ID_AES_GCM((byte) 0x00, "Argon2id + AES-GCM", false),
-  ARGON2ID_CHACHA20_POLY1305((byte) 0x01, "Argon2id + ChaCha20-Poly1305", false),
+  ARGON2ID_AES_GCM((byte) 0x00, "Argon2id + AES-GCM", true),
+  ARGON2ID_CHACHA20_POLY1305((byte) 0x01, "Argon2id + ChaCha20-Poly1305", true),
   PBKDF2_AES_GCM((byte) 0x02, "PBKDF2 + AES-GCM", true);
 
   private final byte id;

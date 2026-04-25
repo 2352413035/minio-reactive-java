@@ -8,7 +8,7 @@
 - 做管理端用户、策略、配置、诊断、维护：用 `ReactiveMinioAdminClient`，并先确认风险等级。
 - 做 KMS、STS、Metrics、Health：分别使用对应平级客户端，不要挂在对象存储客户端下面。
 - SDK 尚未及时封装的新接口：才使用 `ReactiveMinioRawClient` + `MinioApiCatalog` 兜底。
-- 遇到 `EncryptedAdminResponse`：说明是 Crypto Gate 未放行的 madmin 加密响应边界，不要当作明文 JSON。
+- 遇到 `EncryptedAdminResponse`：说明是 madmin 加密响应边界。阶段 111 起 SDK 已支持默认算法解密，但必须由调用方显式传入对应账号的 `secretKey`，不要把加密字节直接当作明文 JSON。
 
 更完整的用户面发布说明见 `docs/60-stage62-user-facing-release-guide.md`。
 
@@ -147,7 +147,7 @@ BucketPolicyStatus policyStatus = client.getBucketPolicyStatus("bucket").block()
 
 - `listIdpConfigsEncrypted(type)` 返回 `EncryptedAdminResponse`，用于真实 MinIO 的加密配置列表响应。
 - `getIdpConfigEncrypted(type, name)` 返回 `EncryptedAdminResponse`，用于真实 MinIO 的单个加密配置响应。
-- 默认 Crypto Gate 未通过前，不把 IDP 配置值伪装成已解密明文模型。
+- IDP 配置值默认返回 `EncryptedAdminResponse`，调用方显式解密后再解析明文模型。
 
 ```java
 ReactiveMinioAdminClient admin = ReactiveMinioAdminClient.builder()
@@ -161,7 +161,7 @@ admin.setUserEnabled("test-user", false).block();
 admin.deleteUser("test-user").block();
 ```
 
-用户、用户组、策略、服务账号等能力逐步提供 typed 方法。服务账号创建响应在默认 Argon2id 解密能力完成前可能返回加密载荷，SDK 不会把它伪装成已解析凭证。
+用户、用户组、策略、服务账号等能力逐步提供 typed 方法。服务账号创建响应可能返回加密载荷；阶段 111 起可通过 `EncryptedAdminResponse.decryptAsUtf8(secretKey)` 或带 `secretKey` 的便捷入口显式解密，SDK 不会自动保存敏感凭证。
 
 阶段 15 起，Admin 只读信息优先使用“摘要 + 原始 JSON”的产品模型：
 
@@ -212,7 +212,7 @@ EncryptedAdminResponse accessKeyInfo = admin.getAccessKeyInfoEncrypted("svc-acce
 EncryptedAdminResponse accessKeys = admin.listAccessKeysEncrypted("all").block();
 ```
 
-这些响应需要等 Crypto Gate Pass 后，才会进入明文 typed 模型。阶段 18 起，边界对象会暴露 `algorithm()` / `algorithmName()`，便于日志和排障说明当前遇到的是哪一种 madmin 加密响应。阶段 73 起，还可以使用 `encryptedSize()`、`decryptSupported()`、`requiresCryptoGate()` 与 `diagnosticMessage()` 输出不含敏感内容的中文诊断。
+这些响应仍以 `EncryptedAdminResponse` 作为安全边界。阶段 111 起三类 madmin 算法都可解密；边界对象会暴露 `algorithm()` / `algorithmName()` / `encryptedSize()` / `decryptSupported()` / `requiresCryptoGate()` 与 `diagnosticMessage()`，便于在不泄露明文的前提下诊断。
 
 ## 错误诊断
 
@@ -267,7 +267,7 @@ String body = raw.executeToString(
 
 ## 阶段 35 IAM 边界
 
-需要查看 bucket 相关用户时使用 `listBucketUsersInfo(bucket)`；需要诊断临时账号时使用 `getTemporaryAccountInfo(accessKey)`。如果接口返回 madmin 加密载荷，请继续使用 `EncryptedAdminResponse` 相关方法，不要在 Crypto Gate Pass 前自行假装成明文模型。
+需要查看 bucket 相关用户时使用 `listBucketUsersInfo(bucket)`；需要诊断临时账号时使用 `getTemporaryAccountInfo(accessKey)`。如果接口返回 madmin 加密载荷，请继续使用 `EncryptedAdminResponse` 相关方法，显式传入 `secretKey` 解密后再解析，不能把解密失败伪装成明文模型。
 
 ## 9.6 Admin 敏感导出
 

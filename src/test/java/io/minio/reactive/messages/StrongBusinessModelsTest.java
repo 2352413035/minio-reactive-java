@@ -214,6 +214,18 @@ class StrongBusinessModelsTest {
     Assertions.assertEquals("root", info.parentUser());
     Assertions.assertFalse(result.encrypted());
     Assertions.assertEquals("ak", result.credentials().accessKey());
+
+    ServiceAccountCreateResult encrypted =
+        ServiceAccountCreateResult.fromResponseBytes(
+            io.minio.reactive.util.MadminEncryptionSupport.encryptData(
+                "admin-secret",
+                "{\"credentials\":{\"accessKey\":\"ak2\",\"secretKey\":\"sk2\"}}"
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    ServiceAccountCreateResult decrypted = encrypted.decrypt("admin-secret");
+
+    Assertions.assertTrue(encrypted.encrypted());
+    Assertions.assertFalse(decrypted.encrypted());
+    Assertions.assertEquals("ak2", decrypted.credentials().accessKey());
   }
 
   @Test

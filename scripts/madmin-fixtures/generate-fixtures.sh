@@ -29,12 +29,44 @@ cat > "$TMP_DIR/main.go" <<'GOCODE'
 package main
 
 import (
+  "bytes"
   "encoding/base64"
   "fmt"
   "os"
 
   madmin "github.com/minio/madmin-go/v3"
+  "github.com/secure-io/sio-go"
+  "github.com/secure-io/sio-go/sioutil"
+  "golang.org/x/crypto/argon2"
 )
+
+const (
+  argon2idTime = 1
+  argon2idMemory = 64 * 1024
+  argon2idThreads = 4
+)
+
+func encryptForcedChaCha20(secret string, plain string) []byte {
+  salt := sioutil.MustRandom(32)
+  key := argon2.IDKey([]byte(secret), salt, argon2idTime, argon2idMemory, argon2idThreads, 32)
+  stream, err := sio.ChaCha20Poly1305.Stream(key)
+  if err != nil {
+    panic(err)
+  }
+  nonce := sioutil.MustRandom(stream.NonceSize())
+  out := bytes.NewBuffer(nil)
+  out.Write(salt)
+  out.WriteByte(0x01)
+  out.Write(nonce)
+  writer := stream.EncryptWriter(out, nonce, nil)
+  if _, err := writer.Write([]byte(plain)); err != nil {
+    panic(err)
+  }
+  if err := writer.Close(); err != nil {
+    panic(err)
+  }
+  return out.Bytes()
+}
 
 func main() {
   secret := os.Getenv("FIXTURE_SECRET")
@@ -45,6 +77,9 @@ func main() {
   }
   fmt.Printf("%02x\n", out[32])
   fmt.Println(base64.StdEncoding.EncodeToString(out))
+  forcedChaCha := encryptForcedChaCha20(secret, plain)
+  fmt.Printf("%02x\n", forcedChaCha[32])
+  fmt.Println(base64.StdEncoding.EncodeToString(forcedChaCha))
 }
 GOCODE
 
@@ -87,6 +122,8 @@ write_fixture "$OUTPUT_DIR/pbkdf2-aesgcm-go.base64" "0x02 PBKDF2 + AES-GCM" "go 
 DEFAULT_OUTPUT=$(run_fixture default)
 DEFAULT_ID=$(printf '%s\n' "$DEFAULT_OUTPUT" | sed -n '1p')
 DEFAULT_PAYLOAD=$(printf '%s\n' "$DEFAULT_OUTPUT" | sed -n '2p')
+FORCED_CHACHA_ID=$(printf '%s\n' "$DEFAULT_OUTPUT" | sed -n '3p')
+FORCED_CHACHA_PAYLOAD=$(printf '%s\n' "$DEFAULT_OUTPUT" | sed -n '4p')
 case "$DEFAULT_ID" in
   00)
     write_fixture "$OUTPUT_DIR/argon2id-aesgcm-go-default.base64" "0x00 Argon2id + AES-GCM" "go run ." "$DEFAULT_PAYLOAD"
@@ -100,12 +137,19 @@ case "$DEFAULT_ID" in
     ;;
 esac
 
+if [[ "$FORCED_CHACHA_ID" != "01" ]]; then
+  echo "强制 ChaCha20 fixture 期望算法 01，实际为 $FORCED_CHACHA_ID" >&2
+  exit 1
+fi
+write_fixture "$OUTPUT_DIR/argon2id-chacha20-go-forced.base64" "0x01 Argon2id + ChaCha20-Poly1305" "go run . forced ChaCha20" "$FORCED_CHACHA_PAYLOAD"
+
 cat > "$OUTPUT_DIR/fixture-metadata.json" <<JSON
 {
   "madminGoVersion": "${MADMIN_GO_VERSION}",
   "fixtureSecret": "${FIXTURE_SECRET}",
   "fixturePlaintext": "${FIXTURE_PLAINTEXT}",
   "defaultAlgorithmId": "${DEFAULT_ID}",
+  "forcedChaChaAlgorithmId": "${FORCED_CHACHA_ID}",
   "generatedBy": "scripts/madmin-fixtures/generate-fixtures.sh"
 }
 JSON

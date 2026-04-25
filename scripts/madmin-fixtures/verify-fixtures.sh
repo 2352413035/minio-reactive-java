@@ -9,7 +9,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 cd "$REPO_ROOT"
 # 先验证仓库已提交的 fixture 资源本身可被当前 Java 测试读取。
 mvn -q \
-  -Dtest=MadminEncryptionSupportTest#shouldDecryptPbkdf2AesGcmMadminGoFixture+shouldDiagnoseUnsupportedDefaultArgon2idAesGcmFixture+shouldDiagnoseUnsupportedDefaultArgon2idChaChaFixtureWhenPresent \
+  -Dtest=MadminEncryptionSupportTest#shouldDecryptPbkdf2AesGcmMadminGoFixture+shouldDecryptDefaultArgon2idAesGcmFixture+shouldDecryptForcedArgon2idChaChaGoFixture+shouldDecryptDefaultArgon2idChaChaFixtureWhenPresent \
   test
 
 # 再验证当前 Go 工具链新生成的 fixture 是否与 Java 兼容。
@@ -21,11 +21,11 @@ PY
 )
 if [[ "$DEFAULT_ID" == "00" ]]; then
   MADMIN_FIXTURE_DIR="$TMP_DIR/generated" mvn -q \
-    -Dtest=MadminEncryptionSupportTest#shouldDecryptPbkdf2AesGcmMadminGoFixture+shouldDiagnoseUnsupportedDefaultArgon2idAesGcmFixture \
+    -Dtest=MadminEncryptionSupportTest#shouldDecryptPbkdf2AesGcmMadminGoFixture+shouldDecryptDefaultArgon2idAesGcmFixture+shouldDecryptForcedArgon2idChaChaGoFixture \
     test
 elif [[ "$DEFAULT_ID" == "01" ]]; then
   MADMIN_FIXTURE_DIR="$TMP_DIR/generated" mvn -q \
-    -Dtest=MadminEncryptionSupportTest#shouldDecryptPbkdf2AesGcmMadminGoFixture+shouldDiagnoseUnsupportedDefaultArgon2idChaChaFixtureWhenPresent \
+    -Dtest=MadminEncryptionSupportTest#shouldDecryptPbkdf2AesGcmMadminGoFixture+shouldDecryptForcedArgon2idChaChaGoFixture+shouldDecryptDefaultArgon2idChaChaFixtureWhenPresent \
     test
   if [[ ! -f "$REPO_ROOT/src/test/resources/madmin-fixtures/argon2id-chacha20-go-default.base64" ]]; then
     echo "当前硬件默认算法为 0x01（Argon2id + ChaCha20-Poly1305），仓库尚未提交 committed ChaCha20 fixture；按计划允许记录 skip reason。" >&2
