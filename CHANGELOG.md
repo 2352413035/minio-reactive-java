@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 92 Admin 核心 API 同名覆盖收口
+
+- `ReactiveMinioAdminClient` 新增 `addUpdateGroup`、`removeGroup`、`attachPolicy`、`detachPolicy`、`setPolicy`、`clearBucketQuota`、`listServiceAccount`、`getServiceAccountInfo` 等 minio-java 同名迁移入口。
+- 新增入口继续使用 Admin 专用客户端已有协议实现和类型边界，不退回 raw client；服务账号读取仍以 `EncryptedAdminResponse` 明确保留 Crypto Gate 边界。
+- `scripts/report-minio-java-parity.py` 的结论改为根据当前缺口动态输出，避免在对象/Admin 都收口后继续提示“缺失对象 API”。
+- 新增 `docs/90-stage92-admin-api-full-name-parity.md`，记录 Admin 同名入口、风险边界和后续 `*Args` / credentials provider 重点。
+- 重新生成 minio-java 对标报告后，Admin 核心 API 精确同名达到 24 / 24，别名或部分覆盖 0 个，缺失 0 个。
+
 ## 阶段 91 对象存储核心 API 同名覆盖收口
 
 - 新增 `PutObjectFanOutEntry`、`PutObjectFanOutResult`、`PutObjectFanOutResponse`，并实现 `ReactiveMinioClient.putObjectFanOut`。

@@ -252,9 +252,22 @@ def markdown(report):
     lines.append("")
     lines.append("## 结论")
     lines.append("")
-    lines.append(
-        "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。后续应优先补齐缺失对象 API、`*Args` builder、凭证 Provider 与 Admin Crypto 自动解密。"
+    object_done = (
+        len(object_api["missing"]) == 0
+        and len(object_api["aliasOrPartial"]) == 0
     )
+    admin_done = (
+        len(admin_api["missing"]) == 0
+        and len(admin_api["aliasOrPartial"]) == 0
+    )
+    if object_done and admin_done:
+        lines.append(
+            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API 与 Admin 核心 API 已达到精确同名收口，后续重点转向 `*Args` builder、凭证 Provider、Admin Crypto 自动解密和正式发布工程。"
+        )
+    else:
+        lines.append(
+            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。后续应优先补齐 minio-java API 同名缺口，然后继续推进 `*Args` builder、凭证 Provider 与 Admin Crypto 自动解密。"
+        )
     return "\n".join(lines) + "\n"
 
 

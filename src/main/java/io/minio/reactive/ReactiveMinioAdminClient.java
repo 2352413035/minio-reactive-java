@@ -1259,6 +1259,55 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         null);
   }
 
+  /** 对齐 minio-java：给用户或用户组绑定策略。 */
+  public Mono<Void> setPolicy(String userOrGroupName, boolean isGroup, String policyName) {
+    return isGroup
+        ? setGroupPolicy(policyName, userOrGroupName)
+        : setUserPolicy(policyName, userOrGroupName);
+  }
+
+  /** 对齐 minio-java：新增或更新用户组。 */
+  public Mono<Void> addUpdateGroup(
+      String group, String groupStatus, java.util.List<String> members) {
+    requireText("group", group);
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<String, Object>();
+    payload.put("group", group);
+    payload.put("members", members == null ? java.util.Collections.<String>emptyList() : members);
+    payload.put(
+        "groupStatus",
+        groupStatus == null || groupStatus.trim().isEmpty() ? "enabled" : groupStatus);
+    payload.put("isRemove", Boolean.FALSE);
+    return executeToVoid(
+        "ADMIN_UPDATE_GROUP_MEMBERS",
+        emptyMap(),
+        emptyMap(),
+        emptyMap(),
+        io.minio.reactive.util.JsonSupport.toJsonBytes(payload),
+        "application/json");
+  }
+
+  /** 对齐 minio-java：新增或更新启用状态用户组。 */
+  public Mono<Void> addUpdateGroup(String group, java.util.List<String> members) {
+    return addUpdateGroup(group, "enabled", members);
+  }
+
+  /** 对齐 minio-java：删除用户组。 */
+  public Mono<Void> removeGroup(String group) {
+    requireText("group", group);
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<String, Object>();
+    payload.put("group", group);
+    payload.put("members", java.util.Collections.<String>emptyList());
+    payload.put("groupStatus", "enabled");
+    payload.put("isRemove", Boolean.TRUE);
+    return executeToVoid(
+        "ADMIN_UPDATE_GROUP_MEMBERS",
+        emptyMap(),
+        emptyMap(),
+        emptyMap(),
+        io.minio.reactive.util.JsonSupport.toJsonBytes(payload),
+        "application/json");
+  }
+
   /** 列出内置策略绑定实体摘要。 */
   public Mono<io.minio.reactive.messages.admin.AdminPolicyEntities> listPolicyEntities() {
     return listBuiltinPolicyEntities()
@@ -1283,6 +1332,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return attachBuiltinPolicy(body, "application/json");
   }
 
+  /** 对齐 minio-java：把策略绑定到用户或用户组。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> attachPolicy(
+      String[] policies, String user, String group) {
+    return attachBuiltinPolicy(policyAssociationBody(policies, user, group));
+  }
+
   /** 解绑内置策略实体；调用方应确认请求体只包含目标实体。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachBuiltinPolicy(
       byte[] body, String contentType) {
@@ -1295,6 +1350,12 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachBuiltinPolicy(
       byte[] body) {
     return detachBuiltinPolicy(body, "application/json");
+  }
+
+  /** 对齐 minio-java：把策略从用户或用户组解绑。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> detachPolicy(
+      String[] policies, String user, String group) {
+    return detachBuiltinPolicy(policyAssociationBody(policies, user, group));
   }
 
   /** 列出 LDAP 策略绑定实体摘要；只统计映射数量并保留原始策略实体 JSON。 */
@@ -1458,10 +1519,30 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
+  /** 对齐 minio-java：获取服务账号信息；Crypto Gate 通过前返回加密边界对象。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> getServiceAccountInfo(
+      String accessKey) {
+    return getServiceAccountInfoEncrypted(accessKey);
+  }
+
   /** 列出当前用户的服务账号加密响应；默认响应解密能力完成前不伪装成明文模型。 */
   public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listServiceAccountsEncrypted() {
     return executeToBytes(
             "ADMIN_LIST_SERVICE_ACCOUNTS", emptyMap(), emptyMap(), emptyMap(), null, null)
+        .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
+  }
+
+  /** 对齐 minio-java：按用户名列出服务账号；Crypto Gate 通过前返回加密边界对象。 */
+  public Mono<io.minio.reactive.messages.admin.EncryptedAdminResponse> listServiceAccount(
+      String username) {
+    requireText("username", username);
+    return executeToBytes(
+            "ADMIN_LIST_SERVICE_ACCOUNTS",
+            emptyMap(),
+            map("user", username),
+            emptyMap(),
+            null,
+            null)
         .map(io.minio.reactive.messages.admin.EncryptedAdminResponse::new);
   }
 
@@ -2167,6 +2248,18 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return getBucketQuota(bucket).map(io.minio.reactive.messages.admin.AdminBucketQuota::parse);
   }
 
+  /** 对齐 minio-java：清空 bucket quota。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> clearBucketQuota(String bucket) {
+    requireText("bucket", bucket);
+    byte[] body =
+        "{\"quota\":0,\"quotatype\":\"hard\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    return setBucketQuotaConfig(bucket, body, "application/json")
+        .map(
+            text ->
+                io.minio.reactive.messages.admin.AdminTextResult.of(
+                    "bucket-quota-clear", text.rawText()));
+  }
+
   /** 调用 `ADMIN_SET_BUCKET_QUOTA`。 */
   public Mono<String> setBucketQuota(String bucket, byte[] body, String contentType) {
     return executeToString("ADMIN_SET_BUCKET_QUOTA", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
@@ -2730,6 +2823,26 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
    */
   private static java.util.Map<String, String> siteReplicationApiVersion() {
     return map("api-version", "1");
+  }
+
+  /** 生成 minio-java attachPolicy/detachPolicy 对齐的 JSON 请求体。 */
+  private static byte[] policyAssociationBody(String[] policies, String user, String group) {
+    if (policies == null || policies.length == 0) {
+      throw new IllegalArgumentException("policies 不能为空");
+    }
+    boolean hasUser = user != null && !user.trim().isEmpty();
+    boolean hasGroup = group != null && !group.trim().isEmpty();
+    if (hasUser == hasGroup) {
+      throw new IllegalArgumentException("必须且只能提供 user 或 group");
+    }
+    java.util.Map<String, Object> payload = new java.util.LinkedHashMap<String, Object>();
+    payload.put("policies", policies);
+    if (hasUser) {
+      payload.put("user", user);
+    } else {
+      payload.put("group", group);
+    }
+    return io.minio.reactive.util.JsonSupport.toJsonBytes(payload);
   }
 
   /** 校验导入备份包，避免误调用空恢复请求。 */

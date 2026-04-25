@@ -99,6 +99,14 @@ class ReactiveMinioSpecializedClientsTest {
     assertFluxMethodExists(ReactiveMinioClient.class, "promptObject");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "serverInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "addUser");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "addUpdateGroup");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "removeGroup");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "attachPolicy");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "detachPolicy");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "setPolicy");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "clearBucketQuota");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "listServiceAccount");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "getServiceAccountInfo");
     assertMonoMethodExists(ReactiveMinioKmsClient.class, "keyStatus");
     assertMonoMethodExists(ReactiveMinioStsClient.class, "assumeRoleWithWebIdentity");
     assertMonoMethodExists(ReactiveMinioMetricsClient.class, "v3");
@@ -620,13 +628,21 @@ class ReactiveMinioSpecializedClientsTest {
 
     admin.setGroupEnabled("dev", false).block();
     admin.updateGroupMembers(UpdateGroupMembersRequest.add("dev", java.util.Collections.singletonList("user1"))).block();
+    admin.addUpdateGroup("ops", "enabled", java.util.Collections.singletonList("user2")).block();
+    admin.removeGroup("old-team").block();
     admin.deleteServiceAccountTyped("svc1").block();
+    admin.listServiceAccount("root-user").block();
+    admin.getServiceAccountInfo("svc2").block();
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/set-group-status"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/update-group-members"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/delete-service-account"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/list-service-accounts"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/info-service-account"));
     Assertions.assertTrue(containsAllQueryParts(queries, "group=dev", "status=disabled"));
     Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "user=root-user"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "accessKey=svc2"));
   }
 
 
@@ -667,16 +683,28 @@ class ReactiveMinioSpecializedClientsTest {
 
     admin.putPolicy("readonly", "{\"Version\":\"2012-10-17\"}").block();
     admin.setUserPolicy("readonly", "user1").block();
+    admin.setPolicy("dev", true, "readwrite").block();
+    admin.attachPolicy(new String[] {"readonly"}, "user1", null).block();
+    admin.detachPolicy(new String[] {"readonly"}, null, "dev").block();
+    admin.clearBucketQuota("bucket1").block();
     kms.getKeyStatus("key1").block();
     Assertions.assertEquals("kms", kms.scrapeMetrics().block().scope());
     Assertions.assertEquals("legacy", metrics.scrapeLegacyMetrics("token").block().scope());
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/add-canned-policy"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/builtin/policy/attach"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/idp/builtin/policy/detach"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/set-bucket-quota"));
     Assertions.assertTrue(paths.contains("/minio/kms/v1/metrics"));
     Assertions.assertTrue(paths.contains("/minio/prometheus/metrics"));
     Assertions.assertTrue(queries.contains("name=readonly"));
     Assertions.assertTrue(containsAllQueryParts(queries, "policyName=readonly", "userOrGroup=user1", "isGroup=false"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "policyName=readwrite", "userOrGroup=dev", "isGroup=true"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
     Assertions.assertTrue(queries.contains("key-id=key1"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> admin.attachPolicy(new String[] {"readonly"}, "user1", "dev"));
   }
 
 
