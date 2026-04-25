@@ -3,6 +3,7 @@ package io.minio.reactive.signer;
 import io.minio.reactive.ReactiveMinioClientConfig;
 import io.minio.reactive.credentials.ReactiveCredentials;
 import io.minio.reactive.http.S3Request;
+import io.minio.reactive.messages.PostPolicy;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -12,6 +13,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -174,6 +176,40 @@ public final class S3RequestSigner {
     S3Request presigned =
         unsignedRequest.toBuilder().queryParameter("X-Amz-Signature", signature).build();
     return presigned.toUri(config);
+  }
+
+
+  public Map<String, String> presignedPostFormData(
+      PostPolicy policy, ReactiveMinioClientConfig config, ReactiveCredentials credentials) {
+    if (policy == null) {
+      throw new IllegalArgumentException("post policy 不能为空");
+    }
+    if (credentials == null || credentials.isAnonymous()) {
+      throw new IllegalArgumentException("匿名访问不需要也不能生成 presigned POST form-data");
+    }
+    ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+    String amzDate = now.format(AMZ_DATE);
+    String shortDate = now.format(SHORT_DATE);
+    String scope = shortDate + "/" + config.region() + "/s3/aws4_request";
+    String credential = credentials.accessKey() + "/" + scope;
+    String policyJson =
+        policy.policyDocument(
+            "AWS4-HMAC-SHA256", credential, amzDate, credentials.sessionToken());
+    String encodedPolicy =
+        Base64.getEncoder().encodeToString(policyJson.getBytes(StandardCharsets.UTF_8));
+    String signature =
+        hex(hmac(signingKey(credentials.secretKey(), shortDate, config.region(), "s3"), encodedPolicy));
+
+    Map<String, String> formData = new LinkedHashMap<String, String>();
+    formData.put("x-amz-algorithm", "AWS4-HMAC-SHA256");
+    formData.put("x-amz-credential", credential);
+    if (credentials.sessionToken() != null && !credentials.sessionToken().trim().isEmpty()) {
+      formData.put("x-amz-security-token", credentials.sessionToken());
+    }
+    formData.put("x-amz-date", amzDate);
+    formData.put("policy", encodedPolicy);
+    formData.put("x-amz-signature", signature);
+    return formData;
   }
 
   private static String serviceName(S3Request request) {
