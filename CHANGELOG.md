@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 76 Crypto Gate Pass 可执行清单
+
+- 新增 `docs/74-stage76-crypto-gate-execution-checklist.md`，把 Crypto Gate Pass 前必须完成的依赖审查、批准材料、测试矩阵和失败回退语义整理为清单。
+- 本阶段不新增依赖、不修改 `pom.xml`、不放行 Crypto Gate；`encrypted-blocked = 11` 继续保持。
+- 明确即使未来 Gate Pass，也必须保留 `EncryptedAdminResponse` 回退和安全诊断语义。
+
 ## 阶段 75 新口径缺口审计
 
 - 新增 `docs/73-stage75-post-stage74-gap-audit.md`，基于 `encrypted-blocked = 11` 重新审计当前 SDK 缺口。
