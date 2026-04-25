@@ -35,6 +35,7 @@ import io.minio.reactive.messages.ObjectInfo;
 import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.ObjectVersionInfo;
+import io.minio.reactive.messages.ObjectWriteResult;
 import io.minio.reactive.messages.PartInfo;
 import io.minio.reactive.messages.PostPolicy;
 import io.minio.reactive.messages.RestoreObjectRequest;
@@ -326,6 +327,39 @@ public final class ReactiveMinioClient {
     return Flux.from(content).collectList().map(ReactiveMinioClient::concat).flatMap(bytes -> putObject(bucket, object, bytes, contentType));
   }
 
+  /**
+   * 向已有对象末尾追加字节。
+   *
+   * <p>MinIO 的 appendObject 语义依赖 `x-amz-write-offset-bytes`：先 HEAD 读取当前对象长度，
+   * 再 PUT 同一个对象并带上写入偏移。对象不存在或服务端不支持该扩展时，会按服务端错误返回。
+   */
+  public Mono<ObjectWriteResult> appendObject(
+      String bucket, String object, byte[] content, String contentType) {
+    byte[] actualContent = content == null ? new byte[0] : content;
+    return statObject(bucket, object)
+        .map(ReactiveMinioClient::contentLength)
+        .flatMap(offset -> appendObjectAtOffset(bucket, object, actualContent, contentType, offset));
+  }
+
+  /** 使用字符串内容追加对象，默认按 UTF-8 转字节。 */
+  public Mono<ObjectWriteResult> appendObject(
+      String bucket, String object, String content, String contentType) {
+    return appendObject(
+        bucket,
+        object,
+        content == null ? new byte[0] : content.getBytes(StandardCharsets.UTF_8),
+        contentType);
+  }
+
+  /** 上传本地文件内容并追加到已有对象末尾。 */
+  public Mono<ObjectWriteResult> appendObject(
+      String bucket, String object, Path filename, String contentType) {
+    final Path source = requireFilePath(filename, "filename");
+    return Mono.fromCallable(() -> readRegularFile(source))
+        .subscribeOn(Schedulers.boundedElastic())
+        .flatMap(bytes -> appendObject(bucket, object, bytes, effectiveContentType(source, contentType)));
+  }
+
   /** 上传本地文件，对齐 minio-java 的 `uploadObject` 方法名。 */
   public Mono<Void> uploadObject(String bucket, String object, Path filename) {
     return uploadObject(bucket, object, filename, null);
@@ -352,6 +386,23 @@ public final class ReactiveMinioClient {
   /** 使用字符串文件名和显式 contentType 上传本地文件。 */
   public Mono<Void> uploadObject(String bucket, String object, String filename, String contentType) {
     return uploadObject(bucket, object, requireFilePath(filename, "filename"), contentType);
+  }
+
+  private Mono<ObjectWriteResult> appendObjectAtOffset(
+      String bucket, String object, byte[] content, String contentType, long offset) {
+    if (offset < 0L) {
+      throw new IllegalStateException("对象当前长度未知，无法安全追加");
+    }
+    S3Request request =
+        request(HttpMethod.PUT, bucket, object)
+            .contentType(contentType == null ? "application/octet-stream" : contentType)
+            .header("Content-Length", Integer.toString(content.length))
+            .header("x-amz-write-offset-bytes", Long.toString(offset))
+            .body(content)
+            .build();
+    return sign(request)
+        .flatMap(httpClient::exchangeToHeaders)
+        .map(headers -> new ObjectWriteResult(bucket, object, headers));
   }
 
   public Mono<Map<String, List<String>>> copyObject(

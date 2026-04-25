@@ -43,6 +43,7 @@ import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.ComposeSource;
 import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
+import io.minio.reactive.messages.ObjectWriteResult;
 import io.minio.reactive.messages.PostPolicy;
 import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.SelectObjectContentRequest;
@@ -85,6 +86,7 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeRepresentativeCatalogMethodsOnSpecializedClients() {
     assertMonoMethodExists(ReactiveMinioClient.class, "s3ListBuckets");
     assertMonoMethodExists(ReactiveMinioClient.class, "s3GetObject");
+    assertMonoMethodExists(ReactiveMinioClient.class, "appendObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "composeObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "downloadObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "getPresignedPostFormData");
@@ -365,6 +367,57 @@ class ReactiveMinioSpecializedClientsTest {
                 .build()
                 .getPresignedPostFormData(policy)
                 .block());
+  }
+
+  @Test
+  void shouldAppendObjectAtCurrentSizeLikeMinioJava() {
+    java.util.List<org.springframework.http.HttpMethod> methods =
+        new java.util.ArrayList<org.springframework.http.HttpMethod>();
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> offsets = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  methods.add(request.method());
+                  paths.add(request.url().getPath());
+                  offsets.add(request.headers().getFirst("x-amz-write-offset-bytes"));
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  if (request.method().equals(org.springframework.http.HttpMethod.HEAD)) {
+                    return Mono.just(
+                        ClientResponse.create(HttpStatus.OK)
+                            .header("Content-Length", "5")
+                            .header("ETag", "\"old\"")
+                            .build());
+                  }
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .header("ETag", "\"new\"")
+                          .header("x-amz-version-id", "v2")
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    ObjectWriteResult result =
+        client.appendObject("bucket1", "append.txt", "追加内容", "text/plain").block();
+
+    Assertions.assertEquals("bucket1", result.bucket());
+    Assertions.assertEquals("append.txt", result.object());
+    Assertions.assertEquals("\"new\"", result.etag());
+    Assertions.assertEquals("v2", result.versionId());
+    Assertions.assertTrue(methods.contains(org.springframework.http.HttpMethod.HEAD));
+    Assertions.assertTrue(methods.contains(org.springframework.http.HttpMethod.PUT));
+    Assertions.assertTrue(paths.contains("/bucket1/append.txt"));
+    Assertions.assertTrue(offsets.contains("5"));
+    Assertions.assertTrue(contentTypes.contains("text/plain"));
   }
 
 
