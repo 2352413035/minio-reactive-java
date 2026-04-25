@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 100 minio-java 签名级差异审计
+
+- 新增 `scripts/report-minio-java-signature-parity.py`，在名称级对标之外继续审计方法重载、credentials provider 构造器/工厂和 Args builder 入口。
+- 新增 `docs/98-stage100-signature-parity-audit.md`，记录签名级报告的当前结论和后续动作。
+- 当前报告显示对象 API 与 Admin API 没有缺失或重载较少项；credentials 阻塞 HTTP 构造器属于响应式 SDK 有意不同；Args 仅 `PutObjectAPIArgs` 需要后续判定是否公开 builder。
+
 ## 阶段 99 credentials provider 行为细化
 
 - `AwsEnvironmentProvider` 对空字符串主变量改为和 minio-java 一致：存在但为空时直接报错，不再静默回退到次级变量。
