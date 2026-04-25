@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 82 mc 只读旁证刷新
+
+- 使用临时 `mc` 配置目录执行只读命令，刷新共享 MinIO ready、online、region、bucket/object 数和磁盘摘要证据。
+- 新增 `docs/80-stage82-mc-readonly-evidence-refresh.md`，记录只读证据和凭据边界。
+- 本阶段不执行写入、不修改配置、不减少 `destructive-blocked = 29`。
+
 ## 阶段 81 示例中文诊断复核
 
 - `ReactiveMinioLiveExample` 的终端输出改为中文，包括缺少配置、bucket/object 流程、S3 错误和响应头说明。
