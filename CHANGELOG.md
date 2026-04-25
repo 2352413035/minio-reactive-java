@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 116 发布就绪总览机器报告
+
+- 新增 `scripts/report-release-readiness.py`，把 minio-java 对标、签名级差异、route parity、能力矩阵、POM 元数据、Crypto Gate 和破坏性边界聚合成一份发布就绪总览。
+- 新增 `docs/114-stage116-release-readiness-aggregator.md`，说明脚本用途、双分支使用方式和当前“发布候选就绪、正式发布未就绪”的判定。
+- 聚合报告继续不连接 MinIO、不执行写入、不修改 POM、不发布 Maven。
+
 ## 阶段 115 发布元数据安全准备清单
 
 - 新增 `docs/113-stage115-release-metadata-safe-prep.md`，把正式 Maven/tag 发布前必须由负责人确认的许可证、SCM、developers、发布仓库、签名、SBOM、Javadoc 和回滚输入整理成中文清单。
