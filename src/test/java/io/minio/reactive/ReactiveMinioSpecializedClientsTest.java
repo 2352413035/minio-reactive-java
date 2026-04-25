@@ -45,8 +45,11 @@ import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.ObjectWriteResult;
 import io.minio.reactive.messages.PostPolicy;
+import io.minio.reactive.messages.PutObjectFanOutEntry;
+import io.minio.reactive.messages.PutObjectFanOutResponse;
 import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.SelectObjectContentRequest;
+import io.minio.reactive.messages.SnowballObject;
 import io.minio.reactive.messages.sts.AssumeRoleResult;
 import io.minio.reactive.messages.sts.AssumeRoleSsoRequest;
 import io.minio.reactive.messages.sts.AssumeRoleWithCertificateRequest;
@@ -90,6 +93,8 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioClient.class, "composeObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "downloadObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "getPresignedPostFormData");
+    assertMonoMethodExists(ReactiveMinioClient.class, "putObjectFanOut");
+    assertMonoMethodExists(ReactiveMinioClient.class, "uploadSnowballObjects");
     assertMonoMethodExists(ReactiveMinioClient.class, "uploadObject");
     assertFluxMethodExists(ReactiveMinioClient.class, "promptObject");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "serverInfo");
@@ -468,6 +473,127 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertThrows(
         IllegalArgumentException.class,
         () -> client.promptObject("bucket1", "context.txt", "lambda", " ").blockFirst());
+  }
+
+  @Test
+  void shouldPutObjectFanOutWithMultipartPostLikeMinioJava() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    java.util.List<String> authorizations = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  authorizations.add(request.headers().getFirst("Authorization"));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(
+                              "{\"key\":\"fan-out-a.txt\",\"etag\":\"etag-a\"}\n"
+                                  + "{\"key\":\"fan-out-b.txt\",\"error\":\"denied\"}")
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    PutObjectFanOutResponse response =
+        client
+            .putObjectFanOut(
+                "bucket1",
+                "同一份内容",
+                java.util.Arrays.asList(
+                    PutObjectFanOutEntry.of("fan-out-a.txt"),
+                    PutObjectFanOutEntry.of("fan-out-b.txt")),
+                "text/plain")
+            .block();
+
+    Assertions.assertEquals("bucket1", response.bucket());
+    Assertions.assertEquals(2, response.resultCount());
+    Assertions.assertEquals("fan-out-a.txt", response.results().get(0).key());
+    Assertions.assertTrue(response.results().get(0).success());
+    Assertions.assertEquals("denied", response.results().get(1).error());
+    Assertions.assertTrue(paths.contains("/bucket1"));
+    Assertions.assertTrue(contentTypes.get(0).startsWith("multipart/form-data"));
+    Assertions.assertTrue(authorizations.isEmpty() || authorizations.get(0) == null);
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            client
+                .putObjectFanOut(
+                    "bucket1",
+                    "内容",
+                    java.util.Collections.<PutObjectFanOutEntry>emptyList(),
+                    "text/plain")
+                .block());
+  }
+
+  @Test
+  void shouldUploadSnowballObjectsAsTarLikeMinioJava() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> autoExtractHeaders = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  autoExtractHeaders.add(
+                      request.headers().getFirst("X-Amz-Meta-Snowball-Auto-Extract"));
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .header("ETag", "\"snowball\"")
+                          .header("x-amz-version-id", "snow-v1")
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    ObjectWriteResult result =
+        client
+            .uploadSnowballObjects(
+                "bucket1",
+                java.util.Arrays.asList(
+                    SnowballObject.ofString("a.txt", "alpha"),
+                    SnowballObject.ofString("/b.txt", "bravo")))
+            .block();
+
+    Assertions.assertEquals("bucket1", result.bucket());
+    Assertions.assertTrue(result.object().startsWith("snowball."));
+    Assertions.assertTrue(result.object().endsWith(".tar"));
+    Assertions.assertEquals("\"snowball\"", result.etag());
+    Assertions.assertEquals("snow-v1", result.versionId());
+    Assertions.assertTrue(paths.get(0).startsWith("/bucket1/snowball."));
+    Assertions.assertEquals("true", autoExtractHeaders.get(0));
+    Assertions.assertEquals("application/x-tar", contentTypes.get(0));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            client
+                .uploadSnowballObjects(
+                    "bucket1", java.util.Collections.<SnowballObject>emptyList())
+                .block());
+    Assertions.assertThrows(
+        UnsupportedOperationException.class,
+        () ->
+            client
+                .uploadSnowballObjects(
+                    "bucket1",
+                    java.util.Collections.singletonList(SnowballObject.ofString("a.txt", "a")),
+                    true));
   }
 
 

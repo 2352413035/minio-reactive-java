@@ -38,9 +38,12 @@ import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.ObjectWriteResult;
 import io.minio.reactive.messages.PartInfo;
 import io.minio.reactive.messages.PostPolicy;
+import io.minio.reactive.messages.PutObjectFanOutEntry;
+import io.minio.reactive.messages.PutObjectFanOutResponse;
 import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.SelectObjectContentRequest;
 import io.minio.reactive.messages.SelectObjectContentResult;
+import io.minio.reactive.messages.SnowballObject;
 import io.minio.reactive.signer.S3RequestSigner;
 import io.minio.reactive.util.S3Escaper;
 import io.minio.reactive.util.S3Xml;
@@ -55,12 +58,15 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.reactivestreams.Publisher;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -388,6 +394,29 @@ public final class ReactiveMinioClient {
     return uploadObject(bucket, object, requireFilePath(filename, "filename"), contentType);
   }
 
+  /**
+   * 将多个对象打包成 Snowball tar 并上传，让 MinIO 服务端自动解包。
+   *
+   * <p>当前实现不引入 Snappy 依赖，先对齐 minio-java 的非压缩 tar 路径。
+   */
+  public Mono<ObjectWriteResult> uploadSnowballObjects(
+      String bucket, List<SnowballObject> objects) {
+    final List<SnowballObject> safeObjects = requireSnowballObjects(objects);
+    final String snowballObject = "snowball." + UUID.randomUUID().toString() + ".tar";
+    return Mono.fromCallable(() -> buildSnowballTar(safeObjects))
+        .subscribeOn(Schedulers.boundedElastic())
+        .flatMap(tar -> uploadSnowballTar(bucket, snowballObject, tar));
+  }
+
+  /** 上传 Snowball 对象；`compression=true` 的 Snappy 路径留给后续依赖评审阶段。 */
+  public Mono<ObjectWriteResult> uploadSnowballObjects(
+      String bucket, List<SnowballObject> objects, boolean compression) {
+    if (compression) {
+      throw new UnsupportedOperationException("当前暂不支持 Snappy 压缩 Snowball 上传");
+    }
+    return uploadSnowballObjects(bucket, objects);
+  }
+
   private Mono<ObjectWriteResult> appendObjectAtOffset(
       String bucket, String object, byte[] content, String contentType, long offset) {
     if (offset < 0L) {
@@ -399,6 +428,19 @@ public final class ReactiveMinioClient {
             .header("Content-Length", Integer.toString(content.length))
             .header("x-amz-write-offset-bytes", Long.toString(offset))
             .body(content)
+            .build();
+    return sign(request)
+        .flatMap(httpClient::exchangeToHeaders)
+        .map(headers -> new ObjectWriteResult(bucket, object, headers));
+  }
+
+  private Mono<ObjectWriteResult> uploadSnowballTar(String bucket, String object, byte[] tar) {
+    S3Request request =
+        request(HttpMethod.PUT, bucket, object)
+            .contentType("application/x-tar")
+            .header("Content-Length", Integer.toString(tar.length))
+            .header("X-Amz-Meta-Snowball-Auto-Extract", "true")
+            .body(tar)
             .build();
     return sign(request)
         .flatMap(httpClient::exchangeToHeaders)
@@ -960,6 +1002,62 @@ public final class ReactiveMinioClient {
         .map(credentials -> signer.presignedPostFormData(policy, config, credentials));
   }
 
+  /**
+   * 将同一份内容 FanOut 写入多个对象。
+   *
+   * <p>该方法对齐 minio-java 的 `putObjectFanOut`：先生成一个内部临时 key 的
+   * presigned POST 表单，再通过 `x-minio-fanout-list` 告诉 MinIO 要展开写入哪些对象。
+   * 表单上传本身不再额外加 Authorization 头，因为签名已经在表单字段中。
+   */
+  public Mono<PutObjectFanOutResponse> putObjectFanOut(
+      String bucket, byte[] content, List<PutObjectFanOutEntry> entries, String contentType) {
+    byte[] actualContent = content == null ? new byte[0] : content;
+    String objectName = "fan-out-" + UUID.randomUUID().toString() + "-" + System.currentTimeMillis();
+    PostPolicy policy = PostPolicy.of(bucket, ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(15));
+    policy.addEqualsCondition("key", objectName);
+    return getPresignedPostFormData(policy)
+        .flatMap(
+            formData -> {
+              Map<String, String> fields = new LinkedHashMap<String, String>(formData);
+              fields.put("key", objectName);
+              fields.put("x-minio-fanout-list", PutObjectFanOutEntry.toFanOutList(entries));
+              String boundary = "----minio-reactive-fanout-" + UUID.randomUUID().toString();
+              byte[] body =
+                  multipartFormData(
+                      boundary,
+                      fields,
+                      "file",
+                      "fanout-content",
+                      contentType == null ? "application/octet-stream" : contentType,
+                      actualContent);
+              S3Request request =
+                  request(HttpMethod.POST, bucket, null)
+                      .contentType("multipart/form-data; boundary=" + boundary)
+                      .header("Content-Length", Integer.toString(body.length))
+                      .body(body)
+                      .build();
+              return httpClient
+                  .exchangeToString(request)
+                  .map(raw -> PutObjectFanOutResponse.parse(bucket, raw));
+            });
+  }
+
+  /** 使用默认 contentType 执行 FanOut 上传。 */
+  public Mono<PutObjectFanOutResponse> putObjectFanOut(
+      String bucket, byte[] content, List<PutObjectFanOutEntry> entries) {
+    return putObjectFanOut(bucket, content, entries, "application/octet-stream");
+  }
+
+  /** 使用字符串内容执行 FanOut 上传，默认按 UTF-8 转字节。 */
+  public Mono<PutObjectFanOutResponse> putObjectFanOut(
+      String bucket, String content, List<PutObjectFanOutEntry> entries, String contentType) {
+    return putObjectFanOut(
+        bucket,
+        (content == null ? "" : content).getBytes(StandardCharsets.UTF_8),
+        entries,
+        contentType);
+  }
+
   public Mono<MultipartUpload> createMultipartUpload(String bucket, String object, String contentType) {
     S3Request.Builder builder = request(HttpMethod.POST, bucket, object).queryParameter("uploads", null);
     if (contentType != null && !contentType.trim().isEmpty()) {
@@ -1327,6 +1425,158 @@ public final class ReactiveMinioClient {
       }
     }
     return builder.toString();
+  }
+
+  private static byte[] multipartFormData(
+      String boundary,
+      Map<String, String> fields,
+      String fileFieldName,
+      String fileName,
+      String fileContentType,
+      byte[] fileContent) {
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    for (Map.Entry<String, String> entry : fields.entrySet()) {
+      writeUtf8(output, "--" + boundary + "\r\n");
+      writeUtf8(
+          output,
+          "Content-Disposition: form-data; name=\""
+              + entry.getKey()
+              + "\"\r\n\r\n");
+      writeUtf8(output, entry.getValue() == null ? "" : entry.getValue());
+      writeUtf8(output, "\r\n");
+    }
+    writeUtf8(output, "--" + boundary + "\r\n");
+    writeUtf8(
+        output,
+        "Content-Disposition: form-data; name=\""
+            + fileFieldName
+            + "\"; filename=\""
+            + fileName
+            + "\"\r\n");
+    writeUtf8(output, "Content-Type: " + fileContentType + "\r\n\r\n");
+    byte[] safeContent = fileContent == null ? new byte[0] : fileContent;
+    output.write(safeContent, 0, safeContent.length);
+    writeUtf8(output, "\r\n--" + boundary + "--\r\n");
+    return output.toByteArray();
+  }
+
+  private static List<SnowballObject> requireSnowballObjects(List<SnowballObject> objects) {
+    if (objects == null || objects.isEmpty()) {
+      throw new IllegalArgumentException("snowball object 列表不能为空");
+    }
+    List<SnowballObject> safeObjects = new ArrayList<SnowballObject>();
+    for (SnowballObject object : objects) {
+      if (object == null) {
+        throw new IllegalArgumentException("snowball object 不能为空");
+      }
+      safeObjects.add(object);
+    }
+    return safeObjects;
+  }
+
+  private static byte[] buildSnowballTar(List<SnowballObject> objects) {
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    for (SnowballObject object : objects) {
+      byte[] content = snowballContent(object);
+      writeTarEntry(output, object.name(), content, snowballMtime(object));
+    }
+    byte[] zero = new byte[1024];
+    output.write(zero, 0, zero.length);
+    return output.toByteArray();
+  }
+
+  private static byte[] snowballContent(SnowballObject object) {
+    if (object.filename() != null) {
+      return readRegularFile(requireFilePath(object.filename(), "filename"));
+    }
+    return object.content() == null ? new byte[0] : object.content();
+  }
+
+  private static long snowballMtime(SnowballObject object) {
+    return object.modificationTime() == null
+        ? 0L
+        : object.modificationTime().toInstant().getEpochSecond();
+  }
+
+  private static void writeTarEntry(
+      ByteArrayOutputStream output, String name, byte[] content, long modificationTime) {
+    byte[] safeContent = content == null ? new byte[0] : content;
+    byte[] header = tarHeader(name, safeContent.length, modificationTime);
+    output.write(header, 0, header.length);
+    output.write(safeContent, 0, safeContent.length);
+    int padding = (int) ((512 - (safeContent.length % 512)) % 512);
+    if (padding > 0) {
+      byte[] zeros = new byte[padding];
+      output.write(zeros, 0, zeros.length);
+    }
+  }
+
+  private static byte[] tarHeader(String name, long size, long modificationTime) {
+    byte[] header = new byte[512];
+    byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
+    if (nameBytes.length > 100) {
+      throw new IllegalArgumentException("snowball object name 不能超过 100 字节: " + name);
+    }
+    putTarBytes(header, 0, 100, nameBytes);
+    putTarOctal(header, 100, 8, 0644);
+    putTarOctal(header, 108, 8, 0);
+    putTarOctal(header, 116, 8, 0);
+    putTarOctal(header, 124, 12, size);
+    putTarOctal(header, 136, 12, modificationTime);
+    for (int i = 148; i < 156; i++) {
+      header[i] = (byte) ' ';
+    }
+    header[156] = (byte) '0';
+    putTarString(header, 257, 6, "ustar");
+    putTarString(header, 263, 2, "00");
+    long checksum = 0L;
+    for (byte value : header) {
+      checksum += value & 0xFF;
+    }
+    putTarChecksum(header, checksum);
+    return header;
+  }
+
+  private static void putTarBytes(byte[] header, int offset, int length, byte[] value) {
+    int copyLength = Math.min(length, value.length);
+    System.arraycopy(value, 0, header, offset, copyLength);
+  }
+
+  private static void putTarString(byte[] header, int offset, int length, String value) {
+    putTarBytes(header, offset, length, value.getBytes(StandardCharsets.US_ASCII));
+  }
+
+  private static void putTarOctal(byte[] header, int offset, int length, long value) {
+    String octal = Long.toOctalString(value);
+    int digits = length - 1;
+    if (octal.length() > digits) {
+      throw new IllegalArgumentException("tar 数值字段过大: " + value);
+    }
+    for (int i = 0; i < digits; i++) {
+      header[offset + i] = (byte) '0';
+    }
+    byte[] bytes = octal.getBytes(StandardCharsets.US_ASCII);
+    System.arraycopy(bytes, 0, header, offset + digits - bytes.length, bytes.length);
+    header[offset + length - 1] = 0;
+  }
+
+  private static void putTarChecksum(byte[] header, long checksum) {
+    String octal = Long.toOctalString(checksum);
+    if (octal.length() > 6) {
+      throw new IllegalArgumentException("tar checksum 过大: " + checksum);
+    }
+    for (int i = 148; i < 154; i++) {
+      header[i] = (byte) '0';
+    }
+    byte[] bytes = octal.getBytes(StandardCharsets.US_ASCII);
+    System.arraycopy(bytes, 0, header, 154 - bytes.length, bytes.length);
+    header[154] = 0;
+    header[155] = (byte) ' ';
+  }
+
+  private static void writeUtf8(ByteArrayOutputStream output, String value) {
+    byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+    output.write(bytes, 0, bytes.length);
   }
 
   private static List<ComposeSource> requireComposeSources(List<ComposeSource> sources) {
