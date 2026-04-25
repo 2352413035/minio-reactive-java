@@ -177,10 +177,12 @@ if [[ "${MINIO_LAB_IDP_TYPE:-openid}" == "ldap" && -n "${MINIO_LAB_IDP_NAME:-}" 
 fi
 body_ready MINIO_LAB_ADD_IDP_CONFIG_BODY MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE || append_missing idp_missing '缺 IDP add 配置体'
 is_true "${MINIO_LAB_DELETE_IDP_AFTER_TEST:-false}" || append_missing idp_missing '缺 MINIO_LAB_DELETE_IDP_AFTER_TEST=true'
+is_true "${MINIO_LAB_RESTART_IDP_AFTER_CONFIG_CHANGE:-false}" || append_missing idp_missing '缺 MINIO_LAB_RESTART_IDP_AFTER_CONFIG_CHANGE=true'
+[[ -n "${MINIO_LAB_DOCKER_NAME:-}" ]] || append_missing idp_missing '缺 MINIO_LAB_DOCKER_NAME'
 if [[ -z "$idp_missing" ]]; then
-  print_row 'IDP config add/list/get/delete typed/raw' '可执行' '写入总开关 + 独立 OIDC/LDAP 夹具 + add 配置体；update 配置体可选' 'MINIO_LAB_DELETE_IDP_AFTER_TEST=true；finally typed delete' 'templates/idp-openid-config.txt.example'
+  print_row 'IDP 配置 add/update/delete typed/raw' '可执行' '写入总开关 + 独立 OIDC/LDAP 夹具 + add 配置体 + Docker 重启参数；update 配置体可选' 'MINIO_LAB_DELETE_IDP_AFTER_TEST=true；变更后重启；finally typed delete' 'templates/idp-openid-config.txt.example'
 else
-  print_row 'IDP config add/list/get/delete typed/raw' "未就绪：$idp_missing" '独立 OIDC/LDAP 夹具；不能使用共享认证链路' 'MINIO_LAB_DELETE_IDP_AFTER_TEST=true；必要时手工恢复 server config' 'templates/idp-openid-config.txt.example'
+  print_row 'IDP 配置 add/update/delete typed/raw' "未就绪：$idp_missing" '独立 OIDC/LDAP 夹具；不能使用共享认证链路' 'MINIO_LAB_DELETE_IDP_AFTER_TEST=true；变更后重启；必要时手工恢复 server config' 'templates/idp-openid-config.txt.example'
 fi
 
 speedtest_missing=""

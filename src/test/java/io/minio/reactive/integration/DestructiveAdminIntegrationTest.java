@@ -13,6 +13,8 @@ import io.minio.reactive.messages.admin.AdminRemoteTargetList;
 import io.minio.reactive.messages.admin.AdminTierList;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -571,7 +573,9 @@ class DestructiveAdminIntegrationTest {
 
   private static boolean hasIdpWriteFixture() {
     return hasBody("MINIO_LAB_ADD_IDP_CONFIG_BODY", "MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE")
-        && "true".equalsIgnoreCase(labValue("MINIO_LAB_DELETE_IDP_AFTER_TEST"));
+        && "true".equalsIgnoreCase(labValue("MINIO_LAB_DELETE_IDP_AFTER_TEST"))
+        && "true".equalsIgnoreCase(labValue("MINIO_LAB_RESTART_IDP_AFTER_CONFIG_CHANGE"))
+        && notBlank(labValue("MINIO_LAB_DOCKER_NAME"));
   }
 
   private static void exerciseIdpWriteFixture(
@@ -595,24 +599,17 @@ class DestructiveAdminIntegrationTest {
               "idp-config-write",
               "typed getIdpConfigInfo after add",
               () -> admin.getIdpConfigInfo(type, name).block()));
-      labStepValue(
-          "idp-config-write",
-          "raw ADMIN_DELETE_IDP_CONFIG",
-          () -> rawString(raw, "ADMIN_DELETE_IDP_CONFIG", map("type", type, "name", name), emptyMap(), null, null));
-      labStepValue(
-          "idp-config-write",
-          "raw ADMIN_ADD_IDP_CONFIG",
-          () ->
-              rawString(
-                  raw,
-                  "ADMIN_ADD_IDP_CONFIG",
-                  map("type", type, "name", name),
-                  emptyMap(),
-                  encryptedLabBody(addBody),
-                  "application/octet-stream"));
-      Assertions.assertNotNull(
-          labStepValue("idp-config-write", "typed listIdpConfigs after raw add", () -> admin.listIdpConfigs(type).block()));
+      restartIdpLabIfRequested("typed add 后重启以加载 IDP 配置");
+      Assertions.assertTrue(
+          labStepValue(
+                  "idp-config-write",
+                  "typed getIdpConfigInfo after typed add reload",
+                  () -> admin.getIdpConfigInfo(type, name).block())
+              .rawJson()
+              .contains("config_url"));
       if (notBlank(updateBody)) {
+        // MinIO 的 IDP 配置属于非动态配置：add/delete/update 返回成功后通常仍要重启才会进入内存索引。
+        // 因此 lab 在每个会改变存在性的动作后显式重启，再验证下一步，避免把服务端重启语义误判为 SDK 失败。
         runLabStep(
             "idp-config-write",
             "typed updateIdpConfig",
@@ -629,6 +626,32 @@ class DestructiveAdminIntegrationTest {
                     encryptedLabBody(updateBody),
                     "application/octet-stream"));
       }
+      labStepValue(
+          "idp-config-write",
+          "raw ADMIN_DELETE_IDP_CONFIG",
+          () -> rawString(raw, "ADMIN_DELETE_IDP_CONFIG", map("type", type, "name", name), emptyMap(), null, null));
+      restartIdpLabIfRequested("raw delete 后重启以加载 IDP 删除");
+      labStepValue(
+          "idp-config-write",
+          "raw ADMIN_ADD_IDP_CONFIG",
+          () ->
+              rawString(
+                  raw,
+                  "ADMIN_ADD_IDP_CONFIG",
+                  map("type", type, "name", name),
+                  emptyMap(),
+                  encryptedLabBody(addBody),
+                  "application/octet-stream"));
+      restartIdpLabIfRequested("raw add 后重启以加载 IDP 配置");
+      Assertions.assertTrue(
+          labStepValue(
+                  "idp-config-write",
+                  "typed getIdpConfigInfo after raw add reload",
+                  () -> admin.getIdpConfigInfo(type, name).block())
+              .rawJson()
+              .contains("config_url"));
+      Assertions.assertNotNull(
+          labStepValue("idp-config-write", "typed listIdpConfigs after raw add", () -> admin.listIdpConfigs(type).block()));
     } finally {
       runLabStep(
           "idp-config-restore",
@@ -638,6 +661,65 @@ class DestructiveAdminIntegrationTest {
                   .onErrorResume(error -> reactor.core.publisher.Mono.empty())
                   .block());
     }
+  }
+
+  private static void restartIdpLabIfRequested(String step) {
+    if (!"true".equalsIgnoreCase(labValue("MINIO_LAB_RESTART_IDP_AFTER_CONFIG_CHANGE"))) {
+      return;
+    }
+    final String containerName = labValue("MINIO_LAB_DOCKER_NAME");
+    Assumptions.assumeTrue(
+        notBlank(containerName),
+        "IDP 配置实验需要 MINIO_LAB_DOCKER_NAME，才能在 add/update/delete 后重启一次性 Docker lab");
+    runLabStep(
+        "idp-config-restart",
+        step,
+        () -> {
+          runProcess("docker", "restart", containerName);
+          waitForLabReady();
+        });
+  }
+
+  private static void runProcess(String... command) throws Exception {
+    ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+    Process process = builder.start();
+    StringBuilder output = new StringBuilder();
+    try (BufferedReader reader =
+        new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        output.append(line).append('\n');
+      }
+    }
+    int exitCode = process.waitFor();
+    Assertions.assertEquals(0, exitCode, output.toString());
+  }
+
+  private static void waitForLabReady() throws Exception {
+    String endpoint = labValue("MINIO_LAB_ENDPOINT");
+    Assertions.assertTrue(notBlank(endpoint), "缺少 MINIO_LAB_ENDPOINT，无法等待 lab ready");
+    String readyUrl = endpoint.replaceAll("/+$", "") + "/minio/health/ready";
+    Throwable lastFailure = null;
+    for (int i = 0; i < 60; i++) {
+      HttpURLConnection connection = null;
+      try {
+        connection = (HttpURLConnection) new URL(readyUrl).openConnection();
+        connection.setConnectTimeout(1000);
+        connection.setReadTimeout(1000);
+        connection.setRequestMethod("GET");
+        if (connection.getResponseCode() == 200) {
+          return;
+        }
+      } catch (Throwable failure) {
+        lastFailure = failure;
+      } finally {
+        if (connection != null) {
+          connection.disconnect();
+        }
+      }
+      Thread.sleep(1000);
+    }
+    throw new IllegalStateException("等待 MinIO lab ready 超时", lastFailure);
   }
 
   private static void exerciseTierWriteFixture(
