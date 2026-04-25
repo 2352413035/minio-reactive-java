@@ -39,6 +39,8 @@ import io.minio.reactive.messages.BucketNotificationConfiguration;
 import io.minio.reactive.messages.BucketNotificationTarget;
 import io.minio.reactive.messages.BucketReplicationMetrics;
 import io.minio.reactive.messages.CannedAcl;
+import io.minio.reactive.messages.CompletedMultipartUpload;
+import io.minio.reactive.messages.ComposeSource;
 import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.RestoreObjectRequest;
@@ -82,6 +84,7 @@ class ReactiveMinioSpecializedClientsTest {
   void shouldExposeRepresentativeCatalogMethodsOnSpecializedClients() {
     assertMonoMethodExists(ReactiveMinioClient.class, "s3ListBuckets");
     assertMonoMethodExists(ReactiveMinioClient.class, "s3GetObject");
+    assertMonoMethodExists(ReactiveMinioClient.class, "composeObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "downloadObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "uploadObject");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "serverInfo");
@@ -226,6 +229,93 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertThrows(
         IllegalArgumentException.class,
         () -> client.downloadObject("bucket1", "to-file.txt", downloadFile));
+  }
+
+  @Test
+  void shouldComposeObjectsWithMultipartCopyLikeMinioJava() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> copySources = new java.util.ArrayList<String>();
+    java.util.List<String> ranges = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  copySources.add(request.headers().getFirst("X-Amz-Copy-Source"));
+                  ranges.add(request.headers().getFirst("X-Amz-Copy-Source-Range"));
+                  contentTypes.add(String.valueOf(request.headers().getContentType()));
+                  String query = request.url().getQuery();
+                  if (query != null && query.contains("uploads")) {
+                    return Mono.just(
+                        ClientResponse.create(HttpStatus.OK)
+                            .body(
+                                "<InitiateMultipartUploadResult>"
+                                    + "<Bucket>target</Bucket><Key>merged.txt</Key>"
+                                    + "<UploadId>upload-1</UploadId>"
+                                    + "</InitiateMultipartUploadResult>")
+                            .build());
+                  }
+                  if (query != null && query.contains("partNumber=")) {
+                    String etag = query.contains("partNumber=1") ? "\"part-1\"" : "\"part-2\"";
+                    return Mono.just(
+                        ClientResponse.create(HttpStatus.OK)
+                            .body(
+                                "<CopyPartResult><LastModified>2026-04-25T00:00:00Z</LastModified>"
+                                    + "<ETag>"
+                                    + etag
+                                    + "</ETag></CopyPartResult>")
+                            .build());
+                  }
+                  if (query != null && query.contains("uploadId=upload-1")) {
+                    return Mono.just(
+                        ClientResponse.create(HttpStatus.OK)
+                            .body(
+                                "<CompleteMultipartUploadResult>"
+                                    + "<Location>http://localhost:9000/target/merged.txt</Location>"
+                                    + "<Bucket>target</Bucket><Key>merged.txt</Key><ETag>\"merged\"</ETag>"
+                                    + "</CompleteMultipartUploadResult>")
+                            .build());
+                  }
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    CompletedMultipartUpload completed =
+        client
+            .composeObject(
+                "target",
+                "merged.txt",
+                java.util.Arrays.asList(
+                    ComposeSource.of("source", "a.txt").withRange(0, 4),
+                    ComposeSource.of("source", "b.txt", "v1")),
+                "text/plain")
+            .block();
+
+    Assertions.assertEquals("target", completed.bucket());
+    Assertions.assertEquals("merged.txt", completed.key());
+    Assertions.assertEquals("\"merged\"", completed.etag());
+    Assertions.assertTrue(paths.contains("/target/merged.txt"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "uploads"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "partNumber=1", "uploadId=upload-1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "partNumber=2", "uploadId=upload-1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "uploadId=upload-1"));
+    Assertions.assertTrue(copySources.contains("/source/a.txt"));
+    Assertions.assertTrue(copySources.contains("/source/b.txt?versionId=v1"));
+    Assertions.assertTrue(ranges.contains("bytes=0-4"));
+    Assertions.assertTrue(contentTypes.contains("text/plain"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> client.composeObject("target", "empty.txt", java.util.Collections.<ComposeSource>emptyList()));
   }
 
 
