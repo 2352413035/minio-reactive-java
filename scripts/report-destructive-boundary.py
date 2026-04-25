@@ -19,9 +19,9 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_SET_CONFIG',
-        'category': '可回滚候选',
-        'status': '需要全量配置恢复策略',
-        'evidence': '已有产品入口；尚未执行全量配置替换 lab。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw 原样写回与恢复已验证',
+        'evidence': '阶段 117：full config 原样写回 typed/raw 独立 Docker lab。',
     },
     {
         'route': 'ADMIN_ADD_IDP_CONFIG',

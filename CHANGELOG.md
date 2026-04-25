@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 117 全量配置写入 lab 补证
+
+- 新增 `MINIO_LAB_ALLOW_FULL_CONFIG_WRITE` 门禁，只在独立 lab 中执行 `ADMIN_SET_CONFIG` 全量配置原样写回。
+- `DestructiveAdminIntegrationTest` 同时覆盖专用 Admin `setConfigText` 与 raw `ADMIN_SET_CONFIG`，并在 finally 中恢复原始全量配置文本。
+- `scripts/report-destructive-boundary.py` 将 `ADMIN_SET_CONFIG` 更新为已有独立 lab 证据；剩余破坏性边界继续要求更复杂 lab 或维护窗口。
+
 ## 阶段 116 发布就绪总览机器报告
 
 - 新增 `scripts/report-release-readiness.py`，把 minio-java 对标、签名级差异、route parity、能力矩阵、POM 元数据、Crypto Gate 和破坏性边界聚合成一份发布就绪总览。

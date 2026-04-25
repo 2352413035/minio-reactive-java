@@ -127,6 +127,12 @@ else
   print_row 'config KV typed/raw 写入恢复' "未就绪：$config_missing" '独立 lab + test/restore KV' 'MINIO_LAB_RESTORE_CONFIG_KV' '无需额外模板'
 fi
 
+if is_true "${MINIO_LAB_ALLOW_FULL_CONFIG_WRITE:-false}"; then
+  print_row 'full config typed/raw 原样写回' '可执行' '独立 lab + MINIO_LAB_ALLOW_FULL_CONFIG_WRITE=true；测试会自动读取原始配置' '自动恢复原始全量配置文本' '无需额外模板'
+else
+  print_row 'full config typed/raw 原样写回' '未启用：MINIO_LAB_ALLOW_FULL_CONFIG_WRITE 不是 true' '独立 lab + 显式全量配置写回开关' '自动恢复原始全量配置文本' '无需额外模板'
+fi
+
 quota_missing=""
 [[ -n "${MINIO_LAB_BUCKET:-}" ]] || append_missing quota_missing '缺 MINIO_LAB_BUCKET'
 [[ -n "${MINIO_LAB_TEST_BUCKET_QUOTA_JSON:-}" ]] || append_missing quota_missing '缺 MINIO_LAB_TEST_BUCKET_QUOTA_JSON'

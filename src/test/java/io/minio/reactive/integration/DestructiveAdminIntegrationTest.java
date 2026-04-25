@@ -114,6 +114,64 @@ class DestructiveAdminIntegrationTest {
   }
 
   @Test
+  void shouldRewriteFullConfigOnlyInsideVerifiedLab() throws Exception {
+    assumeDestructiveLabEnabled();
+    assertVerifiedLabEnvironment();
+    Assumptions.assumeTrue(
+        "true".equalsIgnoreCase(labValue("MINIO_LAB_ALLOW_FULL_CONFIG_WRITE")),
+        "缺少 MINIO_LAB_ALLOW_FULL_CONFIG_WRITE=true，跳过全量配置原样写回验证。");
+
+    ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
+    String secretKey = labValue("MINIO_LAB_SECRET_KEY");
+    String originalConfig =
+        labStepValue(
+            "full-config",
+            "typed getConfigDecrypted 原始全量配置",
+            () -> admin.getConfigDecrypted(secretKey).block());
+    Assumptions.assumeTrue(notBlank(originalConfig), "全量配置为空，跳过全量配置写回验证。");
+
+    try {
+      // 全量配置写入风险比单条 KV 更高，所以 lab 只做“原样写回”闭环，
+      // 证明 SDK 的 typed/raw 路径可用，但不改变配置语义。
+      runLabStep("full-config", "typed setConfigText 原样写回", () -> admin.setConfigText(originalConfig).block());
+      Assertions.assertTrue(
+          notBlank(
+              labStepValue(
+                  "full-config",
+                  "typed getConfigDecrypted typed 写回后",
+                  () -> admin.getConfigDecrypted(secretKey).block())),
+          "typed 全量配置写回后应仍可读取配置。");
+      runLabStep(
+          "full-config",
+          "raw ADMIN_SET_CONFIG 原样写回",
+          () ->
+              rawVoid(
+                  raw,
+                  "ADMIN_SET_CONFIG",
+                  emptyMap(),
+                  emptyMap(),
+                  encryptedLabBody(originalConfig),
+                  "application/octet-stream"));
+      Assertions.assertTrue(
+          notBlank(
+              labStepValue(
+                  "full-config",
+                  "typed getConfigDecrypted raw 写回后",
+                  () -> admin.getConfigDecrypted(secretKey).block())),
+          "raw 全量配置写回后应仍可读取配置。");
+    } finally {
+      runLabStep(
+          "full-config-restore",
+          "typed setConfigText 恢复原始全量配置",
+          () ->
+              admin.setConfigText(originalConfig)
+                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                  .block());
+    }
+  }
+
+  @Test
   void shouldWriteAndRestoreBucketQuotaOnlyInsideVerifiedLab() throws Exception {
     assumeDestructiveLabEnabled();
     assertVerifiedLabEnvironment();
