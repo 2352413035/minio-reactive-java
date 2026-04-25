@@ -450,6 +450,34 @@ class DestructiveAdminIntegrationTest {
       Assertions.assertTrue(notBlank(typedDrive), "typed drive speedtest 应返回结果。");
       Assertions.assertTrue(notBlank(rawDrive), "raw drive speedtest 应返回结果。");
     }
+
+    if ("true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_NET_SPEEDTEST_PROBE"))) {
+      Duration netDuration = Duration.ofSeconds(intLabValue("MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS", 2));
+      Map<String, String> netQuery =
+          map("duration", AdminSpeedtestOptions.formatDuration(netDuration));
+      runDurationSpeedtestProbe(
+          "speedtest-net-probe",
+          "typed runNetworkSpeedtest bounded",
+          "raw ADMIN_SPEEDTEST_NET bounded",
+          () -> admin.runNetworkSpeedtest(netDuration).block().rawText(),
+          () -> rawString(raw, "ADMIN_SPEEDTEST_NET", emptyMap(), netQuery, null, null),
+          "true".equalsIgnoreCase(labValue("MINIO_LAB_EXPECT_NET_SPEEDTEST_FAILURE")),
+          labValue("MINIO_LAB_NET_SPEEDTEST_EXPECTED_ERROR"));
+    }
+
+    if ("true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE"))) {
+      Duration siteDuration = Duration.ofSeconds(intLabValue("MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS", 2));
+      Map<String, String> siteQuery =
+          map("duration", AdminSpeedtestOptions.formatDuration(siteDuration));
+      runDurationSpeedtestProbe(
+          "speedtest-site-probe",
+          "typed runSiteSpeedtest bounded",
+          "raw ADMIN_SPEEDTEST_SITE bounded",
+          () -> admin.runSiteSpeedtest(siteDuration).block().rawText(),
+          () -> rawString(raw, "ADMIN_SPEEDTEST_SITE", emptyMap(), siteQuery, null, null),
+          "true".equalsIgnoreCase(labValue("MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE")),
+          labValue("MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR"));
+    }
   }
 
   @Test
@@ -998,6 +1026,81 @@ class DestructiveAdminIntegrationTest {
             return null;
           }
         });
+  }
+
+  private static void runDurationSpeedtestProbe(
+      String scope,
+      String typedStep,
+      String rawStep,
+      LabSupplier<String> typedProbe,
+      LabSupplier<String> rawProbe,
+      boolean expectFailure,
+      String expectedErrorToken) {
+    if (expectFailure) {
+      expectLabFailure(scope, typedStep + " expected failure", expectedErrorToken, typedProbe);
+      expectLabFailure(scope, rawStep + " expected failure", expectedErrorToken, rawProbe);
+      return;
+    }
+    String typedResult = labStepValue(scope, typedStep, typedProbe);
+    String rawResult = labStepValue(scope, rawStep, rawProbe);
+    Assertions.assertTrue(notBlank(typedResult), typedStep + " 应返回结果。");
+    Assertions.assertTrue(notBlank(rawResult), rawStep + " 应返回结果。");
+  }
+
+  private static void expectLabFailure(
+      String scope, String step, String expectedErrorToken, LabSupplier<String> action) {
+    try {
+      action.get();
+      recordLabStep(scope, step, "FAIL", "ExpectedFailureMissing");
+      Assertions.fail(step + " 预期失败，但调用成功。");
+    } catch (Throwable failure) {
+      String detail = failure.getClass().getSimpleName();
+      if (notBlank(expectedErrorToken)) {
+        String actual = failureMessage(failure).toLowerCase(java.util.Locale.ROOT);
+        if (!matchesAnyExpectedToken(actual, expectedErrorToken)) {
+          recordLabStep(scope, step, "FAIL", "UnexpectedFailureToken");
+          throw new IllegalStateException(
+              step + " 失败信息未包含期望关键字: " + expectedErrorToken, failure);
+        }
+      }
+      recordLabStep(scope, step, "PASS", "ExpectedFailure:" + detail);
+    }
+  }
+
+  private static String failureMessage(Throwable failure) {
+    StringBuilder builder = new StringBuilder();
+    Throwable cursor = failure;
+    int depth = 0;
+    while (cursor != null && depth < 6) {
+      if (cursor.getMessage() != null) {
+        if (builder.length() > 0) {
+          builder.append(" | ");
+        }
+        builder.append(cursor.getMessage());
+      }
+      cursor = cursor.getCause();
+      depth++;
+    }
+    if (builder.length() == 0) {
+      builder.append(failure.getClass().getName());
+    }
+    return builder.toString();
+  }
+
+  /**
+   * 支持多个期望关键字，分隔符可使用 `|` 或 `,`。
+   *
+   * <p>例如：`NotImplemented|distributed`。
+   */
+  private static boolean matchesAnyExpectedToken(String actualLowerCase, String expectedTokens) {
+    String[] tokens = expectedTokens.split("[|,]");
+    for (String token : tokens) {
+      String normalized = token == null ? "" : token.trim().toLowerCase(java.util.Locale.ROOT);
+      if (notBlank(normalized) && actualLowerCase.contains(normalized)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static <T> T labStepValue(String scope, String step, LabSupplier<T> supplier) {

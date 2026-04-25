@@ -176,14 +176,14 @@ ROUTES = [
     {
         'route': 'ADMIN_SPEEDTEST_NET',
         'category': '资源压测',
-        'status': '需要压测窗口',
-        'evidence': '压测会消耗网络资源。',
+        'status': '单节点独立 lab 返回 NotImplemented，仍需服务端实现与专用压测窗口',
+        'evidence': '阶段 124：typed/raw 有界 net speedtest 在独立 Docker lab 均返回 HTTP 501 NotImplemented；预期失败采证通过。',
     },
     {
         'route': 'ADMIN_SPEEDTEST_SITE',
         'category': '资源压测',
-        'status': '需要压测窗口',
-        'evidence': '压测可能影响站点复制链路。',
+        'status': '单节点独立 lab 返回 NotImplemented，仍需 site replication 拓扑与压测窗口',
+        'evidence': '阶段 124：typed/raw 有界 site speedtest 在独立 Docker lab 均返回 HTTP 501 NotImplemented；预期失败采证通过。',
     },
 ]
 

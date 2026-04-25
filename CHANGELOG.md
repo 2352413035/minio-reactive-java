@@ -1,5 +1,13 @@
 # 变更日志
 
+## 阶段 124 net/site speedtest 独立 lab 复核
+
+- `DestructiveAdminIntegrationTest` 增加 net/site speedtest 可选探测与“预期失败采证”模式，支持 `|`/`,` 多关键字匹配。
+- 新增 `scripts/minio-lab/run-network-speedtest-lab.sh`，可一键启动一次性 Docker lab 并执行 net/site 探测。
+- `audit-fixtures.sh`、`write-report.sh`、`lab.example.properties` 与 `scripts/minio-lab/README.md` 同步补齐 net/site 参数、审计与报告口径。
+- 双分支直探（EXPECT=false）都确认：`ADMIN_SPEEDTEST_NET` 与 `ADMIN_SPEEDTEST_SITE` 在单节点 lab 返回 `HTTP 501 NotImplemented`。
+- 本阶段补齐的是“服务端前置条件阻塞证据”，不是功能通过证据；`destructive-blocked` 统计保持不变。
+
 ## 阶段 123 IDP 配置独立 lab 补证
 
 - 新增 `scripts/minio-lab/run-idp-config-lab.sh`，自动启动一次性 Docker MinIO 与临时 OIDC discovery/JWKS 夹具。

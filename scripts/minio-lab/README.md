@@ -169,6 +169,46 @@ MINIO_LAB_CONFIG_FILE=/tmp/minio-reactive-repl-src-xxxxxx/lab.properties   scrip
 
 脚本会把 replication remote-bucket endpoint 设为 Docker 网络内的目标容器名，确保 source MinIO 服务端能访问目标。脚本只输出 endpoint、bucket、临时路径和清理命令，不输出 access key 或 secret key。执行完成后按脚本输出删除两个容器、Docker 网络和 `/tmp/minio-reactive-repl-*` 临时目录。
 
+### speedtest object / drive / net / site 探测
+
+阶段 120、121、124 后，破坏性 lab 支持四类 speedtest 探测：
+
+```properties
+MINIO_LAB_ENABLE_SPEEDTEST_PROBES=true
+MINIO_LAB_SPEEDTEST_OBJECT_SIZE=1048576
+MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY=1
+MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS=2
+
+MINIO_LAB_ENABLE_DRIVE_SPEEDTEST_PROBE=true
+MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE=4096
+MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE=8192
+
+MINIO_LAB_ENABLE_NET_SPEEDTEST_PROBE=true
+MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS=2
+MINIO_LAB_EXPECT_NET_SPEEDTEST_FAILURE=false
+MINIO_LAB_NET_SPEEDTEST_EXPECTED_ERROR=
+
+MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE=true
+MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS=2
+MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE=false
+MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR=
+```
+
+- object/drive 走“小参数 + 独立 lab”策略，typed/raw 都要执行。
+- net/site 允许两种模式：
+  1. **正常探测模式**：期望 typed/raw 都返回结果；
+  2. **预期失败模式**：设置 `MINIO_LAB_EXPECT_*_SPEEDTEST_FAILURE=true`，并给出 `*_EXPECTED_ERROR` 关键字（支持 `|` 或 `,` 分隔多个关键字）；测试会把“失败且命中关键字”记为 PASS，用于沉淀服务端前置条件证据（例如分布式拓扑或 site replication 前置条件）。
+
+预期失败模式只能用于记录“服务端前置条件未满足”的证据，不能把它当作功能通过或边界下降依据。
+
+可直接使用一键脚本启动一次性 Docker lab 并执行 net/site 探测：
+
+```bash
+scripts/minio-lab/run-network-speedtest-lab.sh
+```
+
+默认脚本采用预期失败采证模式（`EXPECT_*_FAILURE=true`）。如果你已经准备了分布式或 site replication 拓扑，可以在执行前覆盖为 `false`，尝试收集真实通过证据。
+
 ## tier / remote target 可回滚写入夹具
 
 阶段 36 起，独立 lab 可以额外开启真实写入夹具。它们比只读探测更危险，因此必须先打开总开关：
