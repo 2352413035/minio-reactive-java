@@ -150,6 +150,12 @@ public final class ReactiveMinioClient {
     return bucketExists(safeArgs.bucket());
   }
 
+  /** 使用 HeadBucketArgs 执行 HEAD bucket 兼容检查。 */
+  public Mono<Boolean> bucketExists(HeadBucketArgs args) {
+    HeadBucketArgs safeArgs = requireArgs(args, "HeadBucketArgs");
+    return bucketExists(safeArgs.bucket());
+  }
+
   public Mono<Void> makeBucket(String bucket) {
     String body =
         "<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
@@ -172,6 +178,12 @@ public final class ReactiveMinioClient {
   /** 使用 Args builder 风格创建 bucket。 */
   public Mono<Void> makeBucket(MakeBucketArgs args) {
     MakeBucketArgs safeArgs = requireArgs(args, "MakeBucketArgs");
+    return makeBucket(safeArgs.bucket());
+  }
+
+  /** 使用 CreateBucketArgs 创建 bucket；这是 makeBucket 的迁移别名。 */
+  public Mono<Void> makeBucket(CreateBucketArgs args) {
+    CreateBucketArgs safeArgs = requireArgs(args, "CreateBucketArgs");
     return makeBucket(safeArgs.bucket());
   }
 
@@ -207,6 +219,18 @@ public final class ReactiveMinioClient {
   /** 使用 Args builder 风格列出对象。 */
   public Flux<ObjectInfo> listObjects(ListObjectsArgs args) {
     ListObjectsArgs safeArgs = requireArgs(args, "ListObjectsArgs");
+    return listObjects(safeArgs.bucket(), safeArgs.prefix(), safeArgs.recursive());
+  }
+
+  /** 使用 ListObjectsV1Args 列出对象；当前复用 V2 分页主路径。 */
+  public Flux<ObjectInfo> listObjects(ListObjectsV1Args args) {
+    ListObjectsV1Args safeArgs = requireArgs(args, "ListObjectsV1Args");
+    return listObjects(safeArgs.bucket(), safeArgs.prefix(), safeArgs.recursive());
+  }
+
+  /** 使用 ListObjectsV2Args 列出对象。 */
+  public Flux<ObjectInfo> listObjects(ListObjectsV2Args args) {
+    ListObjectsV2Args safeArgs = requireArgs(args, "ListObjectsV2Args");
     return listObjects(safeArgs.bucket(), safeArgs.prefix(), safeArgs.recursive());
   }
 
@@ -253,6 +277,12 @@ public final class ReactiveMinioClient {
               return Mono.empty();
             })
         .flatMapIterable(ListObjectVersionsResult::versions);
+  }
+
+  /** 使用 Args builder 风格列出对象版本。 */
+  public Flux<ObjectVersionInfo> listObjectVersions(ListObjectVersionsArgs args) {
+    ListObjectVersionsArgs safeArgs = requireArgs(args, "ListObjectVersionsArgs");
+    return listObjectVersions(safeArgs.bucket(), safeArgs.prefix(), safeArgs.recursive());
   }
 
   public Mono<ListObjectVersionsResult> listObjectVersionsPage(
@@ -572,6 +602,12 @@ public final class ReactiveMinioClient {
     return removeObjects(safeArgs.bucket(), safeArgs.objects());
   }
 
+  /** 使用 DeleteObjectsArgs 批量删除对象；这是 removeObjects 的迁移别名。 */
+  public Mono<DeleteObjectsResult> removeObjects(DeleteObjectsArgs args) {
+    DeleteObjectsArgs safeArgs = requireArgs(args, "DeleteObjectsArgs");
+    return removeObjects(safeArgs.bucket(), safeArgs.objects());
+  }
+
   public Mono<Map<String, List<String>>> statObject(String bucket, String object) {
     return sign(request(HttpMethod.HEAD, bucket, object).build()).flatMap(httpClient::exchangeToHeaders);
   }
@@ -582,10 +618,22 @@ public final class ReactiveMinioClient {
     return statObject(safeArgs.bucket(), safeArgs.object());
   }
 
+  /** 使用 HeadObjectArgs 获取对象元数据；这是 statObject 的迁移别名。 */
+  public Mono<Map<String, List<String>>> statObject(HeadObjectArgs args) {
+    HeadObjectArgs safeArgs = requireArgs(args, "HeadObjectArgs");
+    return statObject(safeArgs.bucket(), safeArgs.object());
+  }
+
   /** 获取对象 ACL，返回 Owner、Grant 和原始 XML。 */
   public Mono<AccessControlPolicy> getObjectAcl(String bucket, String object) {
     S3Request request = request(HttpMethod.GET, bucket, object).queryParameter("acl", null).build();
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseAccessControlPolicy);
+  }
+
+  /** 使用 Args builder 风格获取对象 ACL。 */
+  public Mono<AccessControlPolicy> getObjectAcl(GetObjectAclArgs args) {
+    GetObjectAclArgs safeArgs = requireArgs(args, "GetObjectAclArgs");
+    return getObjectAcl(safeArgs.bucket(), safeArgs.object());
   }
 
   /** 使用 canned ACL 设置对象权限，复杂 Grant XML 仍可走 advanced/raw 入口。 */
@@ -620,6 +668,12 @@ public final class ReactiveMinioClient {
         .map(SelectObjectContentResult::new);
   }
 
+  /** 使用 Args builder 风格发起 S3 SelectObjectContent 请求。 */
+  public Mono<SelectObjectContentResult> selectObjectContent(SelectObjectContentArgs args) {
+    SelectObjectContentArgs safeArgs = requireArgs(args, "SelectObjectContentArgs");
+    return selectObjectContent(safeArgs.bucket(), safeArgs.object(), safeArgs.selectRequest());
+  }
+
   /**
    * 获取对象属性摘要。
    *
@@ -640,18 +694,46 @@ public final class ReactiveMinioClient {
     return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseObjectAttributes);
   }
 
+  /** 使用 Args builder 风格获取对象属性。 */
+  public Mono<ObjectAttributes> getObjectAttributes(GetObjectAttributesArgs args) {
+    GetObjectAttributesArgs safeArgs = requireArgs(args, "GetObjectAttributesArgs");
+    if (safeArgs.attributes().isEmpty()) {
+      return getObjectAttributes(safeArgs.bucket(), safeArgs.object());
+    }
+    return getObjectAttributes(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.attributes().toArray(new String[0]));
+  }
+
   public Mono<Map<String, String>> getObjectTags(String bucket, String object) {
     S3Request request = request(HttpMethod.GET, bucket, object).queryParameter("tagging", null).build();
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseTagging);
+  }
+
+  /** 使用 Args builder 风格获取对象标签。 */
+  public Mono<Map<String, String>> getObjectTags(GetObjectTagsArgs args) {
+    GetObjectTagsArgs safeArgs = requireArgs(args, "GetObjectTagsArgs");
+    return getObjectTags(safeArgs.bucket(), safeArgs.object());
   }
 
   public Mono<Void> setObjectTags(String bucket, String object, Map<String, String> tags) {
     return putTagging(request(HttpMethod.PUT, bucket, object).queryParameter("tagging", null), tags);
   }
 
+  /** 使用 Args builder 风格设置对象标签。 */
+  public Mono<Void> setObjectTags(SetObjectTagsArgs args) {
+    SetObjectTagsArgs safeArgs = requireArgs(args, "SetObjectTagsArgs");
+    return setObjectTags(safeArgs.bucket(), safeArgs.object(), safeArgs.tags());
+  }
+
   public Mono<Void> deleteObjectTags(String bucket, String object) {
     S3Request request = request(HttpMethod.DELETE, bucket, object).queryParameter("tagging", null).build();
     return sign(request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 使用 Args builder 风格删除对象标签。 */
+  public Mono<Void> deleteObjectTags(DeleteObjectTagsArgs args) {
+    DeleteObjectTagsArgs safeArgs = requireArgs(args, "DeleteObjectTagsArgs");
+    return deleteObjectTags(safeArgs.bucket(), safeArgs.object());
   }
 
   /** 获取对象保留策略配置；bucket 未启用 object lock 时，服务端会返回明确的 S3 错误。 */
@@ -667,6 +749,12 @@ public final class ReactiveMinioClient {
     return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseObjectRetention);
   }
 
+  /** 使用 Args builder 风格获取对象保留策略。 */
+  public Mono<ObjectRetentionConfiguration> getObjectRetention(GetObjectRetentionArgs args) {
+    GetObjectRetentionArgs safeArgs = requireArgs(args, "GetObjectRetentionArgs");
+    return getObjectRetention(safeArgs.bucket(), safeArgs.object(), safeArgs.versionId());
+  }
+
   /** 设置对象保留策略配置。 */
   public Mono<Void> setObjectRetention(
       String bucket, String object, ObjectRetentionConfiguration configuration) {
@@ -678,6 +766,13 @@ public final class ReactiveMinioClient {
       String bucket, String object, String versionId, ObjectRetentionConfiguration configuration) {
     return putObjectSubresource(
         bucket, object, "retention", versionId, S3Xml.objectRetentionXml(configuration), "application/xml");
+  }
+
+  /** 使用 Args builder 风格设置对象保留策略。 */
+  public Mono<Void> setObjectRetention(SetObjectRetentionArgs args) {
+    SetObjectRetentionArgs safeArgs = requireArgs(args, "SetObjectRetentionArgs");
+    return setObjectRetention(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.versionId(), safeArgs.configuration());
   }
 
   /** 获取对象 Legal Hold 配置。 */
@@ -709,6 +804,12 @@ public final class ReactiveMinioClient {
     return setObjectLegalHold(bucket, object, versionId, ObjectLegalHoldConfiguration.enabled());
   }
 
+  /** 使用 Args builder 风格启用对象 Legal Hold。 */
+  public Mono<Void> enableObjectLegalHold(EnableObjectLegalHoldArgs args) {
+    EnableObjectLegalHoldArgs safeArgs = requireArgs(args, "EnableObjectLegalHoldArgs");
+    return enableObjectLegalHold(safeArgs.bucket(), safeArgs.object(), safeArgs.versionId());
+  }
+
   /** 对齐 minio-java：关闭对象 Legal Hold。 */
   public Mono<Void> disableObjectLegalHold(String bucket, String object) {
     return disableObjectLegalHold(bucket, object, null);
@@ -717,6 +818,12 @@ public final class ReactiveMinioClient {
   /** 对齐 minio-java：关闭指定版本对象的 Legal Hold。 */
   public Mono<Void> disableObjectLegalHold(String bucket, String object, String versionId) {
     return setObjectLegalHold(bucket, object, versionId, ObjectLegalHoldConfiguration.disabled());
+  }
+
+  /** 使用 Args builder 风格关闭对象 Legal Hold。 */
+  public Mono<Void> disableObjectLegalHold(DisableObjectLegalHoldArgs args) {
+    DisableObjectLegalHoldArgs safeArgs = requireArgs(args, "DisableObjectLegalHoldArgs");
+    return disableObjectLegalHold(safeArgs.bucket(), safeArgs.object(), safeArgs.versionId());
   }
 
   /** 对齐 minio-java：判断对象 Legal Hold 是否启用。 */
@@ -734,6 +841,12 @@ public final class ReactiveMinioClient {
                 "NoSuchObjectLockConfiguration".equals(error.errorCode())
                     ? Mono.just(false)
                     : Mono.error(error));
+  }
+
+  /** 使用 Args builder 风格判断对象 Legal Hold 是否启用。 */
+  public Mono<Boolean> isObjectLegalHoldEnabled(IsObjectLegalHoldEnabledArgs args) {
+    IsObjectLegalHoldEnabledArgs safeArgs = requireArgs(args, "IsObjectLegalHoldEnabledArgs");
+    return isObjectLegalHoldEnabled(safeArgs.bucket(), safeArgs.object(), safeArgs.versionId());
   }
 
   /** 设置指定版本对象的 Legal Hold 配置。 */
@@ -765,6 +878,13 @@ public final class ReactiveMinioClient {
             .body(bytes)
             .build();
     return sign(s3Request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 使用 Args builder 风格发起归档对象恢复请求。 */
+  public Mono<Void> restoreObject(RestoreObjectArgs args) {
+    RestoreObjectArgs safeArgs = requireArgs(args, "RestoreObjectArgs");
+    return restoreObject(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.versionId(), safeArgs.restoreRequest());
   }
 
   /**
@@ -813,6 +933,19 @@ public final class ReactiveMinioClient {
       }
     }
     return sign(builder.build()).flatMapMany(httpClient::exchangeToBody);
+  }
+
+  /** 使用 Args builder 风格调用 PromptObject。 */
+  public Flux<byte[]> promptObject(PromptObjectArgs args) {
+    PromptObjectArgs safeArgs = requireArgs(args, "PromptObjectArgs");
+    return promptObject(
+        safeArgs.bucket(),
+        safeArgs.object(),
+        safeArgs.versionId(),
+        safeArgs.lambdaArn(),
+        safeArgs.prompt(),
+        safeArgs.promptArgs(),
+        safeArgs.headers());
   }
 
   public Mono<Map<String, String>> getBucketTags(String bucket) {
@@ -1102,6 +1235,12 @@ public final class ReactiveMinioClient {
             null);
   }
 
+  /** 使用 Args builder 风格监听 bucket 通知。 */
+  public Flux<byte[]> listenBucketNotification(ListenBucketNotificationArgs args) {
+    ListenBucketNotificationArgs safeArgs = requireArgs(args, "ListenBucketNotificationArgs");
+    return listenBucketNotification(safeArgs.bucket(), safeArgs.events());
+  }
+
   /**
    * 监听根路径事件通知，并以响应式字节流返回服务端推送内容。
    *
@@ -1350,6 +1489,12 @@ public final class ReactiveMinioClient {
     return sign(builder.build()).flatMap(httpClient::exchangeToString).map(S3Xml::parseCreateMultipartUpload);
   }
 
+  /** 使用 Args builder 风格创建 multipart upload。 */
+  public Mono<MultipartUpload> createMultipartUpload(CreateMultipartUploadArgs args) {
+    CreateMultipartUploadArgs safeArgs = requireArgs(args, "CreateMultipartUploadArgs");
+    return createMultipartUpload(safeArgs.bucket(), safeArgs.object(), safeArgs.contentType());
+  }
+
   public Flux<MultipartUploadInfo> listMultipartUploads(String bucket) {
     return listMultipartUploads(bucket, null, true);
   }
@@ -1366,6 +1511,12 @@ public final class ReactiveMinioClient {
               return Mono.empty();
             })
         .flatMapIterable(ListMultipartUploadsResult::uploads);
+  }
+
+  /** 使用 Args builder 风格列出 multipart uploads。 */
+  public Flux<MultipartUploadInfo> listMultipartUploads(ListMultipartUploadsArgs args) {
+    ListMultipartUploadsArgs safeArgs = requireArgs(args, "ListMultipartUploadsArgs");
+    return listMultipartUploads(safeArgs.bucket(), safeArgs.prefix(), safeArgs.recursive());
   }
 
   public Mono<ListMultipartUploadsResult> listMultipartUploadsPage(
@@ -1421,6 +1572,17 @@ public final class ReactiveMinioClient {
         .map(xml -> S3Xml.parseCopyPartResult(partNumber, xml));
   }
 
+  /** 使用 Args builder 风格执行 multipart copy part。 */
+  public Mono<PartInfo> uploadPartCopy(UploadPartCopyArgs args) {
+    UploadPartCopyArgs safeArgs = requireArgs(args, "UploadPartCopyArgs");
+    return uploadPartCopy(
+        safeArgs.bucket(),
+        safeArgs.object(),
+        safeArgs.uploadId(),
+        safeArgs.partNumber(),
+        safeArgs.source());
+  }
+
   public Mono<PartInfo> uploadPart(
       String bucket, String object, String uploadId, int partNumber, byte[] content) {
     byte[] actualContent = content == null ? new byte[0] : content;
@@ -1436,10 +1598,27 @@ public final class ReactiveMinioClient {
         .map(headers -> new PartInfo(partNumber, firstHeader(headers, "ETag"), actualContent.length, ""));
   }
 
+  /** 使用 Args builder 风格上传 multipart part。 */
+  public Mono<PartInfo> uploadPart(UploadPartArgs args) {
+    UploadPartArgs safeArgs = requireArgs(args, "UploadPartArgs");
+    return uploadPart(
+        safeArgs.bucket(),
+        safeArgs.object(),
+        safeArgs.uploadId(),
+        safeArgs.partNumber(),
+        safeArgs.content());
+  }
+
   public Mono<ListPartsResult> listParts(String bucket, String object, String uploadId) {
     S3Request request =
         request(HttpMethod.GET, bucket, object).queryParameter("uploadId", uploadId).build();
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseListParts);
+  }
+
+  /** 使用 Args builder 风格列出 multipart parts。 */
+  public Mono<ListPartsResult> listParts(ListPartsArgs args) {
+    ListPartsArgs safeArgs = requireArgs(args, "ListPartsArgs");
+    return listParts(safeArgs.bucket(), safeArgs.object(), safeArgs.uploadId());
   }
 
   public Mono<CompletedMultipartUpload> completeMultipartUpload(
@@ -1457,10 +1636,23 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseCompleteMultipartUpload);
   }
 
+  /** 使用 Args builder 风格完成 multipart upload。 */
+  public Mono<CompletedMultipartUpload> completeMultipartUpload(CompleteMultipartUploadArgs args) {
+    CompleteMultipartUploadArgs safeArgs = requireArgs(args, "CompleteMultipartUploadArgs");
+    return completeMultipartUpload(
+        safeArgs.bucket(), safeArgs.object(), safeArgs.uploadId(), safeArgs.parts());
+  }
+
   public Mono<Void> abortMultipartUpload(String bucket, String object, String uploadId) {
     S3Request request =
         request(HttpMethod.DELETE, bucket, object).queryParameter("uploadId", uploadId).build();
     return sign(request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 使用 Args builder 风格终止 multipart upload。 */
+  public Mono<Void> abortMultipartUpload(AbortMultipartUploadArgs args) {
+    AbortMultipartUploadArgs safeArgs = requireArgs(args, "AbortMultipartUploadArgs");
+    return abortMultipartUpload(safeArgs.bucket(), safeArgs.object(), safeArgs.uploadId());
   }
 
   /** 使用多个源对象组合成一个目标对象。 */
