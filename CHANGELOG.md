@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 78 发布工程预检
+
+- 新增 `docs/76-stage78-release-engineering-preflight.md`，明确当前只能作为发布候选继续验证，不能正式 tag/Maven 发布。
+- 当前版本继续保持 `0.1.0-SNAPSHOT`；route parity 233 / 233、product-typed 233 / 233、raw-fallback 0 不替代 Crypto Gate 和独立 lab 证据。
+- 发布工程的下一步仍是补齐 Crypto Gate Pass、独立破坏性 lab 报告、源码包/javadoc/pom 元数据/签名/校验和/许可证或 SBOM 等材料。
+
 ## 阶段 77 独立破坏性 lab 门禁复核
 
 - 新增 `scripts/minio-lab/audit-readiness.sh`，用于在不连接 MinIO、不输出凭证的情况下审计独立 lab 门禁准备度。
