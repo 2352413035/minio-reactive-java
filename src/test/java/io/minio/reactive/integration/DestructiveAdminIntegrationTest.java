@@ -244,9 +244,11 @@ class DestructiveAdminIntegrationTest {
     String expectedRemoteTargetArn = labValue("MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN");
     String expectedBatchJobId = labValue("MINIO_LAB_BATCH_EXPECTED_JOB_ID");
     boolean batchProbes = "true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_BATCH_JOB_PROBES"));
+    boolean replicationDiffProbe =
+        "true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE"));
     Assumptions.assumeTrue(
-        notBlank(tierName) || notBlank(bucket) || batchProbes,
-        "缺少 tier/remote target/batch job lab fixture，跳过可选 lab 探测。");
+        notBlank(tierName) || notBlank(bucket) || batchProbes || replicationDiffProbe,
+        "缺少 tier/remote target/batch job/replication diff lab fixture，跳过可选 lab 探测。");
 
     ReactiveMinioAdminClient admin = labAdminClient();
     ReactiveMinioRawClient raw = labRawClient();
@@ -284,6 +286,30 @@ class DestructiveAdminIntegrationTest {
             containsRemoteTargetArn(typedTargets, expectedRemoteTargetArn),
             "MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN 已设置，但 typed remote target 摘要未找到该 ARN。");
       }
+    }
+    if (replicationDiffProbe) {
+      Assumptions.assumeTrue(notBlank(bucket), "replication diff 探测需要 MINIO_LAB_BUCKET。");
+      String prefix = labValue("MINIO_LAB_REPLICATION_DIFF_PREFIX");
+      String arn = labValue("MINIO_LAB_REPLICATION_DIFF_ARN");
+      String typedDiff =
+          labStepValue(
+              "replication-diff-probe",
+              "typed runReplicationDiff",
+              () -> admin.runReplicationDiff(bucket, true, prefix, arn).block().rawText());
+      String rawDiff =
+          labStepValue(
+              "replication-diff-probe",
+              "raw ADMIN_REPLICATION_DIFF",
+              () ->
+                  rawString(
+                      raw,
+                      "ADMIN_REPLICATION_DIFF",
+                      emptyMap(),
+                      replicationDiffQuery(bucket, true, prefix, arn),
+                      null,
+                      null));
+      Assertions.assertNotNull(typedDiff);
+      Assertions.assertEquals(typedDiff, rawDiff);
     }
     if (batchProbes) {
       AdminBatchJobList typedJobs =
@@ -777,6 +803,22 @@ class DestructiveAdminIntegrationTest {
     Map<String, String> result = new LinkedHashMap<String, String>();
     for (int i = 0; i + 1 < values.length; i += 2) {
       result.put(values[i], values[i + 1]);
+    }
+    return result;
+  }
+
+  private static Map<String, String> replicationDiffQuery(
+      String bucket, boolean verbose, String prefix, String arn) {
+    Map<String, String> result = new LinkedHashMap<String, String>();
+    result.put("bucket", bucket);
+    if (verbose) {
+      result.put("verbose", "true");
+    }
+    if (notBlank(prefix)) {
+      result.put("prefix", prefix);
+    }
+    if (notBlank(arn)) {
+      result.put("arn", arn);
     }
     return result;
   }

@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 118 replication diff query 语义
+
+- `runReplicationDiff` 新增无请求体和 query 选项重载，对齐 madmin `BucketReplicationDiff` 的 `verbose`、`prefix`、`arn` 参数语义。
+- 破坏性 lab 新增 `MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE`，只有具备真实 bucket replication 配置的独立 lab 才执行 typed/raw 探测。
+- 本阶段不降低 `ADMIN_REPLICATION_DIFF` 的破坏性边界；它仍需要复制拓扑证据后才能从剩余 17 个风险项中移除。
+
 ## 阶段 117 全量配置写入 lab 补证
 
 - 新增 `MINIO_LAB_ALLOW_FULL_CONFIG_WRITE` 门禁，只在独立 lab 中执行 `ADMIN_SET_CONFIG` 全量配置原样写回。

@@ -138,7 +138,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 144, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 213, 18, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 214, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -1997,6 +1997,12 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertEquals(
         "remote-target-remove-ok",
         admin.removeRemoteTargetConfig("bucket1", "arn1").block().rawText());
+    Assertions.assertEquals("replication-diff-ok", admin.runReplicationDiff("bucket1").block().rawText());
+    Assertions.assertEquals(
+        "replication-diff-ok",
+        admin.runReplicationDiff("bucket1", true, "prefix-a/", "arn:minio:replication::target")
+            .block()
+            .rawText());
     Assertions.assertEquals(
         "replication-diff-ok", admin.runReplicationDiff("bucket1", jsonBody).block().rawText());
     String startJobJson = "{\"id\":\"job1\",\"type\":\"replicate\",\"user\":\"tester\",\"started\":\"2026-04-25T00:00:00Z\"}";
@@ -2046,6 +2052,8 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/site-replication/peer/remove"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/force-unlock"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "verbose=true", "prefix=prefix-a"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "arn=arn", "replication"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "arn=arn1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "paths=bucket1/object1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "id=job1"));

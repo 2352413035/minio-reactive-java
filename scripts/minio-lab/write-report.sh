@@ -117,11 +117,12 @@ write_minio_lab_report() {
   local step_file
   step_file="$(minio_lab_step_file)"
 
-  local config_enabled full_config_enabled quota_enabled remote_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled
+  local config_enabled full_config_enabled quota_enabled remote_enabled replication_diff_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled
   config_enabled="false"
   full_config_enabled="false"
   quota_enabled="false"
   remote_enabled="false"
+  replication_diff_enabled="false"
   tier_enabled="false"
   batch_enabled="false"
   tier_write_enabled="false"
@@ -140,6 +141,9 @@ write_minio_lab_report() {
   fi
   if [[ -n "${MINIO_LAB_BUCKET:-}" ]]; then
     remote_enabled="true"
+  fi
+  if [[ "${MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE:-}" == "true" ]]; then
+    replication_diff_enabled="true"
   fi
   if [[ -n "${MINIO_LAB_TIER_NAME:-}" ]]; then
     tier_enabled="true"
@@ -188,6 +192,7 @@ write_minio_lab_report() {
     minio_lab_fixture_enabled 'bucket quota 写入 + 恢复' "$quota_enabled"
     minio_lab_fixture_enabled 'tier typed/raw 探测' "$tier_enabled"
     minio_lab_fixture_enabled 'remote target typed/raw 探测' "$remote_enabled"
+    minio_lab_fixture_enabled 'replication diff typed/raw 探测' "$replication_diff_enabled"
     minio_lab_fixture_enabled 'batch job typed/raw 探测' "$batch_enabled"
     minio_lab_fixture_enabled 'tier add/edit/remove 写入 + 恢复' "$tier_write_enabled"
     minio_lab_fixture_enabled 'remote target set/remove 写入 + 恢复' "$remote_write_enabled"
@@ -207,6 +212,9 @@ write_minio_lab_report() {
     printf -- '- remote target set 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SET_REMOTE_TARGET_BODY:-}" "${MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE:-}")"
     printf -- '- remote target 预期 ARN：%s\n' "$(minio_lab_bool "${MINIO_LAB_REMOTE_TARGET_EXPECTED_ARN:-}")"
     printf -- '- remote target 删除 ARN：%s（可选兜底）\n' "$(minio_lab_bool "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}")"
+    printf -- '- replication diff 探测开关：`%s`\n' "${MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE:-false}"
+    printf -- '- replication diff prefix：%s\n' "$(minio_lab_bool "${MINIO_LAB_REPLICATION_DIFF_PREFIX:-}")"
+    printf -- '- replication diff ARN：%s\n' "$(minio_lab_bool "${MINIO_LAB_REPLICATION_DIFF_ARN:-}")"
     printf -- '- batch job start 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_BATCH_START_BODY:-}" "${MINIO_LAB_BATCH_START_BODY_FILE:-}")"
     printf -- '- batch job cancel 旧式请求体：%s（当前 SDK 不要求）\n' "$(minio_lab_bool_any "${MINIO_LAB_BATCH_CANCEL_BODY:-}" "${MINIO_LAB_BATCH_CANCEL_BODY_FILE:-}")"
     printf -- '- site replication add 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_ADD_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE:-}")"
@@ -232,7 +240,7 @@ write_minio_lab_report() {
     printf '5. 如果 remote target 写入夹具失败，优先使用 set 响应返回的 ARN 删除刚写入的 target；响应不可解析时再使用 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` 兜底。\n'
     printf '6. 如果 batch job 实验矩阵失败，优先使用 start 响应中的 jobId 执行 `cancelBatchJob(jobId)` 或 `ADMIN_CANCEL_BATCH_JOB?id=<jobId>`；旧式 cancel 请求体仅作人工排错参考。\n'
     printf '7. 如果 site replication 实验矩阵失败，优先使用 `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY` 或对应文件移除刚新增的站点复制配置。\n'
-    printf '8. 如果 remote target、tier 或 batch job 探测失败，先查看 MinIO 管理日志，再用独立 lab 的控制台或 `mc admin` 回滚。\n'
+    printf '8. 如果 remote target、tier、batch job 或 replication diff 探测失败，先查看 MinIO 管理日志，再确认 bucket 复制规则和远端 target 是否属于本次 lab。\n'
     printf '9. 不要把本报告复制到仓库；报告可能包含 lab 端点和资源名称，但不会包含凭证。\n'
   } > "$report_file"
 

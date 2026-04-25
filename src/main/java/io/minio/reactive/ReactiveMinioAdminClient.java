@@ -725,7 +725,28 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return removeRemoteTargetConfig(bucket, arn, null, null);
   }
 
-  /** 执行 replication diff；该操作可能消耗资源，只在独立 lab 中真实执行。 */
+  /**
+   * 执行 replication diff。
+   *
+   * <p>MinIO madmin 使用 query 参数传递 verbose、prefix 与 arn，不需要请求体。该操作可能扫描 bucket，
+   * 只能在独立 lab 或维护窗口中真实执行。
+   */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runReplicationDiff(String bucket) {
+    return runReplicationDiff(bucket, false, null, null);
+  }
+
+  /** 执行 replication diff，并显式传入 madmin query 选项。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> runReplicationDiff(
+      String bucket, boolean verbose, String prefix, String arn) {
+    return replicationDiff(bucket, verbose, prefix, arn)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("replication-diff", text));
+  }
+
+  /**
+   * 执行 replication diff 的历史兼容入口。
+   *
+   * <p>MinIO 服务端当前忽略请求体；新代码优先使用无请求体的 query 选项重载。
+   */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runReplicationDiff(
       String bucket, byte[] body, String contentType) {
     requireText("bucket", bucket);
@@ -734,7 +755,7 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("replication-diff", text));
   }
 
-  /** 执行 replication diff，默认使用 application/json。 */
+  /** 执行 replication diff 的历史兼容入口，默认使用 application/json。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> runReplicationDiff(
       String bucket, byte[] body) {
     return runReplicationDiff(bucket, body, "application/json");
@@ -2429,14 +2450,31 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return removeRemoteTarget(bucket, arn, null, null);
   }
 
-  /** 调用 `ADMIN_REPLICATION_DIFF`。 */
-  public Mono<String> replicationDiff(String bucket, byte[] body, String contentType) {
-    return executeToString("ADMIN_REPLICATION_DIFF", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
+  /** 调用 `ADMIN_REPLICATION_DIFF`，按 madmin 语义只携带 query 参数。 */
+  public Mono<String> replicationDiff(String bucket) {
+    return replicationDiff(bucket, false, null, null);
   }
 
-  /** 调用 `ADMIN_REPLICATION_DIFF`，不携带请求体。 */
-  public Mono<String> replicationDiff(String bucket) {
-    return replicationDiff(bucket, null, null);
+  /** 调用 `ADMIN_REPLICATION_DIFF`，可选 verbose、prefix 和 arn query 参数。 */
+  public Mono<String> replicationDiff(String bucket, boolean verbose, String prefix, String arn) {
+    requireText("bucket", bucket);
+    java.util.Map<String, String> query = new java.util.LinkedHashMap<String, String>();
+    query.put("bucket", bucket);
+    if (verbose) {
+      query.put("verbose", "true");
+    }
+    if (prefix != null && !prefix.trim().isEmpty()) {
+      query.put("prefix", prefix);
+    }
+    if (arn != null && !arn.trim().isEmpty()) {
+      query.put("arn", arn);
+    }
+    return executeToString("ADMIN_REPLICATION_DIFF", emptyMap(), query, emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_REPLICATION_DIFF` 的历史兼容入口；MinIO 当前通过 query 读取选项。 */
+  public Mono<String> replicationDiff(String bucket, byte[] body, String contentType) {
+    return executeToString("ADMIN_REPLICATION_DIFF", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
   }
 
   /** 调用 `ADMIN_REPLICATION_MRF`。 */

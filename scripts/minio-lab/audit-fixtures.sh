@@ -155,6 +155,16 @@ else
   print_row 'remote target typed/raw 只读探测' '未就绪：缺 bucket' 'MINIO_LAB_BUCKET 或 MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET；可选预期 ARN' '无写入恢复' '无需额外模板'
 fi
 
+if is_true "${MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE:-false}"; then
+  if [[ -n "${MINIO_LAB_BUCKET:-}" ]]; then
+    print_row 'replication diff typed/raw 探测' '可执行：仍要求 bucket 已配置复制规则' 'MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE=true + MINIO_LAB_BUCKET；可选 prefix/arn' '无写入恢复；失败不降低边界' '无需额外模板'
+  else
+    print_row 'replication diff typed/raw 探测' '未就绪：缺 MINIO_LAB_BUCKET' 'MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE=true + MINIO_LAB_BUCKET' '无写入恢复；失败不降低边界' '无需额外模板'
+  fi
+else
+  print_row 'replication diff typed/raw 探测' '未启用：MINIO_LAB_ENABLE_REPLICATION_DIFF_PROBE 不是 true' '复制规则 lab + 显式探测开关' '无写入恢复；失败不降低边界' '无需额外模板'
+fi
+
 if is_true "${MINIO_LAB_ENABLE_BATCH_JOB_PROBES:-false}"; then
   print_row 'batch job typed/raw 只读探测' '夹具已设置' 'MINIO_LAB_ENABLE_BATCH_JOB_PROBES=true；可选预期 jobId' '无写入恢复' '无需额外模板'
 else
