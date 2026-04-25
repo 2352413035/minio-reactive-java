@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 112 加密 Admin 响应显式解密便捷入口
+
+- 在 Crypto Gate Pass 基础上，为配置、用户、IDP、服务账号和 access key 等加密 Admin 响应补充显式 `secretKey` 解密入口。
+- `getAccessKeyInfoTyped(accessKey, secretKey)` 与 `listAccessKeysTyped(listType, secretKey)` 可直接返回明文业务模型。
+- `createServiceAccount(request, secretKey)` / `addServiceAccount(request, secretKey)` 可直接解析创建后的服务账号凭证结果。
+- 原 `*Encrypted` 方法继续保留，作为延迟解密和排障边界；SDK 仍不保存、不输出 `secretKey`。
+
 ## 阶段 111 Crypto Gate Pass 与默认 madmin 解密放行
 
 - 对齐同目录 `minio-java` 的 adminapi crypto 方案，引入 `org.bouncycastle:bcprov-jdk18on:1.82`。

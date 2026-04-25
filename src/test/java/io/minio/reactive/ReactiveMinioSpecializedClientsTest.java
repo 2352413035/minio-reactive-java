@@ -138,7 +138,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 144, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 204, 18, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 213, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -1468,6 +1468,54 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listConfigHistoryKvEncrypted(-1));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.listIdpConfigsEncrypted(" "));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.getIdpConfigEncrypted("openid", null));
+  }
+
+  @Test
+  void shouldDecryptEncryptedAdminResponsesWithExplicitSecretKey() {
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  paths.add(request.url().getPath());
+                  byte[] encrypted =
+                      MadminEncryptionSupport.encryptData(
+                          "admin-secret",
+                          stage112EncryptedAdminBody(request.url().getPath())
+                              .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .body(
+                              reactor.core.publisher.Flux.just(
+                                  new org.springframework.core.io.buffer.DefaultDataBufferFactory()
+                                      .wrap(encrypted)))
+                          .build());
+                })
+            .build();
+    ReactiveMinioAdminClient admin =
+        ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+
+    Assertions.assertTrue(admin.getConfigDecrypted("admin-secret").block().contains("region"));
+    Assertions.assertEquals(
+        "svc1", admin.getAccessKeyInfoTyped("svc1", "admin-secret").block().accessKey());
+    Assertions.assertEquals(
+        1, admin.listAccessKeysTyped("all", "admin-secret").block().serviceAccounts().size());
+    Assertions.assertEquals(
+        "ak-new",
+        admin.createServiceAccount(AddServiceAccountRequest.builder().name("svc").build(), "admin-secret")
+            .block()
+            .credentials()
+            .accessKey());
+
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/config"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/info-access-key"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/list-access-keys-bulk"));
+    Assertions.assertTrue(paths.contains("/minio/admin/v3/add-service-account"));
   }
 
 
@@ -2974,6 +3022,22 @@ class ReactiveMinioSpecializedClientsTest {
       return "log-line\n";
     }
     return "encrypted-placeholder-response-body";
+  }
+
+  private static String stage112EncryptedAdminBody(String path) {
+    if (path.endsWith("/config")) {
+      return "region=us-east-1";
+    }
+    if (path.endsWith("/info-access-key")) {
+      return "{\"accessKey\":\"svc1\",\"accountStatus\":\"enabled\",\"parentUser\":\"root\"}";
+    }
+    if (path.endsWith("/list-access-keys-bulk")) {
+      return "{\"serviceAccounts\":[{\"accessKey\":\"svc1\",\"accountStatus\":\"enabled\"}],\"stsKeys\":[]}";
+    }
+    if (path.endsWith("/add-service-account")) {
+      return "{\"credentials\":{\"accessKey\":\"ak-new\",\"secretKey\":\"sk-new\"}}";
+    }
+    return "{}";
   }
 
   private static String stage47AdminSensitiveExportBody(String path) {

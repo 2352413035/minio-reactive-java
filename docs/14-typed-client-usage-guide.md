@@ -214,6 +214,8 @@ EncryptedAdminResponse accessKeys = admin.listAccessKeysEncrypted("all").block()
 
 这些响应仍以 `EncryptedAdminResponse` 作为安全边界。阶段 111 起三类 madmin 算法都可解密；边界对象会暴露 `algorithm()` / `algorithmName()` / `encryptedSize()` / `decryptSupported()` / `requiresCryptoGate()` 与 `diagnosticMessage()`，便于在不泄露明文的前提下诊断。
 
+阶段 112 起，常见加密 Admin 响应还提供显式 `secretKey` 便捷入口，例如 `getConfigDecrypted(secretKey)`、`getAccessKeyInfoTyped(accessKey, secretKey)`、`listAccessKeysTyped(listType, secretKey)` 和 `createServiceAccount(request, secretKey)`。这些入口只使用调用方本次传入的 `secretKey`，不会在 SDK 内保存。
+
 ## 错误诊断
 
 非 S3 协议族异常会包含协议族、endpoint 名称、HTTP method、路径模板、状态码、requestId、原始响应摘要和中文排查提示。业务调用方可以按异常类型区分：
