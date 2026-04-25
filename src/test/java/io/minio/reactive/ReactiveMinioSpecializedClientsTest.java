@@ -43,6 +43,7 @@ import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.ComposeSource;
 import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
+import io.minio.reactive.messages.PostPolicy;
 import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.SelectObjectContentRequest;
 import io.minio.reactive.messages.sts.AssumeRoleResult;
@@ -86,6 +87,7 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioClient.class, "s3GetObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "composeObject");
     assertMonoMethodExists(ReactiveMinioClient.class, "downloadObject");
+    assertMonoMethodExists(ReactiveMinioClient.class, "getPresignedPostFormData");
     assertMonoMethodExists(ReactiveMinioClient.class, "uploadObject");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "serverInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "addUser");
@@ -118,7 +120,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 130, 60, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 131, 60, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 203, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
@@ -316,6 +318,53 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertThrows(
         IllegalArgumentException.class,
         () -> client.composeObject("target", "empty.txt", java.util.Collections.<ComposeSource>emptyList()));
+  }
+
+  @Test
+  void shouldGeneratePresignedPostFormDataLikeMinioJava() {
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentials("ak", "sk", "session-token")
+            .build();
+    PostPolicy policy =
+        PostPolicy.of(
+            "bucket1",
+            java.time.ZonedDateTime.of(
+                2026, 4, 25, 0, 0, 0, 0, java.time.ZoneOffset.UTC));
+    policy.addEqualsCondition("key", "images/avatar.png");
+    policy.addStartsWithCondition("Content-Type", "image/");
+    policy.addContentLengthRangeCondition(64L, 1024L);
+
+    java.util.Map<String, String> formData = client.getPresignedPostFormData(policy).block();
+    String decodedPolicy =
+        new String(
+            java.util.Base64.getDecoder().decode(formData.get("policy")),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+    Assertions.assertEquals("AWS4-HMAC-SHA256", formData.get("x-amz-algorithm"));
+    Assertions.assertTrue(formData.get("x-amz-credential").startsWith("ak/"));
+    Assertions.assertEquals("session-token", formData.get("x-amz-security-token"));
+    Assertions.assertNotNull(formData.get("x-amz-date"));
+    Assertions.assertNotNull(formData.get("x-amz-signature"));
+    Assertions.assertTrue(decodedPolicy.contains("\"expiration\":\"2026-04-25T00:00:00.000Z\""));
+    Assertions.assertTrue(decodedPolicy.contains("[\"eq\",\"$bucket\",\"bucket1\"]"));
+    Assertions.assertTrue(decodedPolicy.contains("[\"eq\",\"$key\",\"images/avatar.png\"]"));
+    Assertions.assertTrue(decodedPolicy.contains("[\"starts-with\",\"$Content-Type\",\"image/\"]"));
+    Assertions.assertTrue(decodedPolicy.contains("[\"content-length-range\",64,1024]"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> policy.addEqualsCondition("x-amz-signature", "manual"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            ReactiveMinioClient.builder()
+                .endpoint("http://localhost:9000")
+                .region("us-east-1")
+                .build()
+                .getPresignedPostFormData(policy)
+                .block());
   }
 
 

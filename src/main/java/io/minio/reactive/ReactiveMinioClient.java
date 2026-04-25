@@ -36,6 +36,7 @@ import io.minio.reactive.messages.ObjectLegalHoldConfiguration;
 import io.minio.reactive.messages.ObjectRetentionConfiguration;
 import io.minio.reactive.messages.ObjectVersionInfo;
 import io.minio.reactive.messages.PartInfo;
+import io.minio.reactive.messages.PostPolicy;
 import io.minio.reactive.messages.RestoreObjectRequest;
 import io.minio.reactive.messages.SelectObjectContentRequest;
 import io.minio.reactive.messages.SelectObjectContentResult;
@@ -843,6 +844,21 @@ public final class ReactiveMinioClient {
 
   public Mono<URI> getPresignedGetObjectUrl(String bucket, String object) {
     return getPresignedGetObjectUrl(bucket, object, DEFAULT_PRESIGN_EXPIRY);
+  }
+
+  /**
+   * 生成浏览器表单 POST 上传所需的预签名字段。
+   *
+   * <p>该方法对齐 minio-java 的 `getPresignedPostFormData`：调用方提供 PostPolicy，
+   * SDK 使用当前凭证生成 policy、x-amz-date、credential 和 signature。匿名客户端不能生成该表单。
+   */
+  public Mono<Map<String, String>> getPresignedPostFormData(PostPolicy policy) {
+    return credentialsProvider
+        .getCredentials()
+        .switchIfEmpty(
+            Mono.error(
+                new IllegalArgumentException("匿名访问不需要也不能生成 presigned POST form-data")))
+        .map(credentials -> signer.presignedPostFormData(policy, config, credentials));
   }
 
   public Mono<MultipartUpload> createMultipartUpload(String bucket, String object, String contentType) {

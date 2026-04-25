@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 88 getPresignedPostFormData 表单上传入口
+
+- 新增 `PostPolicy`，支持 equals、starts-with、content-length-range 条件和保留字段保护。
+- `ReactiveMinioClient` 新增 `getPresignedPostFormData(PostPolicy)`，由当前凭证生成浏览器表单上传需要的 policy、credential、date、signature 等字段。
+- 新增 `docs/86-stage88-presigned-post-parity.md`，记录预签名 POST 与 minio-java 的对齐语义。
+- 重新生成 minio-java 对标报告后，对象存储核心 API 精确同名从 54 / 59 提升到 55 / 59，剩余缺口为 `appendObject`、`promptObject`、`putObjectFanOut`、`uploadSnowballObjects`。
+
 ## 阶段 87 composeObject 对象组合入口
 
 - 新增 `ComposeSource`，用于描述对象组合的源 bucket、object、versionId 与可选字节范围。
