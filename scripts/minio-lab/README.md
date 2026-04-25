@@ -158,6 +158,17 @@ MINIO_LAB_REPLICATION_DIFF_ARN=可选目标ARN
 这个探测要求 `MINIO_LAB_BUCKET` 已经具备真实复制配置。普通单节点 Docker lab 如果没有 bucket replication 规则，服务端可能返回错误；这种失败只能说明环境未满足复制差异扫描条件，不能用来降低 `destructive-blocked`。
 - `verify-env.sh` 仍会拒绝共享端点 和常见本机默认端点。
 
+### 双 MinIO replication diff lab
+
+如果本机有 `docker`、`mc` 和 `minio/minio` 镜像，可以用专用脚本自动创建 source/target 两个 MinIO，并配置 bucket replication：
+
+```bash
+scripts/minio-lab/start-replication-diff-lab.sh
+MINIO_LAB_CONFIG_FILE=/tmp/minio-reactive-repl-src-xxxxxx/lab.properties   scripts/minio-lab/run-destructive-tests.sh
+```
+
+脚本会把 replication remote-bucket endpoint 设为 Docker 网络内的目标容器名，确保 source MinIO 服务端能访问目标。脚本只输出 endpoint、bucket、临时路径和清理命令，不输出 access key 或 secret key。执行完成后按脚本输出删除两个容器、Docker 网络和 `/tmp/minio-reactive-repl-*` 临时目录。
+
 ## tier / remote target 可回滚写入夹具
 
 阶段 36 起，独立 lab 可以额外开启真实写入夹具。它们比只读探测更危险，因此必须先打开总开关：
