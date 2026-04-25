@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 81 示例中文诊断复核
+
+- `ReactiveMinioLiveExample` 的终端输出改为中文，包括缺少配置、bucket/object 流程、S3 错误和响应头说明。
+- 新增 `docs/79-stage81-example-chinese-diagnostics.md`，记录示例中文体验边界：只改用户输出，不改协议/API/门禁。
+- 本阶段继续不改变 Crypto Gate、独立 lab 和 Maven 发布状态。
+
 ## 阶段 80 Maven 发布元数据预检
 
 - 新增 `scripts/report-pom-release-metadata.py`，用标准库审计双分支 POM 的基础坐标、发布元数据和 source/javadoc/sign/SBOM 插件准备度。
