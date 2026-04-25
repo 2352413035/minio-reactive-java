@@ -1,5 +1,6 @@
 package io.minio.reactive.credentials;
 
+import io.minio.reactive.messages.sts.AssumeRoleResult;
 import reactor.core.publisher.Mono;
 
 /**
@@ -22,6 +23,20 @@ public abstract class BaseIdentityProvider implements Provider {
 
   protected BaseIdentityProvider(ReactiveCredentialsProvider provider) {
     this(provider == null ? null : provider.getCredentials().map(Credentials::fromReactive));
+  }
+
+  protected static Mono<Credentials> fromAssumeRoleResult(Mono<AssumeRoleResult> result) {
+    if (result == null) {
+      throw new IllegalArgumentException("result Mono 不能为空");
+    }
+    return result.map(AssumeRoleResult::credentials).map(Credentials::fromReactive);
+  }
+
+  protected static <T> T requireValue(String name, T value) {
+    if (value == null) {
+      throw new IllegalArgumentException(name + " 不能为空");
+    }
+    return value;
   }
 
   @Override

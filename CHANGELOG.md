@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 98 provider 行为深化与 Crypto Gate 回归
+
+- `AssumeRoleProvider`、`WebIdentityProvider`、`ClientGrantsProvider`、`LdapIdentityProvider`、`CertificateIdentityProvider` 新增 `fromStsClient(...)` 桥接工厂。
+- identity provider 通过现有 `ReactiveMinioStsClient` 强类型方法换取临时凭证，不在 provider 内部复制阻塞 HTTP 客户端。
+- 新增 `docs/96-stage98-provider-behavior-crypto-regression.md`，记录 provider 行为深化和 Crypto Gate 回归结论。
+- 重新生成能力矩阵后，Admin `encrypted-blocked = 11`、`destructive-blocked = 29`、`raw-fallback = 0`，未误降级加密和破坏性边界。
+- 新增测试覆盖 STS mock 响应下的 identity provider 桥接工厂。
+
 ## 阶段 97 Provider 与客户端 builder 桥接
 
 - 所有公开客户端 builder 新增 `credentialsProvider(io.minio.reactive.credentials.Provider)` 重载。
