@@ -111,7 +111,7 @@ printf -- '- batch job cancel：%s\n' "$(body_presence MINIO_LAB_BATCH_CANCEL_BO
 printf -- '- site replication add：%s\n' "$(body_presence MINIO_LAB_SITE_REPLICATION_ADD_BODY MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE)"
 printf -- '- site replication edit：%s\n' "$(body_presence MINIO_LAB_SITE_REPLICATION_EDIT_BODY MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE)"
 printf -- '- site replication remove：%s\n' "$(body_presence MINIO_LAB_SITE_REPLICATION_REMOVE_BODY MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE)"
-printf -- '- remote target 删除 ARN：%s\n' "$(presence "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}")"
+printf -- '- remote target 删除 ARN：%s（set 响应可解析 ARN 时可不预填）\n' "$(presence "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}")"
 
 printf '\n矩阵准备度\n'
 printf -- '----------\n'
@@ -170,12 +170,11 @@ remote_write_missing=""
 is_true "$write_enabled" || append_missing remote_write_missing '缺 MINIO_LAB_ALLOW_WRITE_FIXTURES=true'
 [[ -n "${MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET:-}" ]] || append_missing remote_write_missing '缺 MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET'
 body_ready MINIO_LAB_SET_REMOTE_TARGET_BODY MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE || append_missing remote_write_missing '缺 remote target set 请求体'
-[[ -n "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}" ]] || append_missing remote_write_missing '缺 MINIO_LAB_REMOVE_REMOTE_TARGET_ARN'
 is_true "${MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST:-false}" || append_missing remote_write_missing '缺 MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true'
 if [[ -z "$remote_write_missing" ]]; then
-  print_row 'remote target set/remove 写入恢复' '可执行' '写入总开关 + bucket + set 请求体 + 删除 ARN' 'MINIO_LAB_REMOVE_REMOTE_TARGET_ARN；MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true' 'templates/remote-target-set-replication.json.example'
+  print_row 'remote target set/remove 写入恢复' '可执行' '写入总开关 + bucket + set 请求体；删除 ARN 可由 set 响应解析' '优先使用 set 响应 ARN；可选 MINIO_LAB_REMOVE_REMOTE_TARGET_ARN 兜底；MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true' 'templates/remote-target-set-replication.json.example'
 else
-  print_row 'remote target set/remove 写入恢复' "未就绪：$remote_write_missing" '写入总开关 + bucket + set 请求体 + 删除 ARN' 'MINIO_LAB_REMOVE_REMOTE_TARGET_ARN；MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true' 'templates/remote-target-set-replication.json.example'
+  print_row 'remote target set/remove 写入恢复' "未就绪：$remote_write_missing" '写入总开关 + bucket + set 请求体；删除 ARN 可由 set 响应解析' '优先使用 set 响应 ARN；可选 MINIO_LAB_REMOVE_REMOTE_TARGET_ARN 兜底；MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true' 'templates/remote-target-set-replication.json.example'
 fi
 
 batch_missing=""

@@ -366,7 +366,6 @@ class DestructiveAdminIntegrationTest {
   private static boolean hasRemoteTargetWriteFixture() {
     return notBlank(labValue("MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET"))
         && hasBody("MINIO_LAB_SET_REMOTE_TARGET_BODY", "MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE")
-        && notBlank(labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_ARN"))
         && "true".equalsIgnoreCase(labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST"));
   }
 
@@ -403,7 +402,14 @@ class DestructiveAdminIntegrationTest {
       labStepValue(
           "tier-write",
           "raw ADMIN_ADD_TIER",
-          () -> rawString(raw, "ADMIN_ADD_TIER", emptyMap(), emptyMap(), bytes(addBody), contentType));
+          () ->
+              rawString(
+                  raw,
+                  "ADMIN_ADD_TIER",
+                  emptyMap(),
+                  emptyMap(),
+                  encryptedLabBody(addBody),
+                  "application/octet-stream"));
       Assertions.assertNotNull(
           labStepValue("tier-write", "typed listTiers after raw add", () -> admin.listTiers().block()));
       if (notBlank(editBody)) {
@@ -412,8 +418,14 @@ class DestructiveAdminIntegrationTest {
         labStepValue(
             "tier-write",
             "raw ADMIN_EDIT_TIER",
-            () -> rawString(
-                raw, "ADMIN_EDIT_TIER", map("tier", tier), emptyMap(), bytes(editBody), contentType));
+            () ->
+                rawString(
+                    raw,
+                    "ADMIN_EDIT_TIER",
+                    map("tier", tier),
+                    emptyMap(),
+                    encryptedLabBody(editBody),
+                    "application/octet-stream"));
         Assertions.assertNotNull(
             labStepValue("tier-write", "typed listTiers after edit", () -> admin.listTiers().block()));
       }
@@ -435,21 +447,28 @@ class DestructiveAdminIntegrationTest {
     String bucket = labValue("MINIO_LAB_REMOTE_TARGET_WRITE_BUCKET");
     String body =
         labBody("MINIO_LAB_SET_REMOTE_TARGET_BODY", "MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE");
-    String arn = labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_ARN");
+    String[] restoreArn = {normalizeArn(labValue("MINIO_LAB_REMOVE_REMOTE_TARGET_ARN"))};
     String type = getenvOrDefault("MINIO_LAB_REMOTE_TARGET_TYPE", "replication");
     String contentType =
         getenvOrDefault("MINIO_LAB_REMOTE_TARGET_WRITE_CONTENT_TYPE", "application/json");
     try {
-      // remote target 夹具同样执行“专用客户端写入 + raw 兜底写入 + 专用客户端恢复”的闭环。
-      runLabStep(
-          "remote-target-write",
-          "typed setRemoteTarget",
-          () -> admin.setRemoteTarget(bucket, bytes(body), contentType).block());
+      // remote target set 会返回服务端生成的 ARN；优先用该 ARN 恢复，
+      // 只有服务端未返回时才要求调用方通过 MINIO_LAB_REMOVE_REMOTE_TARGET_ARN 兜底。
+      String typedArn =
+          labStepValue(
+              "remote-target-write",
+              "typed setRemoteTarget",
+              () -> normalizeArn(admin.setRemoteTarget(bucket, bytes(body), contentType).block()));
+      restoreArn[0] = firstNonBlank(typedArn, restoreArn[0]);
+      Assertions.assertTrue(
+          notBlank(restoreArn[0]),
+          "set remote target 未返回 ARN；请在独立 lab 配置中提供 MINIO_LAB_REMOVE_REMOTE_TARGET_ARN。");
       Assertions.assertNotNull(
           labStepValue(
               "remote-target-write",
               "typed listRemoteTargetsInfo after set",
               () -> admin.listRemoteTargetsInfo(bucket, type).block()));
+      final String arnAfterTypedSet = restoreArn[0];
       labStepValue(
           "remote-target-write",
           "raw ADMIN_REMOVE_REMOTE_TARGET",
@@ -457,32 +476,39 @@ class DestructiveAdminIntegrationTest {
               raw,
               "ADMIN_REMOVE_REMOTE_TARGET",
               emptyMap(),
-              map("bucket", bucket, "arn", arn),
+              map("bucket", bucket, "arn", arnAfterTypedSet),
               null,
               null));
-      labStepValue(
-          "remote-target-write",
-          "raw ADMIN_SET_REMOTE_TARGET",
-          () -> rawString(
-              raw,
-              "ADMIN_SET_REMOTE_TARGET",
-              emptyMap(),
-              map("bucket", bucket),
-              bytes(body),
-              contentType));
+      String rawArn =
+          labStepValue(
+              "remote-target-write",
+              "raw ADMIN_SET_REMOTE_TARGET",
+              () ->
+                  normalizeArn(
+                      rawString(
+                          raw,
+                          "ADMIN_SET_REMOTE_TARGET",
+                          emptyMap(),
+                          map("bucket", bucket),
+                          encryptedLabBody(body),
+                          "application/octet-stream")));
+      restoreArn[0] = firstNonBlank(rawArn, arnAfterTypedSet);
       Assertions.assertNotNull(
           labStepValue(
               "remote-target-write",
               "typed listRemoteTargetsInfo after raw set",
               () -> admin.listRemoteTargetsInfo(bucket, type).block()));
     } finally {
-      runLabStep(
-          "remote-target-restore",
-          "typed removeRemoteTarget finally",
-          () ->
-              admin.removeRemoteTarget(bucket, arn)
-                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
-                  .block());
+      final String arn = restoreArn[0];
+      if (notBlank(arn)) {
+        runLabStep(
+            "remote-target-restore",
+            "typed removeRemoteTarget finally",
+            () ->
+                admin.removeRemoteTarget(bucket, arn)
+                    .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                    .block());
+      }
     }
     Assertions.assertNotNull(
         labStepValue(
@@ -554,13 +580,14 @@ class DestructiveAdminIntegrationTest {
         labStepValue(
             "site-replication-write",
             "raw ADMIN_SITE_REPLICATION_EDIT",
-            () -> rawString(
-                raw,
-                "ADMIN_SITE_REPLICATION_EDIT",
-                emptyMap(),
-                map("api-version", "1"),
-                bytes(editBody),
-                contentType));
+            () ->
+                rawString(
+                    raw,
+                    "ADMIN_SITE_REPLICATION_EDIT",
+                    emptyMap(),
+                    map("api-version", "1"),
+                    encryptedLabBody(editBody),
+                    "application/octet-stream"));
       }
       labStepValue(
           "site-replication-write",
@@ -712,10 +739,41 @@ class DestructiveAdminIntegrationTest {
   }
 
   private static byte[] encryptedLabBody(String plainText) {
+    return encryptedLabBody(bytes(plainText));
+  }
+
+  private static byte[] encryptedLabBody(byte[] plainBody) {
     // MinIO madmin 写入类配置接口要求请求体用当前凭证 secretKey 加密。
     // raw 客户端不替用户做业务语义判断，所以 lab 里显式构造加密体来证明兜底能力。
     return io.minio.reactive.util.MadminEncryptionSupport.encryptData(
-        labValue("MINIO_LAB_SECRET_KEY"), bytes(plainText));
+        labValue("MINIO_LAB_SECRET_KEY"), plainBody);
+  }
+
+  private static String normalizeArn(String response) {
+    if (!notBlank(response)) {
+      return "";
+    }
+    String trimmed = response.trim();
+    try {
+      com.fasterxml.jackson.databind.JsonNode root =
+          io.minio.reactive.util.JsonSupport.parseTree(trimmed);
+      if (root != null) {
+        if (root.isTextual()) {
+          return root.asText();
+        }
+        String arn = io.minio.reactive.util.JsonSupport.textAny(root, "arn", "Arn", "ARN");
+        if (notBlank(arn)) {
+          return arn;
+        }
+      }
+    } catch (Exception ignored) {
+      // 非 JSON 响应保留原文本，方便兼容旧版本或 mock。
+    }
+    return trimmed;
+  }
+
+  private static String firstNonBlank(String first, String second) {
+    return notBlank(first) ? first : notBlank(second) ? second : "";
   }
 
   private static boolean containsTierName(AdminTierList tiers, String tierName) {

@@ -695,7 +695,7 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return setBucketQuotaConfig(bucket, body, "application/json");
   }
 
-  /** 设置 remote target；请求体可能包含远端配置或凭据，SDK 不解析也不记录。 */
+  /** 设置 remote target；专用客户端会按 MinIO madmin 语义自动加密请求体。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> setRemoteTargetConfig(
       String bucket, byte[] body, String contentType) {
     requireText("bucket", bucket);
@@ -2300,9 +2300,9 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.AdminReplicationMrfSummary::parse);
   }
 
-  /** 调用 `ADMIN_SET_REMOTE_TARGET`。 */
+  /** 调用 `ADMIN_SET_REMOTE_TARGET`，按 madmin 协议自动加密请求体。 */
   public Mono<String> setRemoteTarget(String bucket, byte[] body, String contentType) {
-    return executeToString("ADMIN_SET_REMOTE_TARGET", emptyMap(), map("bucket", bucket), emptyMap(), body, contentType);
+    return executeEncryptedBytesToString("ADMIN_SET_REMOTE_TARGET", emptyMap(), map("bucket", bucket), body);
   }
 
   /** 调用 `ADMIN_SET_REMOTE_TARGET`，不携带请求体。 */
@@ -2437,9 +2437,9 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return importBucketMetadata(null, null);
   }
 
-  /** 调用 `ADMIN_ADD_TIER`。 */
+  /** 调用 `ADMIN_ADD_TIER`，按 madmin 协议自动加密请求体。 */
   public Mono<String> addTier(byte[] body, String contentType) {
-    return executeToString("ADMIN_ADD_TIER", emptyMap(), emptyMap(), emptyMap(), body, contentType);
+    return executeEncryptedBytesToString("ADMIN_ADD_TIER", emptyMap(), emptyMap(), body);
   }
 
   /** 调用 `ADMIN_ADD_TIER`，不携带请求体。 */
@@ -2447,9 +2447,9 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return addTier(null, null);
   }
 
-  /** 调用 `ADMIN_EDIT_TIER`。 */
+  /** 调用 `ADMIN_EDIT_TIER`，按 madmin 协议自动加密请求体。 */
   public Mono<String> editTier(String tier, byte[] body, String contentType) {
-    return executeToString("ADMIN_EDIT_TIER", map("tier", tier), emptyMap(), emptyMap(), body, contentType);
+    return executeEncryptedBytesToString("ADMIN_EDIT_TIER", map("tier", tier), emptyMap(), body);
   }
 
   /** 调用 `ADMIN_EDIT_TIER`，不携带请求体。 */
@@ -2494,10 +2494,10 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return executeToString("ADMIN_TIER_STATS", emptyMap(), emptyMap(), emptyMap(), null, null);
   }
 
-  /** 调用 `ADMIN_SITE_REPLICATION_ADD`。 */
+  /** 调用 `ADMIN_SITE_REPLICATION_ADD`，按 madmin 协议自动加密请求体。 */
   public Mono<String> siteReplicationAdd(byte[] body, String contentType) {
-    return executeToString(
-        "ADMIN_SITE_REPLICATION_ADD", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
+    return executeEncryptedBytesToString(
+        "ADMIN_SITE_REPLICATION_ADD", emptyMap(), siteReplicationApiVersion(), body);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_ADD`，不携带请求体。 */
@@ -2609,10 +2609,10 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         "ADMIN_SR_PEER_IDP_SETTINGS", emptyMap(), siteReplicationApiVersion(), emptyMap(), null, null);
   }
 
-  /** 调用 `ADMIN_SITE_REPLICATION_EDIT`。 */
+  /** 调用 `ADMIN_SITE_REPLICATION_EDIT`，按 madmin 协议自动加密请求体。 */
   public Mono<String> siteReplicationEdit(byte[] body, String contentType) {
-    return executeToString(
-        "ADMIN_SITE_REPLICATION_EDIT", emptyMap(), siteReplicationApiVersion(), emptyMap(), body, contentType);
+    return executeEncryptedBytesToString(
+        "ADMIN_SITE_REPLICATION_EDIT", emptyMap(), siteReplicationApiVersion(), body);
   }
 
   /** 调用 `ADMIN_SITE_REPLICATION_EDIT`，不携带请求体。 */

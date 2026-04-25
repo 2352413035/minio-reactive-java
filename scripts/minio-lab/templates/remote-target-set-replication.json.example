@@ -2,7 +2,8 @@
   "type": "replication",
   "sourcebucket": "reactive-lab-bucket",
   "targetbucket": "reactive-lab-target-bucket",
-  "endpoint": "http://127.0.0.1:19000",
+  "arn": "arn:minio:replication:us-east-1:reactive-lab-target:reactive-lab-target-bucket",
+  "endpoint": "127.0.0.1:9000",
   "secure": false,
   "region": "us-east-1",
   "credentials": {

@@ -1999,6 +1999,7 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(methods.contains("DELETE"));
     Assertions.assertTrue(contentTypes.contains("application/json"));
     Assertions.assertTrue(contentTypes.contains("application/yaml"));
+    Assertions.assertTrue(contentTypes.contains("application/octet-stream"));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.addIdpConfigEntry("openid", "primary", new byte[0]));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.setBucketQuotaConfig(" ", jsonBody));
     Assertions.assertThrows(IllegalArgumentException.class, () -> admin.editTierConfig("warm-tier", null));
