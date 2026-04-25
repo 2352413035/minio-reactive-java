@@ -157,15 +157,15 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_SPEEDTEST',
-        'category': '资源压测',
-        'status': '需要压测窗口',
-        'evidence': '压测会消耗集群资源。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw bounded cluster speedtest 已验证',
+        'evidence': '阶段 120：独立 Docker lab 使用 1MiB、并发 1、2 秒窗口验证 typed/raw ADMIN_SPEEDTEST；强类型无参入口已禁用。',
     },
     {
         'route': 'ADMIN_SPEEDTEST_OBJECT',
-        'category': '资源压测',
-        'status': '需要压测窗口',
-        'evidence': '压测会消耗对象存储资源。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw bounded object speedtest 已验证',
+        'evidence': '阶段 120：独立 Docker lab 使用 1MiB、并发 1、2 秒窗口验证 typed/raw ADMIN_SPEEDTEST_OBJECT；强类型无参入口已禁用。',
     },
     {
         'route': 'ADMIN_SPEEDTEST_DRIVE',

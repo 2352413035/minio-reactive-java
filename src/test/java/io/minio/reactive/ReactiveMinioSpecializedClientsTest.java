@@ -16,7 +16,9 @@ import io.minio.reactive.messages.admin.AdminBinaryResult;
 import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminConfigHelp;
 import io.minio.reactive.messages.admin.AdminDataUsageSummary;
+import io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions;
 import io.minio.reactive.messages.admin.AdminStorageSummary;
+import io.minio.reactive.messages.admin.AdminSpeedtestOptions;
 import io.minio.reactive.messages.admin.AdminTextResult;
 import io.minio.reactive.messages.admin.AdminIdpConfigList;
 import io.minio.reactive.messages.admin.AdminPolicyEntities;
@@ -58,6 +60,7 @@ import io.minio.reactive.messages.sts.AssumeRoleWithCustomTokenRequest;
 import io.minio.reactive.util.MadminEncryptionSupport;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
@@ -138,7 +141,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 144, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 214, 18, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 219, 38, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -1940,11 +1943,13 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldBuildStage48AdminDiagnosticProbeRequestsAsText() {
     java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
     WebClient webClient =
         WebClient.builder()
             .exchangeFunction(
                 request -> {
                   paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
                   return Mono.just(
                       ClientResponse.create(HttpStatus.OK)
                           .body(stage48AdminDiagnosticProbeBody(request.url().getPath()))
@@ -1975,14 +1980,44 @@ class ReactiveMinioSpecializedClientsTest {
         "site-replication-devnull-ok", admin.runSiteReplicationDevnull().block().rawText());
     Assertions.assertEquals(
         "site-replication-netperf-ok", admin.runSiteReplicationNetperf().block().rawText());
-    Assertions.assertEquals("speedtest-ok", admin.runSpeedtest().block().rawText());
-    Assertions.assertEquals("speedtest-object-ok", admin.runObjectSpeedtest().block().rawText());
-    Assertions.assertEquals("speedtest-drive-ok", admin.runDriveSpeedtest().block().rawText());
-    Assertions.assertEquals("speedtest-net-ok", admin.runNetworkSpeedtest().block().rawText());
-    Assertions.assertEquals("speedtest-site-ok", admin.runSiteSpeedtest().block().rawText());
+    AdminSpeedtestOptions objectOptions =
+        AdminSpeedtestOptions.builder()
+            .sizeBytes(1024)
+            .concurrency(1)
+            .duration(Duration.ofSeconds(2))
+            .bucket("bucket1")
+            .noClear(true)
+            .enableSha256(true)
+            .enableMultipart(true)
+            .build();
+    AdminDriveSpeedtestOptions driveOptions =
+        AdminDriveSpeedtestOptions.builder()
+            .serial(true)
+            .blockSizeBytes(4096)
+            .fileSizeBytes(8192)
+            .build();
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.runSpeedtest().block());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.runObjectSpeedtest().block());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.runDriveSpeedtest().block());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.runNetworkSpeedtest().block());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.runSiteSpeedtest().block());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.speedtest().block());
+    Assertions.assertThrows(
+        IllegalArgumentException.class, () -> admin.speedtest((byte[]) null, null).block());
+    Assertions.assertEquals("speedtest-ok", admin.runSpeedtest(objectOptions).block().rawText());
+    Assertions.assertEquals("speedtest-object-ok", admin.runObjectSpeedtest(objectOptions).block().rawText());
+    Assertions.assertEquals("speedtest-drive-ok", admin.runDriveSpeedtest(driveOptions).block().rawText());
+    Assertions.assertEquals("speedtest-net-ok", admin.runNetworkSpeedtest(Duration.ofSeconds(10)).block().rawText());
+    Assertions.assertEquals("speedtest-site-ok", admin.runSiteSpeedtest(Duration.ofSeconds(10)).block().rawText());
     Assertions.assertEquals(
         "speedtest-ok",
-        raw.executeToString(MinioApiCatalog.byName("ADMIN_SPEEDTEST"))
+        raw.executeToString(
+                MinioApiCatalog.byName("ADMIN_SPEEDTEST"),
+                java.util.Collections.<String, String>emptyMap(),
+                objectOptions.toQueryParameters(),
+                java.util.Collections.<String, String>emptyMap(),
+                null,
+                null)
             .block());
 
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/client/devnull"));
@@ -1994,6 +2029,29 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/drive"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/net"));
     Assertions.assertTrue(paths.contains("/minio/admin/v3/speedtest/site"));
+    Assertions.assertTrue(
+        containsAllQueryParts(
+            queries,
+            "size=1024",
+            "duration=2s",
+            "concurrent=1",
+            "bucket=bucket1",
+            "noclear=true",
+            "enableSha256=true",
+            "enableMultipart=true"));
+    Assertions.assertTrue(
+        containsAllQueryParts(queries, "serial=true", "blocksize=4096", "filesize=8192"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "duration=10s"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> AdminSpeedtestOptions.builder().sizeBytes(1).concurrency(1).duration(Duration.ofSeconds(1)).build());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.runObjectSpeedtest((AdminSpeedtestOptions) null));
+    Assertions.assertThrows(
+        IllegalArgumentException.class, () -> AdminDriveSpeedtestOptions.builder().serial(true).build());
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> AdminDriveSpeedtestOptions.builder().blockSizeBytes(4096).build());
+    Assertions.assertThrows(IllegalArgumentException.class, () -> admin.runDriveSpeedtest((AdminDriveSpeedtestOptions) null));
   }
 
   @Test

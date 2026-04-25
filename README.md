@@ -269,6 +269,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/115-stage117-full-config-lab.md`
 - `docs/116-stage118-replication-diff-query-boundary.md`
 - `docs/117-stage119-idp-madmin-alignment.md`
+- `docs/118-stage120-speedtest-bounded-lab.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`

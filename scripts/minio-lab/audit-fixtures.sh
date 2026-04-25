@@ -113,6 +113,8 @@ printf -- '- site replication edit：%s\n' "$(body_presence MINIO_LAB_SITE_REPLI
 printf -- '- site replication remove：%s\n' "$(body_presence MINIO_LAB_SITE_REPLICATION_REMOVE_BODY MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE)"
 printf -- '- IDP config add：%s\n' "$(body_presence MINIO_LAB_ADD_IDP_CONFIG_BODY MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE)"
 printf -- '- IDP config update：%s（可选；没有 update 请求体时只执行 add/delete 闭环）\n' "$(body_presence MINIO_LAB_UPDATE_IDP_CONFIG_BODY MINIO_LAB_UPDATE_IDP_CONFIG_BODY_FILE)"
+printf -- '- speedtest bounded probes：开关 `%s`；object size `%s`；duration `%s` 秒；concurrency `%s`\n' "${MINIO_LAB_ENABLE_SPEEDTEST_PROBES:-false}" "${MINIO_LAB_SPEEDTEST_OBJECT_SIZE:-未设置}" "${MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS:-未设置}" "${MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY:-未设置}"
+printf -- '- drive speedtest bounded probe：开关 `%s`；block size `%s`；file size `%s`\n' "${MINIO_LAB_ENABLE_DRIVE_SPEEDTEST_PROBE:-false}" "${MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE:-未设置}" "${MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE:-未设置}"
 printf -- '- remote target 删除 ARN：%s（set 响应可解析 ARN 时可不预填）\n' "$(presence "${MINIO_LAB_REMOVE_REMOTE_TARGET_ARN:-}")"
 
 printf '\n矩阵准备度\n'
@@ -179,6 +181,27 @@ if [[ -z "$idp_missing" ]]; then
   print_row 'IDP config add/list/get/delete typed/raw' '可执行' '写入总开关 + 独立 OIDC/LDAP 夹具 + add 配置体；update 配置体可选' 'MINIO_LAB_DELETE_IDP_AFTER_TEST=true；finally typed delete' 'templates/idp-openid-config.txt.example'
 else
   print_row 'IDP config add/list/get/delete typed/raw' "未就绪：$idp_missing" '独立 OIDC/LDAP 夹具；不能使用共享认证链路' 'MINIO_LAB_DELETE_IDP_AFTER_TEST=true；必要时手工恢复 server config' 'templates/idp-openid-config.txt.example'
+fi
+
+speedtest_missing=""
+is_true "${MINIO_LAB_ENABLE_SPEEDTEST_PROBES:-false}" || append_missing speedtest_missing '缺 MINIO_LAB_ENABLE_SPEEDTEST_PROBES=true'
+[[ -n "${MINIO_LAB_BUCKET:-}" ]] || append_missing speedtest_missing '缺 MINIO_LAB_BUCKET'
+[[ "${MINIO_LAB_SPEEDTEST_OBJECT_SIZE:-0}" =~ ^[0-9]+$ ]] || append_missing speedtest_missing 'MINIO_LAB_SPEEDTEST_OBJECT_SIZE 必须是数字'
+[[ "${MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY:-0}" =~ ^[0-9]+$ ]] || append_missing speedtest_missing 'MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY 必须是数字'
+[[ "${MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS:-0}" =~ ^[0-9]+$ ]] || append_missing speedtest_missing 'MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS 必须是数字'
+if [[ "${MINIO_LAB_SPEEDTEST_OBJECT_SIZE:-0}" =~ ^[0-9]+$ && "${MINIO_LAB_SPEEDTEST_OBJECT_SIZE:-0}" -le 0 ]]; then
+  append_missing speedtest_missing 'MINIO_LAB_SPEEDTEST_OBJECT_SIZE 必须大于 0'
+fi
+if [[ "${MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY:-0}" =~ ^[0-9]+$ && "${MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY:-0}" -le 0 ]]; then
+  append_missing speedtest_missing 'MINIO_LAB_SPEEDTEST_OBJECT_CONCURRENCY 必须大于 0'
+fi
+if [[ "${MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS:-0}" =~ ^[0-9]+$ && "${MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS:-0}" -le 1 ]]; then
+  append_missing speedtest_missing 'MINIO_LAB_SPEEDTEST_OBJECT_DURATION_SECONDS 必须大于 1'
+fi
+if [[ -z "$speedtest_missing" ]]; then
+  print_row 'speedtest/object bounded typed/raw 探测' '可执行' '独立 lab + 显式 speedtest 开关 + 小 size/concurrency/duration + lab bucket' '测试自动清理 speedtest 前缀；仍只代表本次独立 lab 资源窗口' '无需额外模板'
+else
+  print_row 'speedtest/object bounded typed/raw 探测' "未就绪：$speedtest_missing" '独立 lab + 显式 speedtest 开关 + 小 size/concurrency/duration + lab bucket' '不在共享环境执行；失败不降低边界' '无需额外模板'
 fi
 
 if is_true "${MINIO_LAB_ENABLE_BATCH_JOB_PROBES:-false}"; then
