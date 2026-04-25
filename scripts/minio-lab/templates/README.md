@@ -1,6 +1,6 @@
 # 高风险 lab 请求体模板
 
-这些模板只用于 **独立、可删除、可回滚的 MinIO lab**。请先复制到仓库外的私有目录，再填入真实 endpoint、bucket、access key、secret key、ARN 或 jobID。
+这些模板只用于 **独立、可删除、可回滚的 MinIO lab**。请先复制到仓库外的私有目录，再填入真实 endpoint、bucket、access key、secret key 或 ARN；batch job 取消使用启动响应里的 jobId，不需要预填 jobID。
 
 ## 使用边界
 
@@ -16,8 +16,8 @@
 | `tier-add-minio.json.example` | `MINIO_LAB_ADD_TIER_BODY_FILE` | 新增 MinIO 类型 tier；名称必须大写 | `MINIO_LAB_REMOVE_TIER_AFTER_TEST=true` |
 | `tier-edit-creds.json.example` | `MINIO_LAB_EDIT_TIER_BODY_FILE` | 可选：编辑 tier 凭证 | 最终仍通过 remove tier 恢复 |
 | `remote-target-set-replication.json.example` | `MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE` | 新增 bucket replication target | 请求体内必须有 `arn`；删除优先使用 set 响应 ARN，必要时提供 `MINIO_LAB_REMOVE_REMOTE_TARGET_ARN` |
-| `batch-start-job.yaml.example` | `MINIO_LAB_BATCH_START_BODY_FILE` | 启动 batch job | 必须提供 cancel 请求体 |
-| `batch-cancel-job.yaml.example` | `MINIO_LAB_BATCH_CANCEL_BODY_FILE` | 取消刚启动的 batch job | `MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true` |
+| `batch-start-job.yaml.example` | `MINIO_LAB_BATCH_START_BODY_FILE` | 启动 batch job | 必须设置 `MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true`，取消时使用 start 响应 jobId |
+| `batch-cancel-job.yaml.example` | `MINIO_LAB_BATCH_CANCEL_BODY_FILE` | 旧式/手工取消说明 | 当前 SDK 不再要求；保留用于人工排错说明 |
 | `site-replication-add.json.example` | `MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE` | 新增站点复制配置 | 必须提供 remove 请求体 |
 | `site-replication-edit.json.example` | `MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE` | 可选：编辑站点复制配置 | 最终仍通过 remove 请求体恢复 |
 | `site-replication-remove.json.example` | `MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE` | 移除刚新增的站点复制配置 | `MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST=true` |

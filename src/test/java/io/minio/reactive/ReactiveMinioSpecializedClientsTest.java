@@ -4,6 +4,7 @@ import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AddServiceAccountRequest;
 import io.minio.reactive.messages.admin.AdminAccountSummary;
 import io.minio.reactive.messages.admin.AdminBatchJobList;
+import io.minio.reactive.messages.admin.AdminBatchJobStartResult;
 import io.minio.reactive.messages.admin.AdminBatchJobDescriptionSummary;
 import io.minio.reactive.messages.admin.AdminBatchJobStatusSummary;
 import io.minio.reactive.messages.admin.AdminBackgroundHealStatus;
@@ -137,7 +138,7 @@ class ReactiveMinioSpecializedClientsTest {
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
     assertAdvancedBaseline(ReactiveMinioClient.class, 144, 60, 5);
-    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 203, 18, 0);
+    assertAdvancedBaseline(ReactiveMinioAdminClient.class, 204, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
     assertAdvancedBaseline(ReactiveMinioMetricsClient.class, 6, 0, 0);
@@ -1640,6 +1641,7 @@ class ReactiveMinioSpecializedClientsTest {
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "removeRemoteTargetConfig");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "runReplicationDiff");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "startBatchJobRequest");
+    assertMonoMethodExists(ReactiveMinioAdminClient.class, "startBatchJobInfo");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "cancelBatchJobRequest");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "addTierConfig");
     assertMonoMethodExists(ReactiveMinioAdminClient.class, "editTierConfig");
@@ -1949,7 +1951,12 @@ class ReactiveMinioSpecializedClientsTest {
         admin.removeRemoteTargetConfig("bucket1", "arn1").block().rawText());
     Assertions.assertEquals(
         "replication-diff-ok", admin.runReplicationDiff("bucket1", jsonBody).block().rawText());
-    Assertions.assertEquals("batch-job-start-ok", admin.startBatchJobRequest(yamlBody).block().rawText());
+    String startJobJson = "{\"id\":\"job1\",\"type\":\"replicate\",\"user\":\"tester\",\"started\":\"2026-04-25T00:00:00Z\"}";
+    Assertions.assertEquals(startJobJson, admin.startBatchJobRequest(yamlBody).block().rawText());
+    AdminBatchJobStartResult batchStart = admin.startBatchJobInfo(yamlBody).block();
+    Assertions.assertEquals(startJobJson, batchStart.rawJson());
+    Assertions.assertEquals("job1", batchStart.jobId());
+    Assertions.assertEquals("batch-job-cancel-ok", admin.cancelBatchJobRequest("job1").block().rawText());
     Assertions.assertEquals("batch-job-cancel-ok", admin.cancelBatchJobRequest(yamlBody).block().rawText());
     Assertions.assertEquals("tier-add-ok", admin.addTierConfig(jsonBody).block().rawText());
     Assertions.assertEquals("tier-edit-ok", admin.editTierConfig("warm-tier", jsonBody).block().rawText());
@@ -1993,6 +2000,7 @@ class ReactiveMinioSpecializedClientsTest {
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "bucket=bucket1", "arn=arn1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "paths=bucket1/object1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "id=job1"));
     Assertions.assertTrue(containsAllQueryParts(queries, "api-version=1"));
     Assertions.assertTrue(methods.contains("PUT"));
     Assertions.assertTrue(methods.contains("POST"));
@@ -3033,7 +3041,7 @@ class ReactiveMinioSpecializedClientsTest {
       return "replication-diff-ok";
     }
     if (path.equals("/minio/admin/v3/start-job")) {
-      return "batch-job-start-ok";
+      return "{\"id\":\"job1\",\"type\":\"replicate\",\"user\":\"tester\",\"started\":\"2026-04-25T00:00:00Z\"}";
     }
     if (path.equals("/minio/admin/v3/cancel-job")) {
       return "batch-job-cancel-ok";

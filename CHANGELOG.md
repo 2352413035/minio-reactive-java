@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 108 batch job 独立 lab 矩阵补证
+
+- 新增 `AdminBatchJobStartResult`，强类型解析 `start-job` 返回的 `jobId`、类型、用户和启动时间。
+- `ReactiveMinioAdminClient` 新增 `startBatchJobInfo(...)` 和 `cancelBatchJobRequest(String jobId)`；`cancelBatchJob(String jobId)` 对齐 MinIO madmin，改为 `DELETE /cancel-job?id=<jobId>`。
+- 破坏性 lab 的 batch job 矩阵不再要求旧式 cancel YAML，请求模板、准备度审计和报告提示均改为从 start 响应解析 jobId 后取消。
+- JDK8/JDK17+ 均在双容器 Docker lab 中通过 batch start/status/cancel 的 typed/raw 写入恢复矩阵，并确认没有 lab 容器残留。
+- site replication 多站点矩阵、Crypto Gate 和正式发布工程材料仍是后续外部门禁；`destructive-blocked` 风险分类口径不在本阶段清零。
+
 ## 阶段 107 tier 独立 lab 写入恢复补证
 
 - 修正 tier MinIO 请求体模板：tier 名称必须大写，bucket 保持小写，endpoint 必须从源 MinIO 服务端进程视角填写可访问 URL。

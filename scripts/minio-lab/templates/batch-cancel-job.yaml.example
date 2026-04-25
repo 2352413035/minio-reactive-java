@@ -1,4 +1,5 @@
-# batch job 取消请求体示例。
-# jobID 必须替换为独立 lab 中刚启动、允许取消的任务 ID。
-# 使用方式：MINIO_LAB_BATCH_CANCEL_BODY_FILE=/secure/path/batch-cancel-job.yaml
+# batch job 取消请求体旧式说明。
+# 当前 SDK 已对齐 MinIO madmin：取消 batch job 时使用 DELETE /cancel-job?id=<jobId>，
+# jobId 来自 start-job 的 JSON 响应，因此 MINIO_LAB_BATCH_CANCEL_BODY_FILE 不再是必需项。
+# 本文件仅用于人工排错或对照旧式 body 夹具时参考，不应提交真实 jobId。
 jobID: lab-job-id

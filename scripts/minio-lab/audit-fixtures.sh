@@ -107,7 +107,7 @@ printf -- '- tier add：%s\n' "$(body_presence MINIO_LAB_ADD_TIER_BODY MINIO_LAB
 printf -- '- tier edit：%s\n' "$(body_presence MINIO_LAB_EDIT_TIER_BODY MINIO_LAB_EDIT_TIER_BODY_FILE)"
 printf -- '- remote target set：%s\n' "$(body_presence MINIO_LAB_SET_REMOTE_TARGET_BODY MINIO_LAB_SET_REMOTE_TARGET_BODY_FILE)"
 printf -- '- batch job start：%s\n' "$(body_presence MINIO_LAB_BATCH_START_BODY MINIO_LAB_BATCH_START_BODY_FILE)"
-printf -- '- batch job cancel：%s\n' "$(body_presence MINIO_LAB_BATCH_CANCEL_BODY MINIO_LAB_BATCH_CANCEL_BODY_FILE)"
+printf -- '- batch job cancel 旧式请求体：%s（当前 SDK 按 madmin 语义使用 start 响应 jobId 取消，不再要求该请求体）\n' "$(body_presence MINIO_LAB_BATCH_CANCEL_BODY MINIO_LAB_BATCH_CANCEL_BODY_FILE)"
 printf -- '- site replication add：%s\n' "$(body_presence MINIO_LAB_SITE_REPLICATION_ADD_BODY MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE)"
 printf -- '- site replication edit：%s\n' "$(body_presence MINIO_LAB_SITE_REPLICATION_EDIT_BODY MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE)"
 printf -- '- site replication remove：%s\n' "$(body_presence MINIO_LAB_SITE_REPLICATION_REMOVE_BODY MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE)"
@@ -180,12 +180,11 @@ fi
 batch_missing=""
 is_true "$write_enabled" || append_missing batch_missing '缺 MINIO_LAB_ALLOW_WRITE_FIXTURES=true'
 body_ready MINIO_LAB_BATCH_START_BODY MINIO_LAB_BATCH_START_BODY_FILE || append_missing batch_missing '缺 batch start 请求体'
-body_ready MINIO_LAB_BATCH_CANCEL_BODY MINIO_LAB_BATCH_CANCEL_BODY_FILE || append_missing batch_missing '缺 batch cancel 请求体'
 is_true "${MINIO_LAB_CANCEL_BATCH_AFTER_TEST:-false}" || append_missing batch_missing '缺 MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true'
 if [[ -z "$batch_missing" ]]; then
-  print_row 'batch job start/status/cancel' '可执行' '写入总开关 + start YAML + cancel YAML' 'MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true' 'templates/batch-start-job.yaml.example；batch-cancel-job.yaml.example'
+  print_row 'batch job start/status/cancel' '可执行' '写入总开关 + start YAML；取消使用 start 响应 jobId' 'MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true' 'templates/batch-start-job.yaml.example；batch-cancel-job.yaml.example（仅旧式说明）'
 else
-  print_row 'batch job start/status/cancel' "未就绪：$batch_missing" '写入总开关 + start YAML + cancel YAML' 'MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true' 'templates/batch-start-job.yaml.example；batch-cancel-job.yaml.example'
+  print_row 'batch job start/status/cancel' "未就绪：$batch_missing" '写入总开关 + start YAML；取消使用 start 响应 jobId' 'MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true' 'templates/batch-start-job.yaml.example；batch-cancel-job.yaml.example（仅旧式说明）'
 fi
 
 site_missing=""
@@ -202,6 +201,6 @@ fi
 printf '\n使用建议\n'
 printf -- '--------\n'
 printf '1. 先运行 start-docker-lab.sh 生成独立 MinIO，再把模板复制到仓库外的私有目录填写。\n'
-printf '2. 模板中的 accessKey、secretKey、endpoint、ARN、jobID 都必须属于本次独立 lab。\n'
+printf '2. 模板中的 accessKey、secretKey、endpoint、ARN 都必须属于本次独立 lab；batch cancel 会使用 start 响应中的 jobId，不需要预填 jobID。\n'
 printf '3. 准备好私有夹具后，再运行 audit-readiness.sh 通过硬门禁，最后运行 run-destructive-tests.sh 收集 typed/raw 证据。\n'
 printf '4. 未执行真实矩阵前，不要把 destructive-blocked 从统计中移除。\n'

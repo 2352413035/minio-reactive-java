@@ -185,13 +185,12 @@ MINIO_LAB_REMOVE_REMOTE_TARGET_AFTER_TEST=true
 ```properties
 MINIO_LAB_BATCH_JOB_CONTENT_TYPE=application/yaml
 MINIO_LAB_BATCH_START_BODY_FILE=/secure/path/batch-start-job.yaml
-MINIO_LAB_BATCH_CANCEL_BODY_FILE=/secure/path/batch-cancel-job.yaml
 MINIO_LAB_CANCEL_BATCH_AFTER_TEST=true
 ```
 
-测试会使用专用 Admin 客户端启动任务并读取状态，再使用 raw catalog 的 `ADMIN_CANCEL_BATCH_JOB` 取消任务；finally 中还会再次尝试专用客户端取消，降低残留任务风险。请求模板见 `scripts/minio-lab/templates/batch-start-job.yaml.example` 和 `scripts/minio-lab/templates/batch-cancel-job.yaml.example`。
+测试会使用专用 Admin 客户端启动任务并读取状态，再按 MinIO madmin 语义从 start 响应解析 jobId，然后使用 raw catalog 的 `ADMIN_CANCEL_BATCH_JOB?id=<jobId>` 取消任务；finally 中还会再次尝试专用客户端 `cancelBatchJob(jobId)`，降低残留任务风险。请求模板见 `scripts/minio-lab/templates/batch-start-job.yaml.example`；`batch-cancel-job.yaml.example` 仅保留为旧式/人工排错说明。
 
-batch job 模板中的 bucket、prefix 和 jobID 必须按独立 lab 的实际任务填写；如果无法稳定取消，不应开启该矩阵。
+batch job 模板中的 bucket、prefix、target endpoint 和 target credentials 必须按独立 lab 的实际资源填写；如果当前镜像无法稳定启动或取消，不应伪造通过证据，应把错误写入阶段文档。
 
 ### site replication add/edit/remove
 
