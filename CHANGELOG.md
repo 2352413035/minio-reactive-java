@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 75 新口径缺口审计
+
+- 新增 `docs/73-stage75-post-stage74-gap-audit.md`，基于 `encrypted-blocked = 11` 重新审计当前 SDK 缺口。
+- 结论：route parity、product-typed 与 raw-fallback 均已满格；剩余是 11 个加密边界、29 个破坏性边界和发布工程门禁。
+- 明确后续不应通过新增重复 API、伪装明文模型或共享端点破坏性写入来宣称完成。
+
 ## 阶段 74 IDP 加密边界统计修正
 
 - 能力矩阵把 `ADMIN_LIST_IDP_CONFIG` 与 `ADMIN_GET_IDP_CONFIG` 纳入 Crypto Gate 统计。
