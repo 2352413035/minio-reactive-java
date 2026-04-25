@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 83 最终完成边界判定
+
+- 新增 `docs/81-stage83-final-boundary.md`，明确当前“发布候选完成、正式发布阻塞于外部门禁”的结论。
+- 当前 route parity 233 / 233、product-typed 233 / 233、raw-fallback 0；剩余 11 个加密边界和 29 个破坏性边界需要外部证据。
+- 继续保持 `0.1.0-SNAPSHOT`，不打 tag、不发布 Maven。
+
 ## 阶段 82 mc 只读旁证刷新
 
 - 使用临时 `mc` 配置目录执行只读命令，刷新共享 MinIO ready、online、region、bucket/object 数和磁盘摘要证据。
