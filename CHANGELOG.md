@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 104 独立 Docker lab 破坏性矩阵补证
+
+- 新增 `scripts/minio-lab/start-docker-lab.sh`，可启动不占用共享 `9000/9001` 的一次性 Docker MinIO lab，并在 `/tmp` 生成私有配置，不输出凭证。
+- 新增 `docs/102-stage104-independent-docker-lab-matrix.md`，记录本次独立 lab typed/raw 证据和仍未放行的高风险矩阵。
+- JDK8/JDK17+ 分支均在独立 `127.0.0.1:19000` lab 中通过 config KV、bucket quota 写入恢复，以及 remote target typed/raw 只读探测。
+- tier 写入、remote target 写入、batch job 和 site replication 高风险矩阵仍未放行，`destructive-blocked` 继续保持 `29`。
+
 ## 阶段 103 Crypto Gate 自动解密准备
 
 - `EncryptedAdminResponse` 新增 `requiresSecretKey()`、`decrypt(secretKey)`、`decryptAsUtf8(secretKey)`，调用方可显式提供 secret key 解密已放行算法。
