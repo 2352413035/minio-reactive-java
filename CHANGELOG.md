@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 91 对象存储核心 API 同名覆盖收口
+
+- 新增 `PutObjectFanOutEntry`、`PutObjectFanOutResult`、`PutObjectFanOutResponse`，并实现 `ReactiveMinioClient.putObjectFanOut`。
+- 新增 `SnowballObject`，并实现 `ReactiveMinioClient.uploadSnowballObjects` 的非压缩 tar 自动解包上传路径。
+- 新增 `docs/89-stage91-object-api-full-name-parity.md`，记录 FanOut、Snowball、Snappy 压缩边界和剩余 SDK 对标重点。
+- 重新生成 minio-java 对标报告后，对象存储核心 API 精确同名达到 59 / 59，缺失 0 个；后续转向 Admin 别名语义、`*Args` builder 与 credentials provider 体系。
+
 ## 阶段 90 promptObject 推理请求入口
 
 - `ReactiveMinioClient` 新增 `promptObject` 多个强类型重载，按 POST + `lambdaArn` query + JSON body 调用 MinIO PromptObject 扩展。
