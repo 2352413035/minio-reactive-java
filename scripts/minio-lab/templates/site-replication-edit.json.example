@@ -1,8 +1,6 @@
 {
-  "sites": [
-    {
-      "name": "lab-peer-a",
-      "endpoint": "https://lab-peer-a.example.invalid"
-    }
-  ]
+  "name": "lab-site-b",
+  "endpoint": "http://lab-site-b-minio:9000",
+  "deploymentID": "<从 site-replication/info 读取的 peer deploymentID>",
+  "sync": "disable"
 }
