@@ -1,7 +1,8 @@
 package io.minio.reactive.messages.admin;
 
-import io.minio.reactive.util.MadminEncryptionSupport;
 import io.minio.reactive.util.MadminEncryptionAlgorithm;
+import io.minio.reactive.util.MadminEncryptionSupport;
+import java.nio.charset.StandardCharsets;
 
 /** 管理端返回的加密响应载荷。 */
 public final class EncryptedAdminResponse {
@@ -39,6 +40,26 @@ public final class EncryptedAdminResponse {
   public boolean decryptSupported() {
     MadminEncryptionAlgorithm algorithm = algorithm();
     return algorithm != null && algorithm.decryptSupported();
+  }
+
+  /** madmin 加密响应是否需要调用方提供对应账号的 secretKey 才能解密。 */
+  public boolean requiresSecretKey() {
+    return isEncrypted();
+  }
+
+  /**
+   * 使用调用方显式提供的 secretKey 解密载荷。
+   *
+   * <p>该方法只支持当前 Java 运行时已经放行的算法；MinIO 默认 Argon2id 系列载荷仍会抛出中文错误，调用方应保留
+   * `EncryptedAdminResponse` 作为回退边界，不能把失败结果伪装成空明文。
+   */
+  public byte[] decrypt(String secretKey) {
+    return MadminEncryptionSupport.decryptData(secretKey, encryptedData);
+  }
+
+  /** 使用 UTF-8 将解密后的明文字节转成字符串。 */
+  public String decryptAsUtf8(String secretKey) {
+    return new String(decrypt(secretKey), StandardCharsets.UTF_8);
   }
 
   /** 是否仍需要 Crypto Gate 放行后才能解密。 */
