@@ -4,6 +4,12 @@
 
 
 
+## 阶段 122 replication diff 双 MinIO 拓扑补证
+
+- 新增 `scripts/minio-lab/start-replication-diff-lab.sh`，自动创建 source/target 两个一次性 Docker MinIO，并配置 bucket replication。
+- JDK8/JDK17 分支均在双 MinIO 拓扑中验证 `ADMIN_REPLICATION_DIFF` typed/raw 路径。
+- `ADMIN_REPLICATION_DIFF` 从“拓扑或身份提供方”移动到“已有独立 lab 证据”；剩余破坏性证据从 14 降到 13。
+
 ## 阶段 121 drive speedtest 小文件独立 lab 补证
 
 - `DestructiveAdminIntegrationTest` 中的 drive speedtest 增加 raw `ADMIN_SPEEDTEST_DRIVE` 有界探测，与 typed `runDriveSpeedtest(AdminDriveSpeedtestOptions)` 形成双路径证据。

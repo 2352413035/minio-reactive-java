@@ -61,9 +61,9 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_REPLICATION_DIFF',
-        'category': '拓扑或身份提供方',
-        'status': '需要复制拓扑或维护窗口',
-        'evidence': '可能消耗复制资源；已有产品入口但未执行真实压测/差异扫描。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw replication diff 已验证',
+        'evidence': '阶段 122：双 MinIO Docker bucket replication 拓扑中验证 typed/raw ADMIN_REPLICATION_DIFF。',
     },
     {
         'route': 'ADMIN_START_BATCH_JOB',
