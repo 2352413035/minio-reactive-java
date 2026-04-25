@@ -433,7 +433,20 @@ class DestructiveAdminIntegrationTest {
               "speedtest-probe",
               "typed runDriveSpeedtest bounded",
               () -> admin.runDriveSpeedtest(driveOptions).block().rawText());
+      String rawDrive =
+          labStepValue(
+              "speedtest-probe",
+              "raw ADMIN_SPEEDTEST_DRIVE bounded",
+              () ->
+                  rawString(
+                      raw,
+                      "ADMIN_SPEEDTEST_DRIVE",
+                      emptyMap(),
+                      driveOptions.toQueryParameters(),
+                      null,
+                      null));
       Assertions.assertTrue(notBlank(typedDrive), "typed drive speedtest 应返回结果。");
+      Assertions.assertTrue(notBlank(rawDrive), "raw drive speedtest 应返回结果。");
     }
   }
 

@@ -4,9 +4,17 @@
 
 
 
+## 阶段 121 drive speedtest 小文件独立 lab 补证
+
+- `DestructiveAdminIntegrationTest` 中的 drive speedtest 增加 raw `ADMIN_SPEEDTEST_DRIVE` 有界探测，与 typed `runDriveSpeedtest(AdminDriveSpeedtestOptions)` 形成双路径证据。
+- `audit-fixtures.sh` 增加 drive speedtest 准备度行，要求显式开关与正数 `blocksize/filesize`，继续禁止共享环境默认执行。
+- JDK8/JDK17 分支均在一次性 Docker MinIO lab 中用 `serial=true`、`blocksize=4096`、`filesize=8192` 验证 typed/raw drive speedtest。
+- 破坏性边界中已有独立 lab 证据提升到 15，资源压测剩余 `ADMIN_SPEEDTEST_NET` 与 `ADMIN_SPEEDTEST_SITE`。
+
 ## 阶段 120 speedtest 有界参数与独立 lab 补证
 
 - 新增 `AdminSpeedtestOptions` 与 `AdminDriveSpeedtestOptions`，为 speedtest/object/drive/net/site 提供 madmin 风格 query 参数重载。
+- 无参/空 body 的 speedtest 强类型入口已降级为中文错误，防止调用方误触发服务端默认大资源压测；完全自定义请求请显式使用 raw client。
 - 破坏性 lab 增加 `MINIO_LAB_ENABLE_SPEEDTEST_PROBES` 与小资源窗口参数，默认仍关闭，避免共享环境资源消耗。
 - JDK8/JDK17 分支均在一次性 Docker MinIO lab 中通过 `ADMIN_SPEEDTEST` 与 `ADMIN_SPEEDTEST_OBJECT` 的 typed/raw 有界压测证据。
 - `ADMIN_SPEEDTEST_DRIVE`、`ADMIN_SPEEDTEST_NET`、`ADMIN_SPEEDTEST_SITE` 仍分别需要磁盘、分布式 erasure 或 site replication 专用拓扑。
