@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 77 独立破坏性 lab 门禁复核
+
+- 新增 `scripts/minio-lab/audit-readiness.sh`，用于在不连接 MinIO、不输出凭证的情况下审计独立 lab 门禁准备度。
+- 新增 `docs/75-stage77-destructive-lab-gate-review.md`，记录当前没有真实 `lab.properties`、无环境变量拒绝和共享端点拒绝的验证口径。
+- 本阶段不减少 `destructive-blocked = 29`，也不把共享 MinIO 当作真实破坏性写入验证通过。
+
 ## 阶段 76 Crypto Gate Pass 可执行清单
 
 - 新增 `docs/74-stage76-crypto-gate-execution-checklist.md`，把 Crypto Gate Pass 前必须完成的依赖审查、批准材料、测试矩阵和失败回退语义整理为清单。

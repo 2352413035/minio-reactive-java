@@ -46,6 +46,16 @@ scripts/minio-lab/run-destructive-tests.sh
 
 配置文件采用简单 `KEY=VALUE` 格式。脚本只读取键值，不执行配置文件中的 shell 代码。真实凭证和真实端点 不要提交到仓库。
 
+### 非破坏性准备度审计
+
+如果只是想确认当前 shell 或私有配置文件是否满足门禁，可以先运行：
+
+```bash
+scripts/minio-lab/audit-readiness.sh
+```
+
+这个脚本只读取配置并复用 `verify-env.sh`，不会连接 MinIO、不会执行写入测试，也不会输出 access key、secret key、请求体或签名。它通过时只表示“可以启动独立 lab 测试”，不代表 typed/raw 破坏性矩阵已经实际通过；真实证据仍然来自 `run-destructive-tests.sh` 生成的本机报告。
+
 ## config write + restore 用例
 
 如果要执行真实配置写入与恢复，还必须提供一组可回滚配置：
