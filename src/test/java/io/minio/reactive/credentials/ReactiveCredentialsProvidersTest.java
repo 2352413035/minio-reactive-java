@@ -124,6 +124,55 @@ class ReactiveCredentialsProvidersTest {
             Assertions.assertThrows(ProviderException.class, () -> new IamAwsProvider().fetch()));
   }
 
+
+  @Test
+  void shouldUseMinioJavaStyleProviderInAllClientBuilders() {
+    Provider provider = new StaticProvider("builder-ak", "builder-sk");
+
+    Assertions.assertNotNull(
+        io.minio.reactive.ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentialsProvider(provider)
+            .build());
+    Assertions.assertNotNull(
+        io.minio.reactive.ReactiveMinioAdminClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentialsProvider(provider)
+            .build());
+    Assertions.assertNotNull(
+        io.minio.reactive.ReactiveMinioRawClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentialsProvider(provider)
+            .build());
+    Assertions.assertNotNull(
+        io.minio.reactive.ReactiveMinioKmsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentialsProvider(provider)
+            .build());
+    Assertions.assertNotNull(
+        io.minio.reactive.ReactiveMinioStsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentialsProvider(provider)
+            .build());
+    Assertions.assertNotNull(
+        io.minio.reactive.ReactiveMinioMetricsClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentialsProvider(provider)
+            .build());
+    Assertions.assertNotNull(
+        io.minio.reactive.ReactiveMinioHealthClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .credentialsProvider(provider)
+            .build());
+  }
+
   private static void withSystemProperty(String key, String value, Runnable runnable) {
     String old = System.getProperty(key);
     try {

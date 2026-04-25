@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 97 Provider 与客户端 builder 桥接
+
+- 所有公开客户端 builder 新增 `credentialsProvider(io.minio.reactive.credentials.Provider)` 重载。
+- builder 内部统一使用 `ReactiveCredentialsProvider.from(provider)` 桥接，客户端运行时仍保持响应式凭证接口。
+- 新增 `docs/95-stage97-provider-builder-integration.md`，记录使用方式和边界。
+- `ReactiveCredentialsProvidersTest` 增加所有 builder 接受 `StaticProvider` 的覆盖。
+
 ## 阶段 96 credentials provider 类名覆盖收口
 
 - 新增 minio-java 同名 credentials provider 迁移层，覆盖 `Credentials`、`Provider`、静态、链式、环境变量、AWS/MinIO 配置文件、JWT、STS identity provider 和 IAM 边界类。
