@@ -349,6 +349,20 @@ class DestructiveAdminIntegrationTest {
   }
 
   @Test
+  void shouldExerciseIdpConfigMatrixOnlyInsideVerifiedLab() throws Exception {
+    assumeDestructiveLabEnabled();
+    assertVerifiedLabEnvironment();
+    boolean writeAllowed = "true".equalsIgnoreCase(labValue("MINIO_LAB_ALLOW_WRITE_FIXTURES"));
+    Assumptions.assumeTrue(
+        writeAllowed && hasIdpWriteFixture(),
+        "缺少 MINIO_LAB_ALLOW_WRITE_FIXTURES=true 或 IDP add/delete 夹具，跳过 IDP 实验矩阵。");
+
+    ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
+    exerciseIdpWriteFixture(admin, raw);
+  }
+
+  @Test
   void shouldWriteAndRestoreTierAndRemoteTargetOnlyInsideVerifiedLab() throws Exception {
     assumeDestructiveLabEnabled();
     assertVerifiedLabEnvironment();
@@ -465,6 +479,77 @@ class DestructiveAdminIntegrationTest {
             "MINIO_LAB_SITE_REPLICATION_REMOVE_BODY",
             "MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE")
         && "true".equalsIgnoreCase(labValue("MINIO_LAB_REMOVE_SITE_REPLICATION_AFTER_TEST"));
+  }
+
+  private static boolean hasIdpWriteFixture() {
+    return hasBody("MINIO_LAB_ADD_IDP_CONFIG_BODY", "MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE")
+        && "true".equalsIgnoreCase(labValue("MINIO_LAB_DELETE_IDP_AFTER_TEST"));
+  }
+
+  private static void exerciseIdpWriteFixture(
+      ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
+    String type = getenvOrDefault("MINIO_LAB_IDP_TYPE", "openid");
+    String name = getenvOrDefault("MINIO_LAB_IDP_NAME", "_");
+    String addBody =
+        labBody("MINIO_LAB_ADD_IDP_CONFIG_BODY", "MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE");
+    String updateBody =
+        labBody("MINIO_LAB_UPDATE_IDP_CONFIG_BODY", "MINIO_LAB_UPDATE_IDP_CONFIG_BODY_FILE");
+    try {
+      // IDP add/update 请求体在专用客户端内自动加密；raw 兜底路径必须由调用方显式加密。
+      runLabStep(
+          "idp-config-write",
+          "typed addIdpConfig",
+          () -> admin.addIdpConfigEntry(type, name, bytes(addBody), null).block());
+      Assertions.assertNotNull(
+          labStepValue("idp-config-write", "typed listIdpConfigs after add", () -> admin.listIdpConfigs(type).block()));
+      Assertions.assertNotNull(
+          labStepValue(
+              "idp-config-write",
+              "typed getIdpConfigInfo after add",
+              () -> admin.getIdpConfigInfo(type, name).block()));
+      labStepValue(
+          "idp-config-write",
+          "raw ADMIN_DELETE_IDP_CONFIG",
+          () -> rawString(raw, "ADMIN_DELETE_IDP_CONFIG", map("type", type, "name", name), emptyMap(), null, null));
+      labStepValue(
+          "idp-config-write",
+          "raw ADMIN_ADD_IDP_CONFIG",
+          () ->
+              rawString(
+                  raw,
+                  "ADMIN_ADD_IDP_CONFIG",
+                  map("type", type, "name", name),
+                  emptyMap(),
+                  encryptedLabBody(addBody),
+                  "application/octet-stream"));
+      Assertions.assertNotNull(
+          labStepValue("idp-config-write", "typed listIdpConfigs after raw add", () -> admin.listIdpConfigs(type).block()));
+      if (notBlank(updateBody)) {
+        runLabStep(
+            "idp-config-write",
+            "typed updateIdpConfig",
+            () -> admin.updateIdpConfigEntry(type, name, bytes(updateBody), null).block());
+        labStepValue(
+            "idp-config-write",
+            "raw ADMIN_UPDATE_IDP_CONFIG",
+            () ->
+                rawString(
+                    raw,
+                    "ADMIN_UPDATE_IDP_CONFIG",
+                    map("type", type, "name", name),
+                    emptyMap(),
+                    encryptedLabBody(updateBody),
+                    "application/octet-stream"));
+      }
+    } finally {
+      runLabStep(
+          "idp-config-restore",
+          "typed deleteIdpConfig finally",
+          () ->
+              admin.deleteIdpConfig(type, name)
+                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                  .block());
+    }
   }
 
   private static void exerciseTierWriteFixture(
