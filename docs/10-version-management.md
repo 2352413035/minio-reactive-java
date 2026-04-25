@@ -87,7 +87,7 @@ JDK17+ 分支：
 - `1b7f609`：阶段 76 Crypto Gate 放行清单检查点。
 - `2b5c4fc`：阶段 77 破坏性 lab 准备度门禁检查点。
 
-阶段 78 发布工程门禁口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag、不发布 Maven；route parity 233 / 233，product-typed 233 / 233，`raw-fallback = 0`。当前没有公开路由、产品入口或 raw-only 缺口；正式发布前必须先满足 Crypto Gate、独立 lab 和 Maven/tag 发布工程清单。阶段 77 已补充非破坏性 lab 准备度审计，但这不等于真实破坏性矩阵通过。
+阶段 115 发布工程门禁口径：两条线继续使用 `0.1.0-SNAPSHOT`，不打正式 tag、不发布 Maven；route parity 233 / 233，product-typed 233 / 233，`raw-fallback = 0`，Crypto Gate 已在阶段 111 进入 Pass 回归项。当前没有公开路由、产品入口或 raw-only 缺口；正式发布前仍必须先补齐发布负责人确认的许可证、SCM、developers、issueManagement、organization、distributionManagement、source/javadoc/sign/SBOM、发布仓库和回滚策略，并继续保留独立 lab 或维护窗口证据。阶段 114 的 destructive boundary 报告说明 `destructive-blocked = 29` 是风险分类，不是 API 缺口；阶段 115 的发布元数据清单说明这些 POM 字段不能由代码自动伪造。
 
 ## 验证命令
 

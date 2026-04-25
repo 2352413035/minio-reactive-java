@@ -2,6 +2,12 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 115 发布元数据安全准备清单
+
+- 新增 `docs/113-stage115-release-metadata-safe-prep.md`，把正式 Maven/tag 发布前必须由负责人确认的许可证、SCM、developers、发布仓库、签名、SBOM、Javadoc 和回滚输入整理成中文清单。
+- 明确本阶段不修改版本号、不写入猜测的 POM 元数据、不配置签名密钥、不发布 Maven、不创建 tag。
+- 发布门禁继续要求引用 POM 元数据报告和 destructive boundary 报告；Crypto Gate 已 Pass，但仍是每次发布的回归项。
+
 ## 阶段 114 破坏性边界机器报告
 
 - 新增 `scripts/report-destructive-boundary.py`，支持 Markdown/JSON 输出 29 个高风险 Admin 路由的分类报告。
