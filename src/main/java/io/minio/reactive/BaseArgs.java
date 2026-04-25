@@ -2,7 +2,9 @@ package io.minio.reactive;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Args 请求对象的公共基类。
@@ -49,5 +51,22 @@ public class BaseArgs {
       throw new IllegalArgumentException(name + " 不能为空");
     }
     return Collections.unmodifiableList(result);
+  }
+
+  protected static Map<String, String> copyStringMap(Map<String, String> values, String name) {
+    if (values == null || values.isEmpty()) {
+      throw new IllegalArgumentException(name + " 不能为空");
+    }
+    Map<String, String> result = new LinkedHashMap<String, String>();
+    for (Map.Entry<String, String> entry : values.entrySet()) {
+      if (entry.getKey() == null || entry.getKey().trim().isEmpty()) {
+        throw new IllegalArgumentException(name + " 不能包含空 key");
+      }
+      if (entry.getValue() == null) {
+        throw new IllegalArgumentException(name + " 不能包含空 value");
+      }
+      result.put(entry.getKey(), entry.getValue());
+    }
+    return Collections.unmodifiableMap(result);
   }
 }

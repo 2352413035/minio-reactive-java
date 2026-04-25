@@ -136,7 +136,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 134, 60, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 142, 60, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 203, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
@@ -735,6 +735,102 @@ class ReactiveMinioSpecializedClientsTest {
             RemoveObjectsArgs.builder()
                 .bucket("bucket1")
                 .objects(java.util.Collections.<String>emptyList())
+                .build());
+  }
+
+
+  @Test
+  void shouldBuildStage94BucketSubresourceArgsRequests() {
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    java.util.List<String> contentTypes = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  queries.add(request.url().getQuery());
+                  contentTypes.add(request.headers().getFirst("Content-Type"));
+                  return Mono.just(ClientResponse.create(HttpStatus.OK).body("{}").build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    java.util.Map<String, String> tags = new java.util.LinkedHashMap<String, String>();
+    tags.put("env", "test");
+
+    client.setBucketTags(SetBucketTagsArgs.builder().bucket("bucket1").tags(tags).build()).block();
+    client.deleteBucketTags(DeleteBucketTagsArgs.builder().bucket("bucket1").build()).block();
+    client
+        .setBucketPolicy(
+            SetBucketPolicyArgs.builder().bucket("bucket1").policyJson("{\"Version\":\"2012\"}").build())
+        .block();
+    client.deleteBucketPolicy(DeleteBucketPolicyArgs.builder().bucket("bucket1").build()).block();
+    client
+        .setBucketLifecycle(
+            SetBucketLifecycleArgs.builder()
+                .bucket("bucket1")
+                .lifecycleXml("<LifecycleConfiguration/>")
+                .build())
+        .block();
+    client
+        .setBucketVersioning(
+            SetBucketVersioningArgs.builder()
+                .bucket("bucket1")
+                .versioningXml("<VersioningConfiguration/>")
+                .build())
+        .block();
+    client
+        .setBucketNotification(
+            SetBucketNotificationArgs.builder()
+                .bucket("bucket1")
+                .notificationXml("<NotificationConfiguration/>")
+                .build())
+        .block();
+    client
+        .setBucketEncryption(
+            SetBucketEncryptionArgs.builder()
+                .bucket("bucket1")
+                .encryptionXml("<ServerSideEncryptionConfiguration/>")
+                .build())
+        .block();
+    client
+        .setObjectLockConfiguration(
+            SetObjectLockConfigurationArgs.builder()
+                .bucket("bucket1")
+                .objectLockXml("<ObjectLockConfiguration/>")
+                .build())
+        .block();
+    client
+        .setBucketReplication(
+            SetBucketReplicationArgs.builder()
+                .bucket("bucket1")
+                .replicationXml("<ReplicationConfiguration/>")
+                .build())
+        .block();
+
+    Assertions.assertTrue(containsAllQueryParts(queries, "tagging"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "policy"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "lifecycle"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "versioning"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "notification"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "encryption"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "object-lock"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "replication"));
+    Assertions.assertTrue(contentTypes.contains("application/json"));
+    Assertions.assertTrue(contentTypes.contains("application/xml"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> SetBucketPolicyArgs.builder().bucket("bucket1").policyJson("").build());
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            SetBucketTagsArgs.builder()
+                .bucket("bucket1")
+                .tags(java.util.Collections.<String, String>emptyMap())
                 .build());
   }
 

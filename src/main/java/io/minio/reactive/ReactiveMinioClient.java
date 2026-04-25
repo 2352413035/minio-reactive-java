@@ -820,13 +820,31 @@ public final class ReactiveMinioClient {
     return sign(request).flatMap(httpClient::exchangeToString).map(S3Xml::parseTagging);
   }
 
+  /** 使用 Args builder 风格获取 bucket 标签。 */
+  public Mono<Map<String, String>> getBucketTags(GetBucketTagsArgs args) {
+    GetBucketTagsArgs safeArgs = requireArgs(args, "GetBucketTagsArgs");
+    return getBucketTags(safeArgs.bucket());
+  }
+
   public Mono<Void> setBucketTags(String bucket, Map<String, String> tags) {
     return putTagging(request(HttpMethod.PUT, bucket, null).queryParameter("tagging", null), tags);
+  }
+
+  /** 使用 Args builder 风格设置 bucket 标签。 */
+  public Mono<Void> setBucketTags(SetBucketTagsArgs args) {
+    SetBucketTagsArgs safeArgs = requireArgs(args, "SetBucketTagsArgs");
+    return setBucketTags(safeArgs.bucket(), safeArgs.tags());
   }
 
   public Mono<Void> deleteBucketTags(String bucket) {
     S3Request request = request(HttpMethod.DELETE, bucket, null).queryParameter("tagging", null).build();
     return sign(request).flatMap(httpClient::exchangeToVoid);
+  }
+
+  /** 使用 Args builder 风格删除 bucket 标签。 */
+  public Mono<Void> deleteBucketTags(DeleteBucketTagsArgs args) {
+    DeleteBucketTagsArgs safeArgs = requireArgs(args, "DeleteBucketTagsArgs");
+    return deleteBucketTags(safeArgs.bucket());
   }
 
   /** 获取 bucket CORS 配置，返回规则列表模型。 */
@@ -839,6 +857,12 @@ public final class ReactiveMinioClient {
     return getBucketCorsConfiguration(bucket);
   }
 
+  /** 使用 Args builder 风格获取 bucket CORS 配置。 */
+  public Mono<BucketCorsConfiguration> getBucketCors(GetBucketCorsArgs args) {
+    GetBucketCorsArgs safeArgs = requireArgs(args, "GetBucketCorsArgs");
+    return getBucketCors(safeArgs.bucket());
+  }
+
   /** 设置 bucket CORS 配置。 */
   public Mono<Void> setBucketCorsConfiguration(String bucket, BucketCorsConfiguration configuration) {
     return putBucketSubresource(bucket, "cors", S3Xml.bucketCorsXml(configuration), "application/xml");
@@ -849,6 +873,12 @@ public final class ReactiveMinioClient {
     return setBucketCorsConfiguration(bucket, configuration);
   }
 
+  /** 使用 Args builder 风格设置 bucket CORS 配置。 */
+  public Mono<Void> setBucketCors(SetBucketCorsArgs args) {
+    SetBucketCorsArgs safeArgs = requireArgs(args, "SetBucketCorsArgs");
+    return setBucketCors(safeArgs.bucket(), safeArgs.configuration());
+  }
+
   /** 删除 bucket CORS 配置。 */
   public Mono<Void> deleteBucketCorsConfiguration(String bucket) {
     return deleteBucketSubresource(bucket, "cors");
@@ -857,6 +887,12 @@ public final class ReactiveMinioClient {
   /** 对齐 minio-java 方法名：删除 bucket CORS 配置。 */
   public Mono<Void> deleteBucketCors(String bucket) {
     return deleteBucketCorsConfiguration(bucket);
+  }
+
+  /** 使用 Args builder 风格删除 bucket CORS 配置。 */
+  public Mono<Void> deleteBucketCors(DeleteBucketCorsArgs args) {
+    DeleteBucketCorsArgs safeArgs = requireArgs(args, "DeleteBucketCorsArgs");
+    return deleteBucketCors(safeArgs.bucket());
   }
 
   /** 获取 bucket 静态网站配置摘要。 */
@@ -908,32 +944,83 @@ public final class ReactiveMinioClient {
     return getBucketSubresource(bucket, "policy");
   }
 
+  /** 使用 Args builder 风格获取 bucket policy。 */
+  public Mono<String> getBucketPolicy(GetBucketPolicyArgs args) {
+    GetBucketPolicyArgs safeArgs = requireArgs(args, "GetBucketPolicyArgs");
+    return getBucketPolicy(safeArgs.bucket());
+  }
+
   public Mono<Void> setBucketPolicy(String bucket, String policyJson) {
     return putBucketSubresource(bucket, "policy", policyJson, "application/json");
+  }
+
+  /** 使用 Args builder 风格设置 bucket policy。 */
+  public Mono<Void> setBucketPolicy(SetBucketPolicyArgs args) {
+    SetBucketPolicyArgs safeArgs = requireArgs(args, "SetBucketPolicyArgs");
+    return setBucketPolicy(safeArgs.bucket(), safeArgs.policyJson());
   }
 
   public Mono<Void> deleteBucketPolicy(String bucket) {
     return deleteBucketSubresource(bucket, "policy");
   }
 
+  /** 使用 Args builder 风格删除 bucket policy。 */
+  public Mono<Void> deleteBucketPolicy(DeleteBucketPolicyArgs args) {
+    DeleteBucketPolicyArgs safeArgs = requireArgs(args, "DeleteBucketPolicyArgs");
+    return deleteBucketPolicy(safeArgs.bucket());
+  }
+
   public Mono<String> getBucketLifecycle(String bucket) {
     return getBucketSubresource(bucket, "lifecycle");
+  }
+
+  /** 使用 Args builder 风格获取 bucket lifecycle。 */
+  public Mono<String> getBucketLifecycle(GetBucketLifecycleArgs args) {
+    GetBucketLifecycleArgs safeArgs = requireArgs(args, "GetBucketLifecycleArgs");
+    return getBucketLifecycle(safeArgs.bucket());
   }
 
   public Mono<Void> setBucketLifecycle(String bucket, String lifecycleXml) {
     return putBucketSubresource(bucket, "lifecycle", lifecycleXml, "application/xml");
   }
 
+  /** 使用 Args builder 风格设置 bucket lifecycle。 */
+  public Mono<Void> setBucketLifecycle(SetBucketLifecycleArgs args) {
+    SetBucketLifecycleArgs safeArgs = requireArgs(args, "SetBucketLifecycleArgs");
+    return setBucketLifecycle(safeArgs.bucket(), safeArgs.lifecycleXml());
+  }
+
   public Mono<Void> deleteBucketLifecycle(String bucket) {
     return deleteBucketSubresource(bucket, "lifecycle");
+  }
+
+  /** 使用 Args builder 风格删除 bucket lifecycle。 */
+  public Mono<Void> deleteBucketLifecycle(DeleteBucketLifecycleArgs args) {
+    DeleteBucketLifecycleArgs safeArgs = requireArgs(args, "DeleteBucketLifecycleArgs");
+    return deleteBucketLifecycle(safeArgs.bucket());
   }
 
   public Mono<String> getBucketVersioning(String bucket) {
     return getBucketSubresource(bucket, "versioning");
   }
 
+  /** 使用 Args builder 风格获取 bucket versioning。 */
+  public Mono<String> getBucketVersioning(GetBucketVersioningArgs args) {
+    GetBucketVersioningArgs safeArgs = requireArgs(args, "GetBucketVersioningArgs");
+    return getBucketVersioning(safeArgs.bucket());
+  }
+
   public Mono<Void> setBucketVersioning(String bucket, String versioningXml) {
     return putBucketSubresource(bucket, "versioning", versioningXml, "application/xml");
+  }
+
+  /** 使用 Args builder 风格设置 bucket versioning。 */
+  public Mono<Void> setBucketVersioning(SetBucketVersioningArgs args) {
+    SetBucketVersioningArgs safeArgs = requireArgs(args, "SetBucketVersioningArgs");
+    if (safeArgs.configuration() != null) {
+      return setBucketVersioningConfiguration(safeArgs.bucket(), safeArgs.configuration());
+    }
+    return setBucketVersioning(safeArgs.bucket(), safeArgs.versioningXml());
   }
 
   /** 获取 bucket versioning 配置，返回强类型对象。 */
@@ -957,8 +1044,23 @@ public final class ReactiveMinioClient {
     return getBucketSubresource(bucket, "notification");
   }
 
+  /** 使用 Args builder 风格获取 bucket notification。 */
+  public Mono<String> getBucketNotification(GetBucketNotificationArgs args) {
+    GetBucketNotificationArgs safeArgs = requireArgs(args, "GetBucketNotificationArgs");
+    return getBucketNotification(safeArgs.bucket());
+  }
+
   public Mono<Void> setBucketNotification(String bucket, String notificationXml) {
     return putBucketSubresource(bucket, "notification", notificationXml, "application/xml");
+  }
+
+  /** 使用 Args builder 风格设置 bucket notification。 */
+  public Mono<Void> setBucketNotification(SetBucketNotificationArgs args) {
+    SetBucketNotificationArgs safeArgs = requireArgs(args, "SetBucketNotificationArgs");
+    if (safeArgs.configuration() != null) {
+      return setBucketNotificationConfiguration(safeArgs.bucket(), safeArgs.configuration());
+    }
+    return setBucketNotification(safeArgs.bucket(), safeArgs.notificationXml());
   }
 
   /** 获取 bucket notification 配置，返回目标、事件和 filter 摘要。 */
@@ -975,6 +1077,12 @@ public final class ReactiveMinioClient {
   /** 对齐 minio-java：通过写入空 notification 配置删除通知规则。 */
   public Mono<Void> deleteBucketNotification(String bucket) {
     return setBucketNotificationConfiguration(bucket, BucketNotificationConfiguration.empty());
+  }
+
+  /** 使用 Args builder 风格删除 bucket notification。 */
+  public Mono<Void> deleteBucketNotification(DeleteBucketNotificationArgs args) {
+    DeleteBucketNotificationArgs safeArgs = requireArgs(args, "DeleteBucketNotificationArgs");
+    return deleteBucketNotification(safeArgs.bucket());
   }
 
   /**
@@ -1014,12 +1122,30 @@ public final class ReactiveMinioClient {
     return getBucketSubresource(bucket, "encryption");
   }
 
+  /** 使用 Args builder 风格获取 bucket encryption。 */
+  public Mono<String> getBucketEncryption(GetBucketEncryptionArgs args) {
+    GetBucketEncryptionArgs safeArgs = requireArgs(args, "GetBucketEncryptionArgs");
+    return getBucketEncryption(safeArgs.bucket());
+  }
+
   public Mono<Void> setBucketEncryption(String bucket, String encryptionXml) {
     return putBucketSubresource(bucket, "encryption", encryptionXml, "application/xml");
   }
 
+  /** 使用 Args builder 风格设置 bucket encryption。 */
+  public Mono<Void> setBucketEncryption(SetBucketEncryptionArgs args) {
+    SetBucketEncryptionArgs safeArgs = requireArgs(args, "SetBucketEncryptionArgs");
+    return setBucketEncryption(safeArgs.bucket(), safeArgs.encryptionXml());
+  }
+
   public Mono<Void> deleteBucketEncryption(String bucket) {
     return deleteBucketSubresource(bucket, "encryption");
+  }
+
+  /** 使用 Args builder 风格删除 bucket encryption。 */
+  public Mono<Void> deleteBucketEncryption(DeleteBucketEncryptionArgs args) {
+    DeleteBucketEncryptionArgs safeArgs = requireArgs(args, "DeleteBucketEncryptionArgs");
+    return deleteBucketEncryption(safeArgs.bucket());
   }
 
   public Mono<String> getBucketObjectLockConfiguration(String bucket) {
@@ -1031,6 +1157,12 @@ public final class ReactiveMinioClient {
     return getBucketObjectLockConfiguration(bucket);
   }
 
+  /** 使用 Args builder 风格获取 bucket 默认对象锁配置。 */
+  public Mono<String> getObjectLockConfiguration(GetObjectLockConfigurationArgs args) {
+    GetObjectLockConfigurationArgs safeArgs = requireArgs(args, "GetObjectLockConfigurationArgs");
+    return getObjectLockConfiguration(safeArgs.bucket());
+  }
+
   public Mono<Void> setBucketObjectLockConfiguration(String bucket, String objectLockXml) {
     return putBucketSubresource(bucket, "object-lock", objectLockXml, "application/xml");
   }
@@ -1040,22 +1172,53 @@ public final class ReactiveMinioClient {
     return setBucketObjectLockConfiguration(bucket, objectLockXml);
   }
 
+  /** 使用 Args builder 风格设置 bucket 默认对象锁配置。 */
+  public Mono<Void> setObjectLockConfiguration(SetObjectLockConfigurationArgs args) {
+    SetObjectLockConfigurationArgs safeArgs = requireArgs(args, "SetObjectLockConfigurationArgs");
+    return setObjectLockConfiguration(safeArgs.bucket(), safeArgs.objectLockXml());
+  }
+
   /** 对齐 minio-java：通过写入空对象锁配置删除默认保留配置。 */
   public Mono<Void> deleteObjectLockConfiguration(String bucket) {
     return setBucketObjectLockConfiguration(
         bucket, "<ObjectLockConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"/>");
   }
 
+  /** 使用 Args builder 风格删除 bucket 默认对象锁配置。 */
+  public Mono<Void> deleteObjectLockConfiguration(DeleteObjectLockConfigurationArgs args) {
+    DeleteObjectLockConfigurationArgs safeArgs =
+        requireArgs(args, "DeleteObjectLockConfigurationArgs");
+    return deleteObjectLockConfiguration(safeArgs.bucket());
+  }
+
   public Mono<String> getBucketReplication(String bucket) {
     return getBucketSubresource(bucket, "replication");
+  }
+
+  /** 使用 Args builder 风格获取 bucket replication。 */
+  public Mono<String> getBucketReplication(GetBucketReplicationArgs args) {
+    GetBucketReplicationArgs safeArgs = requireArgs(args, "GetBucketReplicationArgs");
+    return getBucketReplication(safeArgs.bucket());
   }
 
   public Mono<Void> setBucketReplication(String bucket, String replicationXml) {
     return putBucketSubresource(bucket, "replication", replicationXml, "application/xml");
   }
 
+  /** 使用 Args builder 风格设置 bucket replication。 */
+  public Mono<Void> setBucketReplication(SetBucketReplicationArgs args) {
+    SetBucketReplicationArgs safeArgs = requireArgs(args, "SetBucketReplicationArgs");
+    return setBucketReplication(safeArgs.bucket(), safeArgs.replicationXml());
+  }
+
   public Mono<Void> deleteBucketReplication(String bucket) {
     return deleteBucketSubresource(bucket, "replication");
+  }
+
+  /** 使用 Args builder 风格删除 bucket replication。 */
+  public Mono<Void> deleteBucketReplication(DeleteBucketReplicationArgs args) {
+    DeleteBucketReplicationArgs safeArgs = requireArgs(args, "DeleteBucketReplicationArgs");
+    return deleteBucketReplication(safeArgs.bucket());
   }
 
   /** 获取旧版 bucket replication metrics JSON 包装。 */

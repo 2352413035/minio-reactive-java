@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 94 bucket 子资源 Args builder 补齐
+
+- 新增 26 个 bucket 子资源 `*Args` 类，覆盖 tags、CORS、policy、lifecycle、versioning、notification、encryption、object-lock、replication 的 get/set/delete 迁移入口。
+- `ReactiveMinioClient` 新增对应 Args 重载，继续复用既有强类型方法和 XML/JSON 子资源流程。
+- `BaseArgs` 增加字符串 Map 防御性复制和中文校验，避免空 tags/key/value 进入 HTTP 层。
+- 新增 `docs/92-stage94-bucket-subresource-args-builder.md`，记录 bucket 子资源 Args 范围、边界和后续配置对象深化方向。
+- 重新生成 minio-java 对标报告后，`*Args` builder 从 22 / 86 提升到 48 / 86。
+
 ## 阶段 93 对象存储高频 Args builder 起步
 
 - 新增 22 个对象存储相关 `*Args` 类，覆盖 bucket、object、文件上传下载、append、compose、presign、FanOut 和 Snowball 的高频迁移路径。
