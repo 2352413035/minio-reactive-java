@@ -161,9 +161,9 @@ is_true "$write_enabled" || append_missing tier_write_missing '缺 MINIO_LAB_ALL
 body_ready MINIO_LAB_ADD_TIER_BODY MINIO_LAB_ADD_TIER_BODY_FILE || append_missing tier_write_missing '缺 tier add 请求体'
 is_true "${MINIO_LAB_REMOVE_TIER_AFTER_TEST:-false}" || append_missing tier_write_missing '缺 MINIO_LAB_REMOVE_TIER_AFTER_TEST=true'
 if [[ -z "$tier_write_missing" ]]; then
-  print_row 'tier add/edit/remove 写入恢复' '可执行' '写入总开关 + tier 名称 + add 请求体；edit 请求体可选' 'MINIO_LAB_REMOVE_TIER_AFTER_TEST=true' 'templates/tier-add-minio.json.example；tier-edit-creds.json.example'
+  print_row 'tier add/edit/remove 写入恢复' '可执行' '写入总开关 + 大写 tier 名称 + add 请求体；edit 请求体可选' 'MINIO_LAB_REMOVE_TIER_AFTER_TEST=true' 'templates/tier-add-minio.json.example；tier-edit-creds.json.example'
 else
-  print_row 'tier add/edit/remove 写入恢复' "未就绪：$tier_write_missing" '写入总开关 + tier 名称 + add 请求体；edit 请求体可选' 'MINIO_LAB_REMOVE_TIER_AFTER_TEST=true' 'templates/tier-add-minio.json.example；tier-edit-creds.json.example'
+  print_row 'tier add/edit/remove 写入恢复' "未就绪：$tier_write_missing" '写入总开关 + 大写 tier 名称 + add 请求体；edit 请求体可选' 'MINIO_LAB_REMOVE_TIER_AFTER_TEST=true' 'templates/tier-add-minio.json.example；tier-edit-creds.json.example'
 fi
 
 remote_write_missing=""

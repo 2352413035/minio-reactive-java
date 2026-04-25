@@ -146,7 +146,7 @@ MINIO_LAB_ALLOW_WRITE_FIXTURES=true
 ### tier add/edit/remove
 
 ```properties
-MINIO_LAB_TIER_WRITE_NAME=reactive-lab-tier
+MINIO_LAB_TIER_WRITE_NAME=REACTIVE-LAB-TIER
 MINIO_LAB_TIER_WRITE_CONTENT_TYPE=application/json
 MINIO_LAB_ADD_TIER_BODY=<仅属于独立 lab 的 add tier 请求体>
 MINIO_LAB_ADD_TIER_BODY_FILE=<可选，本机私有请求体文件>
@@ -157,7 +157,7 @@ MINIO_LAB_REMOVE_TIER_AFTER_TEST=true
 
 测试会先使用 `ReactiveMinioAdminClient` 写入，再使用 `ReactiveMinioRawClient` 的 catalog 路由交叉验证，最后删除该 tier。请求体可能包含远端存储信息，报告只记录是否设置，不输出内容。
 
-可复制 `scripts/minio-lab/templates/tier-add-minio.json.example` 和 `scripts/minio-lab/templates/tier-edit-creds.json.example` 到仓库外私有目录后填写。`edit` 请求体是可选项；最小闭环只要求 add 请求体与最终 remove 恢复。
+可复制 `scripts/minio-lab/templates/tier-add-minio.json.example` 和 `scripts/minio-lab/templates/tier-edit-creds.json.example` 到仓库外私有目录后填写。tier 名称必须大写；MinIO 类型 tier 的 endpoint 要从源 MinIO 服务端视角填写可访问 URL，Docker 场景下通常不是宿主机映射端口。`edit` 请求体是可选项；最小闭环只要求 add 请求体与最终 remove 恢复。
 
 ### remote target set/remove
 

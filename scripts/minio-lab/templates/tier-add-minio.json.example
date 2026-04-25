@@ -1,9 +1,9 @@
 {
   "Version": "v1",
   "Type": "minio",
-  "Name": "reactive-lab-tier",
+  "Name": "REACTIVE-LAB-TIER",
   "MinIO": {
-    "Endpoint": "http://127.0.0.1:19000",
+    "Endpoint": "http://127.0.0.1:9000",
     "AccessKey": "<仅本机私有>",
     "SecretKey": "<仅本机私有>",
     "Bucket": "reactive-lab-tier-bucket",

@@ -78,7 +78,7 @@ minio.content=你好，来自 reactive minio sdk
 | 产品强类型成熟度 | S3 77 / 77、Admin 128 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示风险接口已经可以在共享环境中真实执行。 |
 | 风险边界 | Admin 仍有 11 个加密响应边界、29 个破坏性操作边界；破坏性写入只允许在独立 lab 通过显式写入夹具证明，不能在共享环境中伪装成“普通已完成”。 |
 
-阶段 84 已按独立 Docker lab 口径补充真实破坏性证据：JDK8 与 JDK17+ 分支均通过 `DestructiveAdminIntegrationTest`，覆盖 config KV 与 bucket quota 的 typed/raw 写入、读取和恢复，以及 remote target 的 typed/raw 只读探测；阶段 105 已补齐 tier、remote target、batch job、site replication 的模板与夹具审计脚本；阶段 106 已把 tier、remote target set、site replication add/edit 的专用客户端请求体切换为 madmin 加密语义，并在双分支一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵。但 tier、batch job、site replication 仍需要额外私有夹具和真实恢复证据，因此破坏性边界不能直接清零。
+阶段 84 已按独立 Docker lab 口径补充真实破坏性证据：JDK8 与 JDK17+ 分支均通过 `DestructiveAdminIntegrationTest`，覆盖 config KV 与 bucket quota 的 typed/raw 写入、读取和恢复，以及 remote target 的 typed/raw 只读探测；阶段 105 已补齐 tier、remote target、batch job、site replication 的模板与夹具审计脚本；阶段 106 已把 tier、remote target set、site replication add/edit 的专用客户端请求体切换为 madmin 加密语义，并在双分支一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵；阶段 107 又在双分支双容器 Docker lab 通过 tier add/remove typed/raw 写入恢复矩阵。但 tier edit、batch job、site replication 仍需要额外私有夹具和真实恢复证据，因此破坏性边界不能直接清零。
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md` 和 `.omx/reports/capability-matrix.md`。
 
@@ -256,6 +256,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/102-stage104-independent-docker-lab-matrix.md`
 - `docs/103-stage105-high-risk-lab-fixture-authoring.md`
 - `docs/104-stage106-madmin-encrypted-write-alignment.md`
+- `docs/105-stage107-tier-lab-matrix.md`
 - `docs/release-gates.md`
 - `CHANGELOG.md`
 - `scripts/madmin-fixtures/`
