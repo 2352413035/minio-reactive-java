@@ -136,7 +136,7 @@ class ReactiveMinioSpecializedClientsTest {
 
   @Test
   void shouldKeepAdvancedCompatibilityBaselineForMigration() {
-    assertAdvancedBaseline(ReactiveMinioClient.class, 142, 60, 5);
+    assertAdvancedBaseline(ReactiveMinioClient.class, 144, 60, 5);
     assertAdvancedBaseline(ReactiveMinioAdminClient.class, 203, 18, 0);
     assertAdvancedBaseline(ReactiveMinioKmsClient.class, 8, 0, 0);
     assertAdvancedBaseline(ReactiveMinioStsClient.class, 14, 6, 0);
@@ -832,6 +832,101 @@ class ReactiveMinioSpecializedClientsTest {
                 .bucket("bucket1")
                 .tags(java.util.Collections.<String, String>emptyMap())
                 .build());
+  }
+
+
+  @Test
+  void shouldBuildStage95RemainingObjectArgsRequests() {
+    java.util.List<String> methods = new java.util.ArrayList<String>();
+    java.util.List<String> paths = new java.util.ArrayList<String>();
+    java.util.List<String> queries = new java.util.ArrayList<String>();
+    WebClient webClient =
+        WebClient.builder()
+            .exchangeFunction(
+                request -> {
+                  methods.add(request.method().name());
+                  paths.add(request.url().getPath());
+                  queries.add(request.url().getQuery());
+                  return Mono.just(
+                      ClientResponse.create(HttpStatus.OK)
+                          .header("ETag", "\"etag-2\"")
+                          .body("body")
+                          .build());
+                })
+            .build();
+    ReactiveMinioClient client =
+        ReactiveMinioClient.builder()
+            .endpoint("http://localhost:9000")
+            .region("us-east-1")
+            .webClient(webClient)
+            .credentials("ak", "sk")
+            .build();
+    java.util.Map<String, String> tags = new java.util.LinkedHashMap<String, String>();
+    tags.put("kind", "object");
+
+    client.makeBucket(CreateBucketArgs.builder().bucket("bucket2").build()).block();
+    Assertions.assertTrue(client.bucketExists(HeadBucketArgs.builder().bucket("bucket2").build()).block());
+    client.statObject(HeadObjectArgs.builder().bucket("bucket2").object("object2").build()).block();
+    client
+        .setObjectTags(
+            SetObjectTagsArgs.builder().bucket("bucket2").object("object2").tags(tags).build())
+        .block();
+    client.deleteObjectTags(DeleteObjectTagsArgs.builder().bucket("bucket2").object("object2").build()).block();
+    client
+        .enableObjectLegalHold(
+            EnableObjectLegalHoldArgs.builder().bucket("bucket2").object("object2").versionId("v1").build())
+        .block();
+    client
+        .disableObjectLegalHold(
+            DisableObjectLegalHoldArgs.builder().bucket("bucket2").object("object2").versionId("v1").build())
+        .block();
+    client
+        .promptObject(
+            PromptObjectArgs.builder()
+                .bucket("bucket2")
+                .object("object2")
+                .lambdaArn("arn:minio:lambda:test")
+                .prompt("请总结对象")
+                .build())
+        .collectList()
+        .block();
+    client
+        .listenBucketNotification(
+            ListenBucketNotificationArgs.builder().bucket("bucket2").events("s3:ObjectCreated:*").build())
+        .collectList()
+        .block();
+    client
+        .uploadPart(
+            UploadPartArgs.builder()
+                .bucket("bucket2")
+                .object("object2")
+                .uploadId("upload-1")
+                .partNumber(1)
+                .content("part".getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                .build())
+        .block();
+    client
+        .abortMultipartUpload(
+            AbortMultipartUploadArgs.builder()
+                .bucket("bucket2")
+                .object("object2")
+                .uploadId("upload-1")
+                .build())
+        .block();
+
+    Assertions.assertTrue(methods.contains("HEAD"));
+    Assertions.assertTrue(methods.contains("PUT"));
+    Assertions.assertTrue(methods.contains("POST"));
+    Assertions.assertTrue(methods.contains("DELETE"));
+    Assertions.assertTrue(paths.contains("/bucket2/object2"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "tagging"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "legal-hold", "versionId=v1"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "lambdaArn=arn:minio:lambda:test"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "events=s3:ObjectCreated:*"));
+    Assertions.assertTrue(containsAllQueryParts(queries, "partNumber=1", "uploadId=upload-1"));
+    Assertions.assertThrows(
+        IllegalArgumentException.class,
+        () -> PromptObjectArgs.builder().bucket("bucket2").object("object2").prompt("x").build());
   }
 
 

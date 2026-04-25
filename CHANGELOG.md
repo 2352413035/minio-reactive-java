@@ -2,6 +2,14 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 95 剩余对象与分片 Args builder 收口
+
+- 新增剩余 38 个 `*Args` 类，覆盖对象治理、分片上传、PromptObject、SelectObjectContent、通知监听和 minio-java 基础继承体系名称。
+- `ReactiveMinioClient` 为可执行 Args 增加重载，继续委托既有强类型方法；基础继承体系类只作为迁移兼容父类，不伪装成独立业务能力。
+- `scripts/report-minio-java-parity.py` 结论增加 Args 完成口径，避免 Args 已满格后继续提示 Args 是主要缺口。
+- 新增 `docs/93-stage95-remaining-object-args-builder.md`，记录 Args 收口范围、边界和后续 credentials provider 重点。
+- 重新生成 minio-java 对标报告后，`*Args` builder 达到 86 / 86；对象和 Admin 核心 API 继续保持精确同名满格。
+
 ## 阶段 94 bucket 子资源 Args builder 补齐
 
 - 新增 26 个 bucket 子资源 `*Args` 类，覆盖 tags、CORS、policy、lifecycle、versioning、notification、encryption、object-lock、replication 的 get/set/delete 迁移入口。

@@ -260,7 +260,12 @@ def markdown(report):
         len(admin_api["missing"]) == 0
         and len(admin_api["aliasOrPartial"]) == 0
     )
-    if object_done and admin_done:
+    args_done = report["args"]["reactiveCount"] >= report["args"]["minioJavaCount"]
+    if object_done and admin_done and args_done:
+        lines.append(
+            "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API、Admin 核心 API 与 `*Args` 类名已经达到精确同名收口，后续重点转向凭证 Provider、Admin Crypto 自动解密、结果模型深化和正式发布工程。"
+        )
+    elif object_done and admin_done:
         lines.append(
             "服务端 route catalog 覆盖不能替代 minio-java SDK 对标。当前对象存储核心 API 与 Admin 核心 API 已达到精确同名收口，后续重点转向 `*Args` builder、凭证 Provider、Admin Crypto 自动解密和正式发布工程。"
         )
