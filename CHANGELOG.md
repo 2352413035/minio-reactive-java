@@ -2,6 +2,13 @@
 
 本文件记录 SDK 里程碑级变化。当前项目仍处于 `0.1.0-SNAPSHOT`，阶段 26 是“对标 MinIO 路由完整、调用入口完整、风险边界明确”的发布候选收口，不等同于 1.0 稳定版。
 
+## 阶段 110 破坏性 lab 缺口再审计与 tier edit 补证
+
+- 修正 tier edit 模板：按 madmin-go `TierCreds` 使用 `access` / `secret` 字段，不再使用旧式 `AccessKey` / `SecretKey`。
+- JDK8/JDK17+ 均在双容器 Docker lab 中通过 tier add/edit/remove typed/raw 矩阵，包含 typed edit 与 raw `ADMIN_EDIT_TIER`。
+- 新增阶段110缺口审计文档，说明 `destructive-blocked = 29` 是风险分类计数，不是 SDK 功能缺口。
+- service restart/update、decommission、rebalance、force-unlock、speedtest 等仍保留维护窗口边界；site replication edit 真实 endpoint/deploymentID 变更后续单独判断。
+
 ## 阶段 109 site replication 多站点 lab 矩阵补证
 
 - 修正 site replication add 模板：请求体对齐 madmin-go 的 `PeerSite[]` 数组，字段名使用 `endpoints`，不再使用旧式 `{"sites": [...]}` 包装。
