@@ -4,6 +4,7 @@ import io.minio.reactive.ReactiveMinioAdminClient;
 import io.minio.reactive.ReactiveMinioRawClient;
 import io.minio.reactive.catalog.MinioApiCatalog;
 import io.minio.reactive.messages.admin.AdminBatchJobList;
+import io.minio.reactive.messages.admin.AdminBatchJobStartResult;
 import io.minio.reactive.messages.admin.AdminBucketQuota;
 import io.minio.reactive.messages.admin.AdminJsonResult;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
@@ -371,7 +372,6 @@ class DestructiveAdminIntegrationTest {
 
   private static boolean hasBatchJobWriteFixture() {
     return hasBody("MINIO_LAB_BATCH_START_BODY", "MINIO_LAB_BATCH_START_BODY_FILE")
-        && hasBody("MINIO_LAB_BATCH_CANCEL_BODY", "MINIO_LAB_BATCH_CANCEL_BODY_FILE")
         && "true".equalsIgnoreCase(labValue("MINIO_LAB_CANCEL_BATCH_AFTER_TEST"));
   }
 
@@ -521,32 +521,40 @@ class DestructiveAdminIntegrationTest {
       ReactiveMinioAdminClient admin, ReactiveMinioRawClient raw) {
     String startBody =
         labBody("MINIO_LAB_BATCH_START_BODY", "MINIO_LAB_BATCH_START_BODY_FILE");
-    String cancelBody =
-        labBody("MINIO_LAB_BATCH_CANCEL_BODY", "MINIO_LAB_BATCH_CANCEL_BODY_FILE");
     String contentType = getenvOrDefault("MINIO_LAB_BATCH_JOB_CONTENT_TYPE", "application/yaml");
+    final String[] jobId = {""};
     try {
-      // batch job 只在独立 lab 中启动；取消动作同时覆盖 raw 兜底路径。
-      runLabStep(
-          "batch-write",
-          "typed startBatchJob",
-          () -> admin.startBatchJob(bytes(startBody), contentType).block());
+      // batch job start 返回 jobId；MinIO madmin 的 status/cancel 都使用该 ID 查询参数。
+      AdminBatchJobStartResult start =
+          labStepValue(
+              "batch-write",
+              "typed startBatchJobInfo",
+              () -> admin.startBatchJobInfo(bytes(startBody), contentType).block());
+      Assertions.assertNotNull(start);
+      jobId[0] = start.jobId();
+      Assertions.assertTrue(notBlank(jobId[0]), "batch job 启动响应缺少 jobId，无法安全取消。");
       Assertions.assertNotNull(
           labStepValue("batch-write", "typed listBatchJobsInfo", () -> admin.listBatchJobsInfo().block()));
       Assertions.assertNotNull(
           labStepValue(
-              "batch-write", "typed getBatchJobStatusInfo", () -> admin.getBatchJobStatusInfo().block()));
+              "batch-write",
+              "typed getBatchJobStatusInfo(jobId)",
+              () -> admin.getBatchJobStatusInfo(jobId[0]).block()));
       labStepValue(
           "batch-write",
           "raw ADMIN_CANCEL_BATCH_JOB",
-          () -> rawString(raw, "ADMIN_CANCEL_BATCH_JOB", emptyMap(), emptyMap(), bytes(cancelBody), contentType));
+          () -> rawString(raw, "ADMIN_CANCEL_BATCH_JOB", emptyMap(), map("id", jobId[0]), null, null));
     } finally {
-      runLabStep(
-          "batch-restore",
-          "typed cancelBatchJob finally",
-          () ->
-              admin.cancelBatchJob(bytes(cancelBody), contentType)
-                  .onErrorResume(error -> reactor.core.publisher.Mono.empty())
-                  .block());
+      final String cancelId = jobId[0];
+      if (notBlank(cancelId)) {
+        runLabStep(
+            "batch-restore",
+            "typed cancelBatchJob finally",
+            () ->
+                admin.cancelBatchJob(cancelId)
+                    .onErrorResume(error -> reactor.core.publisher.Mono.empty())
+                    .block());
+      }
     }
     Assertions.assertNotNull(
         labStepValue("batch-restore", "typed listBatchJobsInfo after restore", () -> admin.listBatchJobsInfo().block()));

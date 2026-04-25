@@ -754,7 +754,29 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
     return startBatchJobRequest(body, "application/yaml");
   }
 
-  /** 取消 batch job；该操作只应在确认 job id 和影响范围后执行。 */
+  /** 启动 batch job 并解析服务端返回的 jobId，推荐后续 status/cancel 使用该 ID。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBatchJobStartResult> startBatchJobInfo(
+      byte[] body, String contentType) {
+    requireBytes("body", body);
+    return startBatchJob(body, contentType)
+        .map(io.minio.reactive.messages.admin.AdminBatchJobStartResult::parse);
+  }
+
+  /** 启动 batch job 并解析 jobId，默认使用 application/yaml。 */
+  public Mono<io.minio.reactive.messages.admin.AdminBatchJobStartResult> startBatchJobInfo(
+      byte[] body) {
+    return startBatchJobInfo(body, "application/yaml");
+  }
+
+  /** 取消指定 batch job；MinIO madmin 使用 query 参数 id，而不是 YAML 请求体。 */
+  public Mono<io.minio.reactive.messages.admin.AdminTextResult> cancelBatchJobRequest(
+      String jobId) {
+    requireText("jobId", jobId);
+    return cancelBatchJob(jobId)
+        .map(text -> io.minio.reactive.messages.admin.AdminTextResult.of("batch-job-cancel", text));
+  }
+
+  /** 取消 batch job；旧式 body 入口只保留兼容，推荐使用 jobId 重载。 */
   public Mono<io.minio.reactive.messages.admin.AdminTextResult> cancelBatchJobRequest(
       byte[] body, String contentType) {
     requireBytes("body", body);
@@ -2410,7 +2432,13 @@ public final class ReactiveMinioAdminClient extends ReactiveMinioCatalogClientSu
         .map(io.minio.reactive.messages.admin.AdminBatchJobDescriptionSummary::parse);
   }
 
-  /** 调用 `ADMIN_CANCEL_BATCH_JOB`。 */
+  /** 调用 `ADMIN_CANCEL_BATCH_JOB`，按 MinIO madmin 语义使用 id 查询参数。 */
+  public Mono<String> cancelBatchJob(String jobId) {
+    requireText("jobId", jobId);
+    return executeToString("ADMIN_CANCEL_BATCH_JOB", emptyMap(), map("id", jobId), emptyMap(), null, null);
+  }
+
+  /** 调用 `ADMIN_CANCEL_BATCH_JOB`。旧式 body 入口只保留兼容，推荐使用 jobId 重载。 */
   public Mono<String> cancelBatchJob(byte[] body, String contentType) {
     return executeToString("ADMIN_CANCEL_BATCH_JOB", emptyMap(), emptyMap(), emptyMap(), body, contentType);
   }

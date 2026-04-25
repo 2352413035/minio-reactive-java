@@ -1,5 +1,6 @@
 # batch job 启动请求体示例。
-# 这里只保留结构占位；真实 bucket、prefix、目标端点、凭证等必须放在本机私有文件中。
+# 该模板用于独立、可删除、可回滚的 Docker lab；请复制到仓库外再填真实值。
+# source 省略 endpoint/credentials 时表示当前 MinIO；target 必须是源服务端可访问的另一个 lab MinIO。
 # 使用方式：MINIO_LAB_BATCH_START_BODY_FILE=/secure/path/batch-start-job.yaml
 replicate:
   apiVersion: v1
@@ -7,9 +8,20 @@ replicate:
     type: minio
     bucket: lab-source-bucket
     prefix: lab-prefix/
+    snowball:
+      disable: true
   target:
     type: minio
     bucket: lab-target-bucket
+    prefix: lab-target-prefix/
+    endpoint: http://lab-target-minio:9000
+    path: on
+    credentials:
+      accessKey: <仅本机私有>
+      secretKey: <仅本机私有>
   flags:
     filter:
       newerThan: 0s
+    retry:
+      attempts: 3
+      delay: 500ms
