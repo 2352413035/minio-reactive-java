@@ -24,6 +24,7 @@ import io.minio.reactive.messages.admin.AdminUserInfo;
 import io.minio.reactive.messages.CompletePart;
 import io.minio.reactive.messages.CompletedMultipartUpload;
 import io.minio.reactive.messages.ListMultipartUploadsResult;
+import io.minio.reactive.messages.ListObjectsResult;
 import io.minio.reactive.messages.MultipartUpload;
 import io.minio.reactive.messages.ObjectAttributes;
 import io.minio.reactive.messages.ObjectInfo;
@@ -34,6 +35,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -110,7 +113,11 @@ class LiveMinioIntegrationTest {
             "folder/b.txt",
             "copy/a-copy.txt",
             "presigned.txt",
-            "multipart.bin");
+            "multipart.bin",
+            "typed/source.txt",
+            "typed/file-upload.txt",
+            "typed/abort.bin",
+            "raw/fallback.txt");
     for (String object : knownObjects) {
       client.removeObject(bucket, object).onErrorResume(error -> reactor.core.publisher.Mono.empty()).block();
     }
@@ -232,6 +239,128 @@ class LiveMinioIntegrationTest {
     Assertions.assertTrue(client.listObjects(bucket).collectList().block().isEmpty());
   }
 
+  @Test
+  void shouldVerifyUserBucketAndFileFlowsWithTypedAndRawClients() throws Exception {
+    Path tempDir = Files.createTempDirectory("reactive-minio-live-");
+    Path uploadFile = tempDir.resolve("upload.txt");
+    Path downloadFile = tempDir.resolve("download.txt");
+    try {
+      client.makeBucket(bucket).block();
+      Assertions.assertEquals(Boolean.TRUE, client.bucketExists(bucket).block());
+      Assertions.assertFalse(client.getBucketLocation(bucket).block().trim().isEmpty());
+      Assertions.assertEquals(
+          Integer.valueOf(200),
+          rawClient
+              .executeToStatus(
+                  MinioApiCatalog.byName("S3_HEAD_BUCKET"),
+                  mapOf("bucket", bucket),
+                  emptyMap(),
+                  emptyMap(),
+                  null,
+                  null)
+              .block());
+
+      client.putObject(bucket, "typed/source.txt", "hello reactive", "text/plain").block();
+      Assertions.assertEquals(
+          "hello reactive",
+          new String(joinBytes(client.getObject(bucket, "typed/source.txt").collectList().block()), StandardCharsets.UTF_8));
+      Assertions.assertEquals(
+          "reactive",
+          new String(
+              joinBytes(client.getObjectRange(bucket, "typed/source.txt", 6, 13).collectList().block()),
+              StandardCharsets.UTF_8));
+      Assertions.assertEquals("hello reactive", client.getObjectAsString(bucket, "typed/source.txt").block());
+
+      // 文件上传/下载是用户最常用路径之一：这里验证本地文件读取、对象写入、下载落盘和覆盖保护。
+      Files.write(uploadFile, "file upload body".getBytes(StandardCharsets.UTF_8));
+      client.uploadObject(bucket, "typed/file-upload.txt", uploadFile, "text/plain").block();
+      Assertions.assertEquals("file upload body", client.getObjectAsString(bucket, "typed/file-upload.txt").block());
+      client.downloadObject(bucket, "typed/file-upload.txt", downloadFile).block();
+      Assertions.assertEquals("file upload body", new String(Files.readAllBytes(downloadFile), StandardCharsets.UTF_8));
+      Assertions.assertThrows(
+          IllegalArgumentException.class,
+          () -> client.downloadObject(bucket, "typed/file-upload.txt", downloadFile).block());
+      client.downloadObject(bucket, "typed/file-upload.txt", downloadFile, true).block();
+
+      ListObjectsResult page = client.listObjectsPage(bucket, "typed/", null, null, null, 1000).block();
+      Assertions.assertEquals(bucket, page.name());
+      Assertions.assertEquals(2, page.contents().size());
+
+      MultipartUpload aborted = client.createMultipartUpload(bucket, "typed/abort.bin", "application/octet-stream").block();
+      client.abortMultipartUpload(bucket, "typed/abort.bin", aborted.uploadId()).block();
+      ReactiveS3Exception abortedObject =
+          Assertions.assertThrows(
+              ReactiveS3Exception.class, () -> client.statObject(bucket, "typed/abort.bin").block());
+      Assertions.assertEquals(404, abortedObject.statusCode());
+
+      // raw client 不替代强类型客户端；它用于 SDK 尚未封装的新接口或排障时直接走 catalog 兜底调用。
+      rawClient
+          .executeToVoid(
+              MinioApiCatalog.byName("S3_PUT_OBJECT"),
+              mapOf("bucket", bucket, "object", "raw/fallback.txt"),
+              emptyMap(),
+              emptyMap(),
+              "raw fallback body".getBytes(StandardCharsets.UTF_8),
+              "text/plain")
+          .block();
+      Assertions.assertEquals(
+          "raw fallback body",
+          rawClient
+              .executeToString(
+                  MinioApiCatalog.byName("S3_GET_OBJECT"),
+                  mapOf("bucket", bucket, "object", "raw/fallback.txt"),
+                  emptyMap(),
+                  emptyMap(),
+                  null,
+                  null)
+              .block());
+      Assertions.assertFalse(
+          rawClient
+              .executeToHeaders(
+                  MinioApiCatalog.byName("S3_HEAD_OBJECT"),
+                  mapOf("bucket", bucket, "object", "raw/fallback.txt"),
+                  emptyMap(),
+                  emptyMap(),
+                  null,
+                  null)
+              .block()
+              .isEmpty());
+      Assertions.assertTrue(
+          rawClient
+              .executeToString(
+                  MinioApiCatalog.byName("S3_LIST_OBJECTS_V2"),
+                  mapOf("bucket", bucket),
+                  mapOf("prefix", "raw/"),
+                  emptyMap(),
+                  null,
+                  null)
+              .block()
+              .contains("raw/fallback.txt"));
+
+      rawClient
+          .executeToVoid(
+              MinioApiCatalog.byName("S3_DELETE_OBJECT"),
+              mapOf("bucket", bucket, "object", "raw/fallback.txt"),
+              emptyMap(),
+              emptyMap(),
+              null,
+              null)
+          .block();
+      ReactiveS3Exception deleted =
+          Assertions.assertThrows(
+              ReactiveS3Exception.class, () -> client.statObject(bucket, "raw/fallback.txt").block());
+      Assertions.assertEquals(404, deleted.statusCode());
+
+      client.removeObject(bucket, "typed/source.txt").block();
+      client.removeObject(bucket, "typed/file-upload.txt").block();
+      Assertions.assertTrue(client.listObjects(bucket).collectList().block().isEmpty());
+    } finally {
+      deleteIfExists(downloadFile);
+      deleteIfExists(uploadFile);
+      deleteIfExists(tempDir);
+    }
+  }
+
 
 
   @Test
@@ -331,6 +460,17 @@ class LiveMinioIntegrationTest {
     return java.util.Collections.<String, String>emptyMap();
   }
 
+  private static Map<String, String> mapOf(String... keyValues) {
+    if (keyValues.length % 2 != 0) {
+      throw new IllegalArgumentException("mapOf 需要成对传入 key/value");
+    }
+    Map<String, String> map = new HashMap<String, String>();
+    for (int index = 0; index < keyValues.length; index += 2) {
+      map.put(keyValues[index], keyValues[index + 1]);
+    }
+    return map;
+  }
+
   private static boolean containsBucket(List<BucketInfo> buckets, String bucket) {
     if (buckets == null) {
       return false;
@@ -347,6 +487,26 @@ class LiveMinioIntegrationTest {
     byte[] bytes = new byte[size];
     Arrays.fill(bytes, value);
     return bytes;
+  }
+
+  private static byte[] joinBytes(List<byte[]> chunks) {
+    int total = 0;
+    for (byte[] chunk : chunks) {
+      total += chunk.length;
+    }
+    byte[] bytes = new byte[total];
+    int offset = 0;
+    for (byte[] chunk : chunks) {
+      System.arraycopy(chunk, 0, bytes, offset, chunk.length);
+      offset += chunk.length;
+    }
+    return bytes;
+  }
+
+  private static void deleteIfExists(Path path) throws Exception {
+    if (path != null) {
+      Files.deleteIfExists(path);
+    }
   }
 
   private static void writeWithPresignedPut(URI uri, byte[] bytes) throws Exception {
