@@ -45,6 +45,8 @@
 3. 继续运行 route/capability、单元测试、live 安全测试和 `mc` 只读旁证。
 4. 保持 `encrypted-blocked` 与 `destructive-blocked` 计数不变。
 
+如果发布负责人已经准备接手，优先把 `docs/129-stage131-release-owner-template.md` 发给负责人逐项填写，再按本交接表回填执行结果。
+
 如果独立 lab 已经准备好，优先执行：
 
 1. 设置本机私有 `scripts/minio-lab/lab.properties` 或环境变量。
