@@ -1,5 +1,10 @@
 # 变更日志
 
+## 阶段 131 正式发布负责人待填模板
+
+- 新增 `docs/129-stage131-release-owner-template.md`，把版本号、POM 元数据、发布插件、签名、SBOM、发布仓库、tag 和回滚策略整理成一份可直接填写的模板。
+- `stage115` 安全准备清单、`release-gates` 和 `stage65` 发布交接文档已同步引用这份模板，方便直接交给发布负责人执行。
+
 ## 阶段 130 高频桶 / 文件 Client 方法进一步实证
 
 - `LiveMinioIntegrationTest` 的高频桶/文件用例进一步显式覆盖 `listBuckets`、`uploadObject`、`statObject`、`downloadObject`、`removeBucket` 等最终用户最常走的方法。

@@ -194,6 +194,8 @@
 
 阶段 115 后，正式 Maven/tag 发布除了引用阶段 113/114 的发布状态和破坏性边界报告，还必须引用 `docs/113-stage115-release-metadata-safe-prep.md`。
 
+阶段 131 起，发布负责人还应直接填写 `docs/129-stage131-release-owner-template.md`，把版本号、POM 元数据、发布插件、签名、SBOM、仓库、tag 和回滚策略集中确认完毕，再回到本门禁逐项勾选。
+
 发布负责人确认前，以下规则必须保持：
 
 1. 不把版本号改成正式版。
