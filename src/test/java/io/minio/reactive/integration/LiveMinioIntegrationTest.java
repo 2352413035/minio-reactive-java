@@ -361,6 +361,48 @@ class LiveMinioIntegrationTest {
     }
   }
 
+  @Test
+  void shouldExerciseHighFrequencyReadonlyAdminViews() {
+    client.makeBucket(bucket).block();
+
+    Assertions.assertEquals(Boolean.TRUE, healthClient.isReady().block());
+    Assertions.assertEquals(Integer.valueOf(200), healthClient.readyGet().block());
+    Assertions.assertEquals(
+        Integer.valueOf(200), rawClient.executeToStatus(MinioApiCatalog.byName("HEALTH_READY_GET")).block());
+
+    AdminStorageSummary typedStorage = adminClient.getStorageSummary().block();
+    AdminStorageSummary rawStorage = AdminStorageSummary.parse(rawAdminString("ADMIN_STORAGE_INFO"));
+    Assertions.assertEquals(typedStorage.backendType(), rawStorage.backendType());
+    Assertions.assertEquals(typedStorage.diskCount(), rawStorage.diskCount());
+    Assertions.assertEquals(typedStorage.onlineDiskCount(), rawStorage.onlineDiskCount());
+    Assertions.assertEquals(typedStorage.offlineDiskCount(), rawStorage.offlineDiskCount());
+
+    AdminDataUsageSummary typedDataUsage = adminClient.getDataUsageSummary().block();
+    AdminDataUsageSummary rawDataUsage =
+        AdminDataUsageSummary.parse(rawAdminString("ADMIN_DATA_USAGE_INFO"));
+    Assertions.assertTrue(typedDataUsage.totalCapacity() >= 0);
+    Assertions.assertEquals(typedDataUsage.totalCapacity(), rawDataUsage.totalCapacity());
+    Assertions.assertEquals(typedDataUsage.totalFreeCapacity(), rawDataUsage.totalFreeCapacity());
+    Assertions.assertEquals(typedDataUsage.totalUsedCapacity(), rawDataUsage.totalUsedCapacity());
+    Assertions.assertTrue(rawDataUsage.bucketsCount() >= 1);
+
+    AdminAccountSummary typedAccount = adminClient.getAccountSummary().block();
+    AdminAccountSummary rawAccount = AdminAccountSummary.parse(rawAdminString("ADMIN_ACCOUNT_INFO"));
+    Assertions.assertEquals(typedAccount.accountName(), rawAccount.accountName());
+    Assertions.assertEquals(typedAccount.backendType(), rawAccount.backendType());
+    Assertions.assertTrue(rawAccount.bucketCount() >= 1);
+    Assertions.assertTrue(rawAccount.readableBucketCount() >= 0);
+    Assertions.assertTrue(rawAccount.writableBucketCount() >= 0);
+
+    AdminConfigHelp typedConfigHelp = adminClient.getConfigHelp("api").block();
+    AdminConfigHelp rawConfigHelp =
+        AdminConfigHelp.parse(rawAdminString("ADMIN_HELP_CONFIG_KV", mapOf("subSys", "api", "key", "")));
+    Assertions.assertEquals("api", typedConfigHelp.subSys());
+    Assertions.assertEquals(typedConfigHelp.subSys(), rawConfigHelp.subSys());
+    Assertions.assertFalse(rawConfigHelp.keys().isEmpty());
+    Assertions.assertEquals(typedConfigHelp.keys().size(), rawConfigHelp.keys().size());
+  }
+
 
 
   @Test
@@ -458,6 +500,17 @@ class LiveMinioIntegrationTest {
 
   private static Map<String, String> emptyMap() {
     return java.util.Collections.<String, String>emptyMap();
+  }
+
+  private String rawAdminString(String endpointName) {
+    return rawAdminString(endpointName, emptyMap());
+  }
+
+  private String rawAdminString(String endpointName, Map<String, String> query) {
+    return rawClient
+        .executeToString(
+            MinioApiCatalog.byName(endpointName), emptyMap(), query, emptyMap(), null, null)
+        .block();
   }
 
   private static Map<String, String> mapOf(String... keyValues) {

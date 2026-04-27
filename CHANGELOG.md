@@ -1,5 +1,10 @@
 # 变更日志
 
+## 阶段 127 高频只读 Admin 发布前加固
+
+- `LiveMinioIntegrationTest` 新增高频只读运维视图 live 证据：`/minio/health/ready`、storage info、data usage、account info、config help 的 typed/raw 读链路。
+- 本阶段不新增生产实现，只补发布前高频用户路径验证，继续优先保证桶、文件/对象和常见只读 Admin 操作的稳定性。
+
 ## 阶段 126 剩余运维接口 lab 复核
 
 - 新增单节点、四节点分布式、双站点 site replication 三类 Docker lab 脚本，用于复现 service restart、server update 前置条件、force-unlock、net/site speedtest 和 site replication edit 证据。
