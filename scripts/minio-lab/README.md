@@ -209,6 +209,48 @@ scripts/minio-lab/run-network-speedtest-lab.sh
 
 默认脚本采用预期失败采证模式（`EXPECT_*_FAILURE=true`）。如果你已经准备了分布式或 site replication 拓扑，可以在执行前覆盖为 `false`，尝试收集真实通过证据。
 
+### service / update / force-unlock 探测
+
+阶段 126 起，破坏性 lab 可以继续验证剩余维护类接口的 typed/raw 行为：
+
+```properties
+MINIO_LAB_ENABLE_SERVICE_CONTROL_PROBES=true
+
+MINIO_LAB_ENABLE_MAINTENANCE_BOUNDARY_PROBES=true
+MINIO_LAB_SERVER_UPDATE_URL=http://127.0.0.1:1/minio-release-info
+MINIO_LAB_SERVER_UPDATE_EXPECTED_ERROR=method not allowed|in-place update|connection refused|connect
+
+MINIO_LAB_ENABLE_FORCE_UNLOCK_PROBE=true
+MINIO_LAB_FORCE_UNLOCK_PATHS=reactive-lab-bucket/no-such-lock
+MINIO_LAB_EXPECT_FORCE_UNLOCK_FAILURE=true
+MINIO_LAB_FORCE_UNLOCK_EXPECTED_ERROR=not implemented|404|not found|versionmismatch|mode-server-xl-single
+```
+
+- service control 会真实重启一次性 Docker lab，并在每个 typed/raw 步骤后等待 `/minio/health/ready` 恢复。
+- server update 在官方 Docker 镜像中通常会被 MinIO 明确拒绝原地升级；该探测记录 typed/raw 都能到达接口并得到可解释前置条件错误，不把它伪造成升级成功。
+- force-unlock 只在分布式 erasure 模式下注册路由；单体 lab 默认用预期失败模式记录“需要分布式锁环境”的服务端前置条件。如果你已经启动分布式 Docker lab，可以把 `MINIO_LAB_EXPECT_FORCE_UNLOCK_FAILURE=false` 改为真实成功探测。
+
+可直接使用以下脚本复现阶段 126 的三类 lab：
+
+```bash
+# 单节点一次性 lab：service restart typed/raw、server update 预期失败、force-unlock 前置条件失败。
+scripts/minio-lab/run-maintenance-boundary-lab.sh
+
+# 四节点分布式 erasure lab：net speedtest typed/raw 与 force-unlock typed/raw。
+scripts/minio-lab/run-distributed-maintenance-lab.sh
+
+# 双站点 site replication lab：add、site speedtest、edit、remove；目标站点会先清空默认 bucket，默认跳过已知脆弱的 raw re-add 回放。
+scripts/minio-lab/run-site-replication-lab.sh
+```
+
+`run-site-replication-lab.sh` 默认从 `site-replication/info` 读取真实 `deploymentID` 自动生成 edit 请求体，把 `ADMIN_SPEEDTEST_SITE` 设为真实通过验证，并默认设置 `MINIO_LAB_SKIP_SITE_REPLICATION_RAW_READD=true`，避免 edit/remove 后因为拓扑状态变化把脚本默认路径跑挂。如果本机 MinIO 镜像或拓扑不支持，请显式设置：
+
+```bash
+MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE=true \
+MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR='not implemented|replication|site' \
+scripts/minio-lab/run-site-replication-lab.sh
+```
+
 ## tier / remote target 可回滚写入夹具
 
 阶段 36 起，独立 lab 可以额外开启真实写入夹具。它们比只读探测更危险，因此必须先打开总开关：

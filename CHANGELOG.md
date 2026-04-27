@@ -1,5 +1,12 @@
 # 变更日志
 
+## 阶段 126 剩余运维接口 lab 复核
+
+- 新增单节点、四节点分布式、双站点 site replication 三类 Docker lab 脚本，用于复现 service restart、server update 前置条件、force-unlock、net/site speedtest 和 site replication edit 证据。
+- `DestructiveAdminIntegrationTest` 增加 service/update/force-unlock 探测，site replication 矩阵增加从真实 info 自动生成 edit 请求体和 site speedtest typed/raw 探测。
+- 修复预期失败断言：调用意外成功时不再被误记为 expected failure PASS。
+- `scripts/report-destructive-boundary.py` 将已有独立 lab 证据更新为 25 / 29；剩余为 server update/v2 与 SR peer edit/remove，留待发布前去留决策。
+
 ## 阶段 124 net/site speedtest 独立 lab 复核
 
 - `DestructiveAdminIntegrationTest` 增加 net/site speedtest 可选探测与“预期失败采证”模式，支持 `|`/`,` 多关键字匹配。

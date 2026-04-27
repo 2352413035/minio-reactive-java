@@ -1,5 +1,6 @@
 package io.minio.reactive.integration;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.minio.reactive.ReactiveMinioAdminClient;
 import io.minio.reactive.ReactiveMinioRawClient;
 import io.minio.reactive.catalog.MinioApiCatalog;
@@ -11,6 +12,7 @@ import io.minio.reactive.messages.admin.AdminDriveSpeedtestOptions;
 import io.minio.reactive.messages.admin.AdminSpeedtestOptions;
 import io.minio.reactive.messages.admin.AdminRemoteTargetList;
 import io.minio.reactive.messages.admin.AdminTierList;
+import io.minio.reactive.util.JsonSupport;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -481,6 +483,111 @@ class DestructiveAdminIntegrationTest {
   }
 
   @Test
+  void shouldExerciseServiceControlOnlyInsideVerifiedLab() throws Exception {
+    assumeDestructiveLabEnabled();
+    assertVerifiedLabEnvironment();
+    Assumptions.assumeTrue(
+        "true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_SERVICE_CONTROL_PROBES")),
+        "缺少 MINIO_LAB_ENABLE_SERVICE_CONTROL_PROBES=true，跳过 service restart typed/raw 探测。");
+
+    ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
+
+    // service restart 会真实重启独立 Docker lab；每一步后都等待 ready，避免后续步骤误判为 SDK 失败。
+    runLabStep(
+        "service-control",
+        "typed executeServiceControl restart",
+        () -> invokeRestartAndWait(() -> admin.executeServiceControl("restart").block()));
+    runLabStep(
+        "service-control",
+        "raw ADMIN_SERVICE restart",
+        () ->
+            invokeRestartAndWait(
+                () -> rawString(raw, "ADMIN_SERVICE", emptyMap(), map("action", "restart"), null, null)));
+    runLabStep(
+        "service-control",
+        "typed executeServiceControlV2 restart",
+        () -> invokeRestartAndWait(() -> admin.executeServiceControlV2("restart").block()));
+    runLabStep(
+        "service-control",
+        "raw ADMIN_SERVICE_V2 restart",
+        () ->
+            invokeRestartAndWait(
+                () -> rawString(raw, "ADMIN_SERVICE_V2", emptyMap(), map("action", "restart"), null, null)));
+  }
+
+  @Test
+  void shouldProbeMaintenanceBoundariesOnlyInsideVerifiedLab() throws Exception {
+    assumeDestructiveLabEnabled();
+    assertVerifiedLabEnvironment();
+    Assumptions.assumeTrue(
+        "true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_MAINTENANCE_BOUNDARY_PROBES")),
+        "缺少 MINIO_LAB_ENABLE_MAINTENANCE_BOUNDARY_PROBES=true，跳过 update/force-unlock 边界探测。");
+
+    ReactiveMinioAdminClient admin = labAdminClient();
+    ReactiveMinioRawClient raw = labRawClient();
+    String updateUrl =
+        getenvOrDefault("MINIO_LAB_SERVER_UPDATE_URL", "http://127.0.0.1:1/minio-release-info");
+    String updateExpected =
+        getenvOrDefault(
+            "MINIO_LAB_SERVER_UPDATE_EXPECTED_ERROR",
+            "method not allowed|in-place update|connection refused|connect");
+
+    // Docker 镜像通常禁用原地升级；这里验证 typed/raw 均能到达接口并得到明确前置条件错误。
+    expectLabFailure(
+        "maintenance-boundary",
+        "typed startServerUpdate expected failure",
+        updateExpected,
+        () -> admin.startServerUpdate(updateUrl).block().rawText());
+    expectLabFailure(
+        "maintenance-boundary",
+        "raw ADMIN_SERVER_UPDATE expected failure",
+        updateExpected,
+        () -> rawString(raw, "ADMIN_SERVER_UPDATE", emptyMap(), map("updateURL", updateUrl), null, null));
+    expectLabFailure(
+        "maintenance-boundary",
+        "typed startServerUpdateV2 expected failure",
+        updateExpected,
+        () -> admin.startServerUpdateV2(updateUrl).block().rawText());
+    expectLabFailure(
+        "maintenance-boundary",
+        "raw ADMIN_SERVER_UPDATE_V2 expected failure",
+        updateExpected,
+        () -> rawString(raw, "ADMIN_SERVER_UPDATE_V2", emptyMap(), map("updateURL", updateUrl), null, null));
+
+    if ("true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_FORCE_UNLOCK_PROBE"))) {
+      String paths = getenvOrDefault("MINIO_LAB_FORCE_UNLOCK_PATHS", "reactive-lab-bucket/no-such-lock");
+      boolean expectFailure =
+          !"false".equalsIgnoreCase(labValue("MINIO_LAB_EXPECT_FORCE_UNLOCK_FAILURE"));
+      String expectedError =
+          getenvOrDefault(
+              "MINIO_LAB_FORCE_UNLOCK_EXPECTED_ERROR",
+              "not implemented|404|not found|versionmismatch|mode-server-xl-single");
+      if (expectFailure) {
+        expectLabFailure(
+            "maintenance-boundary",
+            "typed forceUnlockPaths expected failure",
+            expectedError,
+            () -> admin.forceUnlockPaths(paths).block().rawText());
+        expectLabFailure(
+            "maintenance-boundary",
+            "raw ADMIN_FORCE_UNLOCK expected failure",
+            expectedError,
+            () -> rawString(raw, "ADMIN_FORCE_UNLOCK", emptyMap(), map("paths", paths), null, null));
+      } else {
+        runLabStep(
+            "maintenance-boundary",
+            "typed forceUnlockPaths",
+            () -> admin.forceUnlockPaths(paths).block());
+        runLabStep(
+            "maintenance-boundary",
+            "raw ADMIN_FORCE_UNLOCK",
+            () -> rawString(raw, "ADMIN_FORCE_UNLOCK", emptyMap(), map("paths", paths), null, null));
+      }
+    }
+  }
+
+  @Test
   void shouldWriteAndRestoreTierAndRemoteTargetOnlyInsideVerifiedLab() throws Exception {
     assumeDestructiveLabEnabled();
     assertVerifiedLabEnvironment();
@@ -723,6 +830,33 @@ class DestructiveAdminIntegrationTest {
     Assertions.assertEquals(0, exitCode, output.toString());
   }
 
+  private static void invokeRestartAndWait(LabRunnable action) throws Exception {
+    try {
+      action.run();
+    } catch (Throwable failure) {
+      if (!isPrematureCloseDuringRestart(failure)) {
+        rethrowLabFailure(failure);
+      }
+    } finally {
+      waitForLabReady();
+    }
+  }
+
+  private static boolean isPrematureCloseDuringRestart(Throwable failure) {
+    String message = failureMessage(failure).toLowerCase(java.util.Locale.ROOT);
+    return message.contains("prematurely closed") || message.contains("connection reset");
+  }
+
+  private static void rethrowLabFailure(Throwable failure) throws Exception {
+    if (failure instanceof Exception) {
+      throw (Exception) failure;
+    }
+    if (failure instanceof Error) {
+      throw (Error) failure;
+    }
+    throw new IllegalStateException(failure);
+  }
+
   private static void waitForLabReady() throws Exception {
     String endpoint = labValue("MINIO_LAB_ENDPOINT");
     Assertions.assertTrue(notBlank(endpoint), "缺少 MINIO_LAB_ENDPOINT，无法等待 lab ready");
@@ -946,11 +1080,12 @@ class DestructiveAdminIntegrationTest {
           "site-replication-write",
           "typed siteReplicationAdd",
           () -> admin.siteReplicationAdd(bytes(addBody), contentType).block());
-      Assertions.assertNotNull(
+      AdminJsonResult infoAfterAdd =
           labStepValue(
               "site-replication-write",
               "typed getSiteReplicationInfo after add",
-              () -> admin.getSiteReplicationInfo().block()));
+              () -> admin.getSiteReplicationInfo().block());
+      Assertions.assertNotNull(infoAfterAdd);
       Assertions.assertNotNull(
           labStepValue(
               "site-replication-write",
@@ -961,7 +1096,30 @@ class DestructiveAdminIntegrationTest {
               "site-replication-write",
               "typed getSiteReplicationMetainfo after add",
               () -> admin.getSiteReplicationMetainfo().block()));
+      if ("true".equalsIgnoreCase(labValue("MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE"))) {
+        Duration siteDuration =
+            Duration.ofSeconds(intLabValue("MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS", 2));
+        Map<String, String> siteQuery =
+            map("duration", AdminSpeedtestOptions.formatDuration(siteDuration));
+        runDurationSpeedtestProbe(
+            "site-replication-write",
+            "typed runSiteSpeedtest with configured site replication",
+            "raw ADMIN_SPEEDTEST_SITE with configured site replication",
+            () -> admin.runSiteSpeedtest(siteDuration).block().rawText(),
+            () -> rawString(raw, "ADMIN_SPEEDTEST_SITE", emptyMap(), siteQuery, null, null),
+            "true".equalsIgnoreCase(labValue("MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE")),
+            labValue("MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR"));
+      }
+      if (!notBlank(editBody)
+          && "true".equalsIgnoreCase(labValue("MINIO_LAB_SITE_REPLICATION_EDIT_FROM_INFO"))) {
+        editBody = siteReplicationEditBodyFromInfo(infoAfterAdd.rawJson());
+      }
       if (notBlank(editBody)) {
+        final String siteReplicationEditBody = editBody;
+        labStepValue(
+            "site-replication-write",
+            "typed editSiteReplicationConfig",
+            () -> admin.editSiteReplicationConfig(bytes(siteReplicationEditBody)).block().rawText());
         labStepValue(
             "site-replication-write",
             "raw ADMIN_SITE_REPLICATION_EDIT",
@@ -971,7 +1129,7 @@ class DestructiveAdminIntegrationTest {
                     "ADMIN_SITE_REPLICATION_EDIT",
                     emptyMap(),
                     map("api-version", "1"),
-                    encryptedLabBody(editBody),
+                    encryptedLabBody(siteReplicationEditBody),
                     "application/octet-stream"));
       }
       labStepValue(
@@ -984,21 +1142,23 @@ class DestructiveAdminIntegrationTest {
               map("api-version", "1"),
               bytes(removeBody),
               contentType));
-      labStepValue(
-          "site-replication-write",
-          "raw ADMIN_SITE_REPLICATION_ADD after remove",
-          () -> rawString(
-              raw,
-              "ADMIN_SITE_REPLICATION_ADD",
-              emptyMap(),
-              map("api-version", "1"),
-              encryptedLabBody(addBody),
-              "application/octet-stream"));
-      Assertions.assertNotNull(
-          labStepValue(
-              "site-replication-write",
-              "typed getSiteReplicationInfo after raw add",
-              () -> admin.getSiteReplicationInfo().block()));
+      if (!"true".equalsIgnoreCase(labValue("MINIO_LAB_SKIP_SITE_REPLICATION_RAW_READD"))) {
+        labStepValue(
+            "site-replication-write",
+            "raw ADMIN_SITE_REPLICATION_ADD after remove",
+            () -> rawString(
+                raw,
+                "ADMIN_SITE_REPLICATION_ADD",
+                emptyMap(),
+                map("api-version", "1"),
+                encryptedLabBody(addBody),
+                "application/octet-stream"));
+        Assertions.assertNotNull(
+            labStepValue(
+                "site-replication-write",
+                "typed getSiteReplicationInfo after raw add",
+                () -> admin.getSiteReplicationInfo().block()));
+      }
     } finally {
       runLabStep(
           "site-replication-restore",
@@ -1051,8 +1211,6 @@ class DestructiveAdminIntegrationTest {
       String scope, String step, String expectedErrorToken, LabSupplier<String> action) {
     try {
       action.get();
-      recordLabStep(scope, step, "FAIL", "ExpectedFailureMissing");
-      Assertions.fail(step + " 预期失败，但调用成功。");
     } catch (Throwable failure) {
       String detail = failure.getClass().getSimpleName();
       if (notBlank(expectedErrorToken)) {
@@ -1064,7 +1222,10 @@ class DestructiveAdminIntegrationTest {
         }
       }
       recordLabStep(scope, step, "PASS", "ExpectedFailure:" + detail);
+      return;
     }
+    recordLabStep(scope, step, "FAIL", "ExpectedFailureMissing");
+    Assertions.fail(step + " 预期失败，但调用成功。");
   }
 
   private static String failureMessage(Throwable failure) {
@@ -1101,6 +1262,29 @@ class DestructiveAdminIntegrationTest {
       }
     }
     return false;
+  }
+
+  private static String siteReplicationEditBodyFromInfo(String rawJson) {
+    String targetName = getenvOrDefault("MINIO_LAB_SITE_REPLICATION_EDIT_SITE_NAME", "lab-site-b");
+    String targetEndpoint =
+        getenvOrDefault("MINIO_LAB_SITE_REPLICATION_EDIT_ENDPOINT", "http://lab-site-b-minio:9000");
+    JsonNode sites = JsonSupport.child(JsonSupport.parseTree(rawJson), "sites", "Sites");
+    if (sites == null || !sites.isArray()) {
+      throw new IllegalStateException("site replication info 中缺少 sites 数组，无法生成 edit 请求体");
+    }
+    for (JsonNode site : sites) {
+      String name = JsonSupport.textAny(site, "name", "Name");
+      String deploymentId = JsonSupport.textAny(site, "deploymentID", "DeploymentID", "deploymentId");
+      if (targetName.equals(name) && notBlank(deploymentId)) {
+        Map<String, Object> body = new LinkedHashMap<String, Object>();
+        body.put("name", name);
+        body.put("endpoint", targetEndpoint);
+        body.put("deploymentID", deploymentId);
+        body.put("sync", getenvOrDefault("MINIO_LAB_SITE_REPLICATION_EDIT_SYNC", "disable"));
+        return JsonSupport.toJsonString(body);
+      }
+    }
+    throw new IllegalStateException("未找到可用于 edit 的 site replication peer: " + targetName);
   }
 
   private static <T> T labStepValue(String scope, String step, LabSupplier<T> supplier) {

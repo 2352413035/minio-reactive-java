@@ -109,9 +109,9 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_SITE_REPLICATION_EDIT',
-        'category': '拓扑或身份提供方',
-        'status': '需要真实 deploymentID/endpoint 变更',
-        'evidence': '已有入口；真实拓扑变更未执行。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw site replication edit 已验证',
+        'evidence': '阶段 126：双站点 Docker MinIO site replication 拓扑中，从 info 读取真实 deploymentID 后验证 ADMIN_SITE_REPLICATION_EDIT typed/raw。',
     },
     {
         'route': 'ADMIN_SR_PEER_EDIT',
@@ -127,15 +127,15 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_SERVICE',
-        'category': '维护窗口',
-        'status': '需要可用性维护窗口',
-        'evidence': 'restart/stop 类操作会影响服务可用性。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw restart 已在一次性 lab 验证',
+        'evidence': '阶段 126：独立 Docker lab 对 ADMIN_SERVICE restart 执行 typed/raw 调用，并在每次重启后等待 health ready 恢复；stop 仍属于生产维护窗口。',
     },
     {
         'route': 'ADMIN_SERVICE_V2',
-        'category': '维护窗口',
-        'status': '需要可用性维护窗口',
-        'evidence': 'restart/stop 类操作会影响服务可用性。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw restart 已在一次性 lab 验证',
+        'evidence': '阶段 126：独立 Docker lab 对 ADMIN_SERVICE_V2 restart 执行 typed/raw 调用，并在每次重启后等待 health ready 恢复；stop 仍属于生产维护窗口。',
     },
     {
         'route': 'ADMIN_SERVER_UPDATE',
@@ -151,9 +151,9 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_FORCE_UNLOCK',
-        'category': '维护窗口',
-        'status': '需要锁语义风险评估',
-        'evidence': '强制解锁可能破坏正在进行的写入或锁状态。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw 分布式 lab force-unlock 已验证',
+        'evidence': '阶段 126：四节点分布式 Docker MinIO lab 验证 ADMIN_FORCE_UNLOCK typed/raw 调用；生产仍需确认目标锁路径和维护窗口。',
     },
     {
         'route': 'ADMIN_SPEEDTEST',
@@ -175,15 +175,15 @@ ROUTES = [
     },
     {
         'route': 'ADMIN_SPEEDTEST_NET',
-        'category': '资源压测',
-        'status': '单节点独立 lab 返回 NotImplemented，仍需服务端实现与专用压测窗口',
-        'evidence': '阶段 124：typed/raw 有界 net speedtest 在独立 Docker lab 均返回 HTTP 501 NotImplemented；预期失败采证通过。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw 分布式有界 net speedtest 已验证',
+        'evidence': '阶段 126：四节点分布式 Docker MinIO lab 使用 2 秒窗口验证 ADMIN_SPEEDTEST_NET typed/raw；单节点阶段 124 的 NotImplemented 仍作为拓扑前置条件说明。',
     },
     {
         'route': 'ADMIN_SPEEDTEST_SITE',
-        'category': '资源压测',
-        'status': '单节点独立 lab 返回 NotImplemented，仍需 site replication 拓扑与压测窗口',
-        'evidence': '阶段 124：typed/raw 有界 site speedtest 在独立 Docker lab 均返回 HTTP 501 NotImplemented；预期失败采证通过。',
+        'category': '已有独立 lab 证据',
+        'status': 'typed/raw 站点复制拓扑有界 site speedtest 已验证',
+        'evidence': '阶段 126：双站点 Docker MinIO site replication 拓扑中使用 2 秒窗口验证 ADMIN_SPEEDTEST_SITE typed/raw；单节点阶段 124 的 NotImplemented 仍作为拓扑前置条件说明。',
     },
 ]
 
