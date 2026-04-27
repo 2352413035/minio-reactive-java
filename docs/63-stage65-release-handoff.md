@@ -10,7 +10,7 @@
 - 产品化入口已经闭环：S3、Admin、KMS、STS、Metrics、Health 均有专用客户端或明确边界。
 - `ReactiveMinioRawClient` 仍是新增接口、特殊请求和 catalog 兜底调用器，不替代专用客户端。
 - 当前仍是 `0.1.0-SNAPSHOT` 发布候选口径，不是正式 1.0。
-- `encrypted-blocked = 11` 与 `destructive-blocked = 29` 仍是外部门禁，不允许通过文档口径“抹掉”。
+- `destructive-blocked = 29` 仍是风险计数，不允许通过文档口径“抹掉”；但阶段 129 已明确：剩余 4 个接口按发布策略降级/隐藏，不再作为普通用户主路径阻塞。
 
 ## 2. 对外发布说明草案
 
@@ -24,6 +24,7 @@
 2. Crypto Gate Pass 前，默认 madmin 加密响应继续返回 `EncryptedAdminResponse`。
 3. 破坏性 Admin 写入能力只能在独立、可回滚 lab 中验证，不能在共享 MinIO 环境默认执行。
 4. 用户常规集成应优先使用专用客户端；只有 SDK 尚未提供更细入口、或需要特殊请求时，才使用 raw 兜底。
+5. `ADMIN_SERVER_UPDATE*` 仅按高级/维护窗口接口处理；`ADMIN_SR_PEER_*` 默认不在普通用户主文档暴露。
 
 ## 3. 阻塞交接表
 

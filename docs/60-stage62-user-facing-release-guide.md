@@ -44,6 +44,11 @@ Admin 客户端已经达到 product-typed 128 / 128，但这不代表每个 Admi
 2. **高风险但有产品边界**：例如 tier、remote target、batch job、site replication、force-unlock，SDK 提供明确入口和参数校验，但真实执行必须在独立可回滚 lab。
 3. **加密响应边界**：默认 madmin 加密响应只返回 `EncryptedAdminResponse`，Crypto Gate Pass 前不会伪装成明文模型。
 
+阶段 129 后，剩余 4 个更高风险接口还要再单独看待：
+
+- `ADMIN_SERVER_UPDATE` / `ADMIN_SERVER_UPDATE_V2`：保留代码入口，但按**高级/维护窗口接口**处理。
+- `ADMIN_SR_PEER_EDIT` / `ADMIN_SR_PEER_REMOVE`：保留代码入口，但按**内部/高级接口**处理，默认不在普通用户主文档暴露。
+
 示例：
 
 ```java

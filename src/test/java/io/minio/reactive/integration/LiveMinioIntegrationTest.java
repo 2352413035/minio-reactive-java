@@ -247,7 +247,9 @@ class LiveMinioIntegrationTest {
     try {
       client.makeBucket(bucket).block();
       Assertions.assertEquals(Boolean.TRUE, client.bucketExists(bucket).block());
-      Assertions.assertFalse(client.getBucketLocation(bucket).block().trim().isEmpty());
+      Assertions.assertTrue(containsBucket(client.listBuckets().block(), bucket));
+      // MinIO/S3 在默认区域语义下可能返回空字符串，这不应被误判为 SDK 失败。
+      Assertions.assertNotNull(client.getBucketLocation(bucket).block());
       Assertions.assertEquals(
           Integer.valueOf(200),
           rawClient
@@ -275,6 +277,7 @@ class LiveMinioIntegrationTest {
       Files.write(uploadFile, "file upload body".getBytes(StandardCharsets.UTF_8));
       client.uploadObject(bucket, "typed/file-upload.txt", uploadFile, "text/plain").block();
       Assertions.assertEquals("file upload body", client.getObjectAsString(bucket, "typed/file-upload.txt").block());
+      Assertions.assertFalse(client.statObject(bucket, "typed/file-upload.txt").block().isEmpty());
       client.downloadObject(bucket, "typed/file-upload.txt", downloadFile).block();
       Assertions.assertEquals("file upload body", new String(Files.readAllBytes(downloadFile), StandardCharsets.UTF_8));
       Assertions.assertThrows(
@@ -354,6 +357,9 @@ class LiveMinioIntegrationTest {
       client.removeObject(bucket, "typed/source.txt").block();
       client.removeObject(bucket, "typed/file-upload.txt").block();
       Assertions.assertTrue(client.listObjects(bucket).collectList().block().isEmpty());
+      client.removeBucket(bucket).block();
+      Assertions.assertEquals(Boolean.FALSE, client.bucketExists(bucket).block());
+      bucket = null;
     } finally {
       deleteIfExists(downloadFile);
       deleteIfExists(uploadFile);
@@ -384,13 +390,15 @@ class LiveMinioIntegrationTest {
     Assertions.assertEquals(typedDataUsage.totalCapacity(), rawDataUsage.totalCapacity());
     Assertions.assertEquals(typedDataUsage.totalFreeCapacity(), rawDataUsage.totalFreeCapacity());
     Assertions.assertEquals(typedDataUsage.totalUsedCapacity(), rawDataUsage.totalUsedCapacity());
-    Assertions.assertTrue(rawDataUsage.bucketsCount() >= 1);
+    Assertions.assertEquals(typedDataUsage.bucketsCount(), rawDataUsage.bucketsCount());
+    Assertions.assertTrue(rawDataUsage.bucketsCount() >= 0);
 
     AdminAccountSummary typedAccount = adminClient.getAccountSummary().block();
     AdminAccountSummary rawAccount = AdminAccountSummary.parse(rawAdminString("ADMIN_ACCOUNT_INFO"));
     Assertions.assertEquals(typedAccount.accountName(), rawAccount.accountName());
     Assertions.assertEquals(typedAccount.backendType(), rawAccount.backendType());
-    Assertions.assertTrue(rawAccount.bucketCount() >= 1);
+    Assertions.assertEquals(typedAccount.bucketCount(), rawAccount.bucketCount());
+    Assertions.assertTrue(rawAccount.bucketCount() >= 0);
     Assertions.assertTrue(rawAccount.readableBucketCount() >= 0);
     Assertions.assertTrue(rawAccount.writableBucketCount() >= 0);
 

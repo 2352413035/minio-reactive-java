@@ -1,5 +1,16 @@
 # 变更日志
 
+## 阶段 130 高频桶 / 文件 Client 方法进一步实证
+
+- `LiveMinioIntegrationTest` 的高频桶/文件用例进一步显式覆盖 `listBuckets`、`uploadObject`、`statObject`、`downloadObject`、`removeBucket` 等最终用户最常走的方法。
+- “上传文件 -> HEAD/stat -> 下载 -> 删除对象 -> 删除 bucket” 形成更贴近真实使用顺序的 live 闭环。
+
+## 阶段 129 剩余 4 个运维接口发布策略落地
+
+- 更新 `release-gates`、用户快速使用指南和发布交接文档，把 `ADMIN_SERVER_UPDATE*` 明确降级为高级/维护窗口接口。
+- `ADMIN_SR_PEER_*` 明确保留代码入口但默认不在普通用户主文档暴露，按 internal/advanced 处理。
+- `scripts/report-release-readiness.py` 同步改为：剩余 4 个接口继续保留风险计数，但不再作为普通用户主路径发布阻塞。
+
 ## 阶段 128 剩余运维接口发布决策矩阵
 
 - 新增 `docs/126-stage128-remaining-admin-decision-matrix.md`，把仍未放行的 4 个运维接口拆成“维护窗口”和“内部 peer 维护”两类。
