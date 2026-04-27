@@ -186,9 +186,9 @@
 
 - 已完成：minio-java 主体 API 对标、route parity、product-typed、raw 兜底、Crypto Gate Pass。
 - 仍需负责人材料：许可证、SCM、developers、issueManagement、organization、distributionManagement、source/javadoc/sign/SBOM、发布仓库和回滚策略。
-- 仍需运维/lab 证据：`destructive-blocked = 29` 中尚未在独立 lab 或维护窗口证明的全量配置、IDP、站点复制变更、服务控制、升级、force-unlock 和压测类操作。
+- 风险边界仍保留：`destructive-blocked = 29` 继续作为真实运维风险计数；其中 25 个已有独立 lab 证据，剩余 4 个已按阶段 129 发布策略降级/隐藏，不再作为普通用户主路径阻塞。
 
-因此正式发布不得再把 Crypto Gate 写成未完成阻塞项，但必须继续把 Crypto Gate Pass 作为回归证据；正式发布仍不能绕过破坏性运维证据和 Maven/tag 发布工程材料。
+因此正式发布不得再把 Crypto Gate 写成未完成阻塞项，但必须继续把 Crypto Gate Pass 作为回归证据；正式发布仍不能绕过 Maven/tag 发布工程材料。如果未来要把剩余 4 个高级/内部接口重新提升为普通可承诺能力，仍要补真实运维证据。
 
 ## 阶段 115 发布元数据负责人输入清单
 
@@ -211,3 +211,23 @@
 - `SDK 发布候选就绪 = 是` 说明功能覆盖、Crypto Gate、route parity 和 raw fallback 已收口。
 - `正式 Maven/tag 发布就绪 = 否` 时，仍不得发布 Maven、创建 tag 或推送远端。
 - 只有 POM 元数据、release 插件、签名、SBOM、发布仓库、回滚策略和破坏性边界证据都满足后，才允许把正式发布门禁改为通过。
+
+## 阶段 129 剩余 4 个运维接口发布策略
+
+阶段 129 起，剩余未补齐真实运维证据的 4 个接口不再按“普通用户常用路径未验证”处理，而按发布策略分级：
+
+- `ADMIN_SERVER_UPDATE`
+- `ADMIN_SERVER_UPDATE_V2`
+- `ADMIN_SR_PEER_EDIT`
+- `ADMIN_SR_PEER_REMOVE`
+
+当前默认策略：
+
+1. `ADMIN_SERVER_UPDATE*`：**保留代码入口，但降级为高级/维护窗口接口**。
+2. `ADMIN_SR_PEER_*`：**保留代码入口，但默认不在普通用户主文档暴露，按 internal/advanced 处理**。
+
+因此：
+
+- `destructive-blocked` 仍保留为风险计数，不被人为清零。
+- 这些接口不再阻塞“核心桶/文件/常见只读 Admin 路径已验证”的发布结论。
+- 只有当未来要重新宣称它们“可安全使用”时，才必须再补独立 lab 或维护窗口报告。

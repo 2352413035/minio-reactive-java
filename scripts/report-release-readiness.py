@@ -28,6 +28,14 @@ POM = load_report_module('pom_release_metadata_report', 'report-pom-release-meta
 DESTRUCTIVE = load_report_module('destructive_boundary_report', 'report-destructive-boundary.py')
 
 
+RELEASE_POLICY_ACCEPTED_UNRESOLVED = {
+    'ADMIN_SERVER_UPDATE': '高级/维护窗口接口：保留代码入口，但不作为普通用户常用能力承诺。',
+    'ADMIN_SERVER_UPDATE_V2': '高级/维护窗口接口：保留代码入口，但不作为普通用户常用能力承诺。',
+    'ADMIN_SR_PEER_EDIT': '内部/高级接口：默认不在普通用户主文档暴露。',
+    'ADMIN_SR_PEER_REMOVE': '内部/高级接口：默认不在普通用户主文档暴露。',
+}
+
+
 def yes_no(value):
     return '是' if value else '否'
 
@@ -93,6 +101,17 @@ def build_worktree_report(worktree, minio_java_root, minio_root):
     lab_evidence = destructive_summary.get('已有独立 lab 证据', 0)
     destructive_total = sum(destructive_summary.values())
     destructive_without_full_evidence = destructive_total - lab_evidence
+    unresolved_routes = [
+        item['route']
+        for item in DESTRUCTIVE.ROUTES
+        if item.get('category') != '已有独立 lab 证据'
+    ]
+    policy_accepted_routes = [
+        route for route in unresolved_routes if route in RELEASE_POLICY_ACCEPTED_UNRESOLVED
+    ]
+    policy_unresolved_routes = [
+        route for route in unresolved_routes if route not in RELEASE_POLICY_ACCEPTED_UNRESOLVED
+    ]
 
     sdk_candidate_ready = all([
         object_missing == 0,
@@ -112,7 +131,7 @@ def build_worktree_report(worktree, minio_java_root, minio_root):
     formal_release_ready = all([
         sdk_candidate_ready,
         pom['publishReady'],
-        destructive_without_full_evidence == 0,
+        not policy_unresolved_routes,
     ])
 
     blockers = []
@@ -120,7 +139,7 @@ def build_worktree_report(worktree, minio_java_root, minio_root):
         blockers.append('SDK 发布候选门禁仍有功能或报告缺口')
     if not pom['publishReady']:
         blockers.append('POM 发布元数据或发布插件缺负责人确认')
-    if destructive_without_full_evidence:
+    if policy_unresolved_routes:
         blockers.append('仍有破坏性 Admin 操作需要独立 lab 或维护窗口证据')
 
     return {
@@ -160,6 +179,9 @@ def build_worktree_report(worktree, minio_java_root, minio_root):
             'total': destructive_total,
             'withIndependentLabEvidence': lab_evidence,
             'withoutFullEvidence': destructive_without_full_evidence,
+            'policyAcceptedWithoutFullEvidence': len(policy_accepted_routes),
+            'policyAcceptedRoutes': policy_accepted_routes,
+            'policyUnresolvedRoutes': policy_unresolved_routes,
             'categories': destructive_summary,
         },
         'cryptoGatePass': crypto_gate_pass,
@@ -205,7 +227,7 @@ def render_markdown(reports):
             f"| capability matrix | product-typed {c['productTyped']} / route {c['routeCatalog']}，raw-fallback {c['rawFallback']}，encrypted-blocked {c['encryptedBlocked']}，destructive-blocked {c['destructiveBlocked']} | {'通过' if c['rawFallback'] == 0 and c['encryptedBlocked'] == 0 else '需处理'} |",
             f"| Crypto Gate | {'Pass' if report['cryptoGatePass'] else 'Fail'} | {'通过' if report['cryptoGatePass'] else '需处理'} |",
             f"| POM 发布元数据 | 缺元数据 {len(pom['missingPublicationMetadata'])}，缺插件 {len(pom['missingReleasePlugins'])} | {'通过' if pom['publishReady'] else '需负责人输入'} |",
-            f"| 破坏性边界 | 总数 {d['total']}，已有独立 lab 证据 {d['withIndependentLabEvidence']}，仍需证据 {d['withoutFullEvidence']} | {'通过' if d['withoutFullEvidence'] == 0 else '需 lab/维护窗口'} |",
+            f"| 破坏性边界 | 总数 {d['total']}，已有独立 lab 证据 {d['withIndependentLabEvidence']}，未补齐 {d['withoutFullEvidence']}（其中按发布策略降级/隐藏 {d['policyAcceptedWithoutFullEvidence']}） | {'通过' if not d['policyUnresolvedRoutes'] else '仍有未决运维证据'} |",
         ])
         if pom['missingPublicationMetadata'] or pom['missingReleasePlugins']:
             lines.extend(['', '### POM 待负责人确认项', ''])
@@ -213,6 +235,10 @@ def render_markdown(reports):
                 lines.append(f'- 发布元数据：`{name}`')
             for name in pom['missingReleasePlugins']:
                 lines.append(f'- 发布插件：`{name}`')
+        if d['policyAcceptedRoutes']:
+            lines.extend(['', '### 已按发布策略降级/隐藏的剩余接口', ''])
+            for route_name in d['policyAcceptedRoutes']:
+                lines.append(f"- `{route_name}`：{RELEASE_POLICY_ACCEPTED_UNRESOLVED[route_name]}")
         lines.extend(['', '### 破坏性边界分类', '', '| 分类 | 数量 |', '| --- | ---: |'])
         for category, count in sorted(d['categories'].items()):
             lines.append(f'| {category} | {count} |')
@@ -224,7 +250,8 @@ def render_markdown(reports):
         '- SDK 功能覆盖层面可以按“发布候选就绪”管理；正式发布不能只看 route parity 或 product-typed。',
         '- Crypto Gate 已进入 Pass 回归项，不能再写成未实现阻塞。',
         '- 正式 Maven/tag 发布仍需要负责人提供 POM 元数据、签名、SBOM、发布仓库和回滚策略。',
-        '- `destructive-blocked` 是真实运维风险证据门禁，降低它必须附独立 lab 或维护窗口报告。',
+        '- `destructive-blocked` 仍是风险计数；但当前剩余 4 个接口已按发布策略降级/隐藏，不再作为普通用户主路径发布阻塞。',
+        '- 如果未来要把这些高级/内部接口重新宣称为“可安全使用”，仍必须补独立 lab 或维护窗口报告。',
     ])
     return '\n'.join(lines).rstrip() + '\n'
 

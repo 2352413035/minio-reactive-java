@@ -258,6 +258,8 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/124-stage126-maintenance-site-lab.md`
 - `docs/125-stage127-core-admin-live-polish.md`
 - `docs/126-stage128-remaining-admin-decision-matrix.md`
+- `docs/127-stage129-release-policy-apply.md`
+- `docs/128-stage130-high-frequency-client-method-verification.md`
 - `docs/101-stage103-crypto-gate-decryption-prep.md`
 - `docs/102-stage104-independent-docker-lab-matrix.md`
 - `docs/103-stage105-high-risk-lab-fixture-authoring.md`
