@@ -117,7 +117,7 @@ write_minio_lab_report() {
   local step_file
   step_file="$(minio_lab_step_file)"
 
-  local config_enabled full_config_enabled quota_enabled remote_enabled replication_diff_enabled speedtest_enabled drive_speedtest_enabled net_speedtest_enabled site_speedtest_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled idp_write_enabled
+  local config_enabled full_config_enabled quota_enabled remote_enabled replication_diff_enabled speedtest_enabled drive_speedtest_enabled net_speedtest_enabled site_speedtest_enabled service_control_enabled maintenance_boundary_enabled force_unlock_enabled tier_enabled batch_enabled tier_write_enabled remote_write_enabled batch_write_enabled site_write_enabled idp_write_enabled
   config_enabled="false"
   full_config_enabled="false"
   quota_enabled="false"
@@ -127,6 +127,9 @@ write_minio_lab_report() {
   drive_speedtest_enabled="false"
   net_speedtest_enabled="false"
   site_speedtest_enabled="false"
+  service_control_enabled="false"
+  maintenance_boundary_enabled="false"
+  force_unlock_enabled="false"
   tier_enabled="false"
   batch_enabled="false"
   tier_write_enabled="false"
@@ -161,6 +164,15 @@ write_minio_lab_report() {
   fi
   if [[ "${MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE:-}" == "true" ]]; then
     site_speedtest_enabled="true"
+  fi
+  if [[ "${MINIO_LAB_ENABLE_SERVICE_CONTROL_PROBES:-}" == "true" ]]; then
+    service_control_enabled="true"
+  fi
+  if [[ "${MINIO_LAB_ENABLE_MAINTENANCE_BOUNDARY_PROBES:-}" == "true" ]]; then
+    maintenance_boundary_enabled="true"
+  fi
+  if [[ "${MINIO_LAB_ENABLE_FORCE_UNLOCK_PROBE:-}" == "true" ]]; then
+    force_unlock_enabled="true"
   fi
   if [[ -n "${MINIO_LAB_TIER_NAME:-}" ]]; then
     tier_enabled="true"
@@ -219,6 +231,9 @@ write_minio_lab_report() {
     minio_lab_fixture_enabled 'drive speedtest bounded 探测' "$drive_speedtest_enabled"
     minio_lab_fixture_enabled 'net speedtest typed/raw 探测' "$net_speedtest_enabled"
     minio_lab_fixture_enabled 'site speedtest typed/raw 探测' "$site_speedtest_enabled"
+    minio_lab_fixture_enabled 'service restart typed/raw 探测' "$service_control_enabled"
+    minio_lab_fixture_enabled 'server update 前置条件 typed/raw 探测' "$maintenance_boundary_enabled"
+    minio_lab_fixture_enabled 'force-unlock typed/raw 探测' "$force_unlock_enabled"
     minio_lab_fixture_enabled 'batch job typed/raw 探测' "$batch_enabled"
     minio_lab_fixture_enabled 'tier add/edit/remove 写入 + 恢复' "$tier_write_enabled"
     minio_lab_fixture_enabled 'remote target set/remove 写入 + 恢复' "$remote_write_enabled"
@@ -246,10 +261,14 @@ write_minio_lab_report() {
     printf -- '- drive speedtest 开关：`%s`；block size：`%s`；file size：`%s`\n' "${MINIO_LAB_ENABLE_DRIVE_SPEEDTEST_PROBE:-false}" "${MINIO_LAB_SPEEDTEST_DRIVE_BLOCK_SIZE:-未设置}" "${MINIO_LAB_SPEEDTEST_DRIVE_FILE_SIZE:-未设置}"
     printf -- '- net speedtest 开关：`%s`；duration 秒：`%s`；预期失败：`%s`；关键字：%s\n' "${MINIO_LAB_ENABLE_NET_SPEEDTEST_PROBE:-false}" "${MINIO_LAB_SPEEDTEST_NET_DURATION_SECONDS:-未设置}" "${MINIO_LAB_EXPECT_NET_SPEEDTEST_FAILURE:-false}" "$(minio_lab_bool "${MINIO_LAB_NET_SPEEDTEST_EXPECTED_ERROR:-}")"
     printf -- '- site speedtest 开关：`%s`；duration 秒：`%s`；预期失败：`%s`；关键字：%s\n' "${MINIO_LAB_ENABLE_SITE_SPEEDTEST_PROBE:-false}" "${MINIO_LAB_SPEEDTEST_SITE_DURATION_SECONDS:-未设置}" "${MINIO_LAB_EXPECT_SITE_SPEEDTEST_FAILURE:-false}" "$(minio_lab_bool "${MINIO_LAB_SITE_SPEEDTEST_EXPECTED_ERROR:-}")"
+    printf -- '- service control 开关：`%s`\n' "${MINIO_LAB_ENABLE_SERVICE_CONTROL_PROBES:-false}"
+    printf -- '- maintenance boundary 开关：`%s`；server update URL：%s；期望错误：%s\n' "${MINIO_LAB_ENABLE_MAINTENANCE_BOUNDARY_PROBES:-false}" "$(minio_lab_bool "${MINIO_LAB_SERVER_UPDATE_URL:-}")" "$(minio_lab_bool "${MINIO_LAB_SERVER_UPDATE_EXPECTED_ERROR:-}")"
+    printf -- '- force-unlock 开关：`%s`；paths：%s；预期失败：`%s`；关键字：%s\n' "${MINIO_LAB_ENABLE_FORCE_UNLOCK_PROBE:-false}" "$(minio_lab_bool "${MINIO_LAB_FORCE_UNLOCK_PATHS:-}")" "${MINIO_LAB_EXPECT_FORCE_UNLOCK_FAILURE:-true}" "$(minio_lab_bool "${MINIO_LAB_FORCE_UNLOCK_EXPECTED_ERROR:-}")"
     printf -- '- batch job start 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_BATCH_START_BODY:-}" "${MINIO_LAB_BATCH_START_BODY_FILE:-}")"
     printf -- '- batch job cancel 旧式请求体：%s（当前 SDK 不要求）\n' "$(minio_lab_bool_any "${MINIO_LAB_BATCH_CANCEL_BODY:-}" "${MINIO_LAB_BATCH_CANCEL_BODY_FILE:-}")"
     printf -- '- site replication add 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_ADD_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_ADD_BODY_FILE:-}")"
     printf -- '- site replication edit 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_EDIT_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_EDIT_BODY_FILE:-}")"
+    printf -- '- site replication 从 info 自动生成 edit 请求体：`%s`；跳过 raw re-add：`%s`\n' "${MINIO_LAB_SITE_REPLICATION_EDIT_FROM_INFO:-false}" "${MINIO_LAB_SKIP_SITE_REPLICATION_RAW_READD:-false}"
     printf -- '- site replication remove 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY:-}" "${MINIO_LAB_SITE_REPLICATION_REMOVE_BODY_FILE:-}")"
     printf -- '- IDP 类型：`%s`；名称：`%s`；配置变更后重启：`%s`\n' "${MINIO_LAB_IDP_TYPE:-openid}" "${MINIO_LAB_IDP_NAME:-_}" "${MINIO_LAB_RESTART_IDP_AFTER_CONFIG_CHANGE:-false}"
     printf -- '- IDP add 请求体：%s；update 请求体：%s\n' "$(minio_lab_bool_any "${MINIO_LAB_ADD_IDP_CONFIG_BODY:-}" "${MINIO_LAB_ADD_IDP_CONFIG_BODY_FILE:-}")" "$(minio_lab_bool_any "${MINIO_LAB_UPDATE_IDP_CONFIG_BODY:-}" "${MINIO_LAB_UPDATE_IDP_CONFIG_BODY_FILE:-}")"

@@ -78,7 +78,7 @@ minio.content=你好，来自 reactive minio sdk
 | 产品强类型成熟度 | S3 77 / 77、Admin 128 / 128、KMS 7 / 7、STS 7 / 7、Metrics 6 / 6、Health 8 / 8。这个数字表示用户友好 typed 成熟度，不表示风险接口已经可以在共享环境中真实执行。 |
 | 风险边界 | Admin 加密响应已可由用户显式提供 secretKey 解密，`encrypted-blocked = 0`；仍有 29 个破坏性操作边界，破坏性写入只允许在独立 lab 通过显式写入夹具证明，不能在共享环境中伪装成“普通已完成”。 |
 
-阶段 84 已按独立 Docker lab 口径补充真实破坏性证据：JDK8 与 JDK17+ 分支均通过 `DestructiveAdminIntegrationTest`，覆盖 config KV 与 bucket quota 的 typed/raw 写入、读取和恢复，以及 remote target 的 typed/raw 只读探测；阶段 105 已补齐 tier、remote target、batch job、site replication 的模板与夹具审计脚本；阶段 106 已把 tier、remote target set、site replication add/edit 的专用客户端请求体切换为 madmin 加密语义，并在双分支一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵；阶段 107 又在双分支双容器 Docker lab 通过 tier add/remove typed/raw 写入恢复矩阵；阶段 108 继续在双分支双容器 Docker lab 通过 batch job start/status/cancel typed/raw 矩阵；阶段 109 补齐 site replication add/remove typed/raw 矩阵；阶段 110 补齐 tier edit typed/raw 矩阵。剩余 service restart/update、decommission、rebalance、force-unlock、speedtest 与 site replication edit 等更强变体仍需维护窗口或更复杂拓扑，因此破坏性边界不能直接清零。
+阶段 84 已按独立 Docker lab 口径补充真实破坏性证据：JDK8 与 JDK17+ 分支均通过 `DestructiveAdminIntegrationTest`，覆盖 config KV 与 bucket quota 的 typed/raw 写入、读取和恢复，以及 remote target 的 typed/raw 只读探测；阶段 105 已补齐 tier、remote target、batch job、site replication 的模板与夹具审计脚本；阶段 106 已把 tier、remote target set、site replication add/edit 的专用客户端请求体切换为 madmin 加密语义，并在双分支一次性 Docker lab 通过 remote target set/remove typed/raw 写入恢复矩阵；阶段 107 又在双分支双容器 Docker lab 通过 tier add/remove typed/raw 写入恢复矩阵；阶段 108 继续在双分支双容器 Docker lab 通过 batch job start/status/cancel typed/raw 矩阵；阶段 109 补齐 site replication add/remove typed/raw 矩阵；阶段 110 补齐 tier edit typed/raw 矩阵；阶段 126 继续用单节点、四节点分布式和双站点 Docker lab 补齐 service restart、force-unlock、net/site speedtest 与 site replication edit 的 typed/raw 证据。剩余 server update/v2 只能证明官方 Docker 镜像明确拒绝原地升级，`ADMIN_SR_PEER_EDIT`/`ADMIN_SR_PEER_REMOVE` 仍属于内部 peer 维护接口，发布前需要用户决定去留或降级。
 
 机器报告统一见 `.omx/reports/route-parity-jdk8.md`、`.omx/reports/route-parity-jdk17.md`、`.omx/reports/capability-matrix.md`、`.omx/reports/pom-release-metadata-jdk8.md`、`.omx/reports/pom-release-metadata-jdk17.md`、`.omx/reports/destructive-boundary-jdk8.md` 和 `.omx/reports/destructive-boundary-jdk17.md`。阶段 115 的发布负责人输入清单见 `docs/113-stage115-release-metadata-safe-prep.md`；阶段 116 的聚合发布就绪总览脚本见 `scripts/report-release-readiness.py` 和 `docs/114-stage116-release-readiness-aggregator.md`。阶段 117 已将全量配置 `ADMIN_SET_CONFIG` 原样写回纳入独立 lab 补证，详见 `docs/115-stage117-full-config-lab.md`。阶段 118 又将 `ADMIN_REPLICATION_DIFF` 对齐为 madmin query 语义，并提供独立复制拓扑 lab 探测门禁，详见 `docs/116-stage118-replication-diff-query-boundary.md`。
 
@@ -255,6 +255,7 @@ mvn -Dtest=LiveMinioIntegrationTest test
 - `docs/98-stage100-signature-parity-audit.md`
 - `docs/99-stage101-putobjectapiargs-boundary.md`
 - `docs/100-stage102-release-completion-gate-audit.md`
+- `docs/124-stage126-maintenance-site-lab.md`
 - `docs/101-stage103-crypto-gate-decryption-prep.md`
 - `docs/102-stage104-independent-docker-lab-matrix.md`
 - `docs/103-stage105-high-risk-lab-fixture-authoring.md`
