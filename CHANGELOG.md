@@ -1,5 +1,10 @@
 # 变更日志
 
+## 阶段 128 剩余运维接口发布决策矩阵
+
+- 新增 `docs/126-stage128-remaining-admin-decision-matrix.md`，把仍未放行的 4 个运维接口拆成“维护窗口”和“内部 peer 维护”两类。
+- 明确建议：`ADMIN_SERVER_UPDATE*` 保留代码入口但降级为维护窗口/高级运维；`ADMIN_SR_PEER_*` 不建议作为普通用户主文档能力暴露。
+
 ## 阶段 127 高频只读 Admin 发布前加固
 
 - `LiveMinioIntegrationTest` 新增高频只读运维视图 live 证据：`/minio/health/ready`、storage info、data usage、account info、config help 的 typed/raw 读链路。
